@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>計算機</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -12,111 +12,177 @@
     html, body {
       height: 100%;
       font-family: -apple-system, 'Segoe UI', sans-serif;
-      background: #f2f2f7;
+      background: #000;
       overflow: hidden;
+      color: #fff;
     }
 
     /* ── Header ── */
     header {
-      background: #fff;
-      border-bottom: 1px solid #e0e0e5;
-      padding: 12px 20px 12px max(20px, env(safe-area-inset-left));
+      background: #1c1c1e;
+      border-bottom: 1px solid #3a3a3c;
+      padding: 12px 20px;
       display: flex;
       align-items: center;
       gap: 14px;
       font-size: 17px;
-      font-weight: 700;
-      color: #1c1c1e;
+      font-weight: 600;
       flex-shrink: 0;
     }
 
     header a.back {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
-      color: #007aff;
+      color: #ff9500;
       text-decoration: none;
       padding: 5px 12px;
       border-radius: 20px;
-      background: #e8f0fe;
+      background: rgba(255,149,0,0.15);
       transition: background 0.15s;
     }
-
-    header a.back:hover { background: #d0e4fc; }
+    header a.back:hover { background: rgba(255,149,0,0.25); }
 
     /* ── Main layout ── */
     .main {
       display: flex;
       height: calc(100% - 49px);
-      padding: 0 max(0px, env(safe-area-inset-right)) 0 max(0px, env(safe-area-inset-left));
     }
 
-    /* ── Display panel (left) ── */
-    .display-panel {
+    /* ══════════════════════════════
+       Left panel
+    ══════════════════════════════ */
+    .left {
       flex: 0 0 38%;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      padding: 24px 28px;
-      border-right: 1px solid #e0e0e5;
-      background: #fff;
-      gap: 8px;
+      background: #1c1c1e;
+      border-right: 1px solid #3a3a3c;
+      overflow: hidden;
     }
 
-    .expr {
-      font-size: 22px;
+    /* History list */
+    .history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history::-webkit-scrollbar { width: 4px; }
+    .history::-webkit-scrollbar-thumb { background: #48484a; border-radius: 2px; }
+
+    .history-empty {
+      color: #48484a;
+      font-size: 14px;
+      text-align: center;
+      margin: auto;
+    }
+
+    .hist-item {
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .hist-item:hover { background: #2c2c2e; }
+
+    .hist-expr {
+      font-size: 13px;
       color: #8e8e93;
       text-align: right;
-      min-height: 32px;
+      line-height: 1.4;
+      word-break: break-all;
+    }
+    .hist-result {
+      font-size: 22px;
+      font-weight: 300;
+      color: #e0e0e0;
+      text-align: right;
+    }
+
+    /* Divider */
+    .history-divider {
+      height: 1px;
+      background: #3a3a3c;
+      margin: 0 20px;
+      flex-shrink: 0;
+    }
+
+    /* Current display */
+    .display {
+      flex-shrink: 0;
+      padding: 16px 20px 20px;
+      text-align: right;
+    }
+
+    .display .expr {
+      font-size: 18px;
+      color: #8e8e93;
+      min-height: 26px;
       word-break: break-all;
       line-height: 1.4;
     }
 
-    .result {
-      font-size: 64px;
+    .display .result {
+      font-size: 56px;
       font-weight: 200;
-      color: #1c1c1e;
-      text-align: right;
       line-height: 1.1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    /* ── Button panel (right) ── */
+    /* clear history button */
+    .clear-hist {
+      flex-shrink: 0;
+      padding: 8px 20px;
+      text-align: right;
+    }
+
+    .clear-hist button {
+      font-size: 12px;
+      color: #8e8e93;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: color 0.15s;
+    }
+    .clear-hist button:hover { color: #ff453a; }
+    .clear-hist button:active { filter: none; }
+
+    /* ══════════════════════════════
+       Right panel — buttons
+    ══════════════════════════════ */
     .button-panel {
       flex: 1;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       grid-template-rows: repeat(5, 1fr);
       gap: 1px;
-      background: #d1d1d6;
+      background: #3a3a3c;
       padding-bottom: max(0px, env(safe-area-inset-bottom));
     }
 
     button {
       border: none;
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 400;
       cursor: pointer;
-      background: #f9f9f9;
-      color: #1c1c1e;
+      color: #fff;
+      background: #2c2c2e;
       transition: filter 0.1s;
       touch-action: manipulation;
     }
 
-    button:active { filter: brightness(0.88); }
+    button:active { filter: brightness(0.7); }
 
-    /* Function buttons: AC +/- % */
-    .fn { background: #e5e5ea; color: #1c1c1e; font-size: 22px; }
-
-    /* Operator buttons */
-    .op { background: #ff9500; color: #fff; font-weight: 500; }
-    .op:active { filter: brightness(0.88); }
-
-    /* Equal button */
-    .eq { background: #ff9500; color: #fff; font-weight: 500; }
-
-    /* Zero spans 2 columns */
+    .fn  { background: #636366; font-size: 22px; }
+    .op  { background: #ff9500; font-weight: 500; }
+    .eq  { background: #ff9500; font-weight: 500; }
     .zero { grid-column: span 2; }
   </style>
 </head>
@@ -129,47 +195,63 @@
 
 <div class="main">
 
-  <!-- Left: display -->
-  <div class="display-panel">
-    <div class="expr"   id="expr"></div>
-    <div class="result" id="result">0</div>
+  <!-- Left: history + display -->
+  <div class="left">
+
+    <div class="clear-hist">
+      <button onclick="clearHistory()">清除記錄</button>
+    </div>
+
+    <div class="history" id="history">
+      <div class="history-empty" id="hist-empty">計算記錄會顯示在這裡</div>
+    </div>
+
+    <div class="history-divider"></div>
+
+    <div class="display">
+      <div class="expr"   id="expr"></div>
+      <div class="result" id="result">0</div>
+    </div>
+
   </div>
 
   <!-- Right: buttons -->
   <div class="button-panel">
-    <button class="fn" onclick="ac()">AC</button>
-    <button class="fn" onclick="sign()">+/-</button>
-    <button class="fn" onclick="pct()">%</button>
-    <button class="op" onclick="op('/')">÷</button>
+    <button class="fn"   onclick="ac()">AC</button>
+    <button class="fn"   onclick="sign()">+/-</button>
+    <button class="fn"   onclick="pct()">%</button>
+    <button class="op"   onclick="op('/')">÷</button>
 
     <button onclick="digit('7')">7</button>
     <button onclick="digit('8')">8</button>
     <button onclick="digit('9')">9</button>
-    <button class="op" onclick="op('*')">×</button>
+    <button class="op"   onclick="op('*')">×</button>
 
     <button onclick="digit('4')">4</button>
     <button onclick="digit('5')">5</button>
     <button onclick="digit('6')">6</button>
-    <button class="op" onclick="op('-')">−</button>
+    <button class="op"   onclick="op('-')">−</button>
 
     <button onclick="digit('1')">1</button>
     <button onclick="digit('2')">2</button>
     <button onclick="digit('3')">3</button>
-    <button class="op" onclick="op('+')">+</button>
+    <button class="op"   onclick="op('+')">+</button>
 
     <button class="zero" onclick="digit('0')">0</button>
     <button onclick="dot()">.</button>
-    <button class="eq" onclick="eq()">=</button>
+    <button class="eq"   onclick="eq()">=</button>
   </div>
 
 </div>
 
 <script>
   let cur = '0', prev = '', oper = null, reset = false;
+  const SYM = { '+':'+', '-':'−', '*':'×', '/':'÷' };
 
   const resultEl = document.getElementById('result');
   const exprEl   = document.getElementById('expr');
-  const SYM = { '+':'+', '-':'−', '*':'×', '/':'÷' };
+  const histEl   = document.getElementById('history');
+  const emptyEl  = document.getElementById('hist-empty');
 
   function show() { resultEl.textContent = cur; }
 
@@ -194,30 +276,50 @@
   function calc(chained = false) {
     if (!oper || !prev) return;
     const a = parseFloat(prev), b = parseFloat(cur);
-    const res = oper === '+' ? a+b : oper === '-' ? a-b : oper === '*' ? a*b : b ? a/b : 'Error';
+    const res = oper==='+' ? a+b : oper==='-' ? a-b : oper==='*' ? a*b : b ? a/b : 'Error';
+    const exprText = `${prev} ${SYM[oper]} ${cur}`;
+
     if (!chained) {
-      exprEl.textContent = `${prev} ${SYM[oper]} ${cur} =`;
+      exprEl.textContent = exprText + ' =';
+      addHistory(exprText, typeof res === 'number'
+        ? String(parseFloat(res.toFixed(10))) : res);
       oper = null;
     }
+
     cur = typeof res === 'number' ? String(parseFloat(res.toFixed(10))) : res;
     reset = true;
     show();
   }
 
+  function addHistory(expr, result) {
+    emptyEl && emptyEl.remove();
+
+    const item = document.createElement('div');
+    item.className = 'hist-item';
+    item.innerHTML = `<div class="hist-expr">${expr} =</div><div class="hist-result">${result}</div>`;
+    item.onclick = () => { cur = result; reset = false; show(); };
+    histEl.appendChild(item);
+    histEl.scrollTop = histEl.scrollHeight;
+  }
+
+  function clearHistory() {
+    histEl.innerHTML = '<div class="history-empty" id="hist-empty">計算記錄會顯示在這裡</div>';
+  }
+
   function eq()   { calc(); }
   function ac()   { cur='0'; prev=''; oper=null; reset=false; exprEl.textContent=''; show(); }
-  function sign() { cur = String(parseFloat(cur) * -1); show(); }
+  function sign() { if (cur !== '0') { cur = String(parseFloat(cur) * -1); show(); } }
   function pct()  { cur = String(parseFloat(cur) / 100); show(); }
 
   document.addEventListener('keydown', e => {
-    if (e.key >= '0' && e.key <= '9')        digit(e.key);
-    else if (e.key === '.')                   dot();
-    else if (e.key === '+')                   op('+');
-    else if (e.key === '-')                   op('-');
-    else if (e.key === '*')                   op('*');
-    else if (e.key === '/') { e.preventDefault(); op('/'); }
-    else if (e.key === 'Enter' || e.key === '=') eq();
-    else if (e.key === 'Escape')              ac();
+    if (e.key >= '0' && e.key <= '9')            digit(e.key);
+    else if (e.key === '.')                        dot();
+    else if (e.key === '+')                        op('+');
+    else if (e.key === '-')                        op('-');
+    else if (e.key === '*')                        op('*');
+    else if (e.key === '/') { e.preventDefault();  op('/'); }
+    else if (e.key === 'Enter' || e.key === '=')   eq();
+    else if (e.key === 'Escape')                   ac();
     else if (e.key === 'Backspace') {
       cur = cur.length > 1 ? cur.slice(0, -1) : '0';
       show();
