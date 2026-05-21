@@ -21,7 +21,24 @@
       font-size: 22px;
       font-weight: 700;
       letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
+
+    header a.back {
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      background: rgba(255,255,255,0.18);
+      padding: 5px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    header a.back:hover { background: rgba(255,255,255,0.3); }
 
     .container {
       display: flex;
@@ -193,7 +210,10 @@
 </head>
 <body>
 
-<header>🍱 快速點餐</header>
+<header>
+  <a class="back" href="index.html">&#8592; 首頁</a>
+  🍱 快速點餐
+</header>
 
 <div class="container">
   <div class="menu" id="menu"></div>
