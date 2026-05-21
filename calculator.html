@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>計算機</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #16213e;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    header a.back {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      background: rgba(255,255,255,0.12);
+      padding: 5px 12px;
+      border-radius: 20px;
+      transition: background 0.15s;
+    }
+
+    header a.back:hover { background: rgba(255,255,255,0.22); }
+
+    .wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 48px 16px;
+    }
+
+    .calculator {
+      background: #16213e;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      width: 300px;
+    }
+
+    .display {
+      background: #0f3460;
+      border-radius: 14px;
+      padding: 16px 20px;
+      text-align: right;
+      margin-bottom: 20px;
+    }
+
+    .display .expr {
+      color: #8899bb;
+      font-size: 14px;
+      min-height: 20px;
+      margin-bottom: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .display .num {
+      color: #e2e8f0;
+      font-size: 40px;
+      font-weight: 300;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      font-size: 20px;
+      font-weight: 500;
+      padding: 18px;
+      cursor: pointer;
+      transition: transform 0.1s, filter 0.1s;
+    }
+
+    button:active { transform: scale(0.92); }
+    button:hover  { filter: brightness(1.2); }
+
+    .n { background: #1a2744; color: #e2e8f0; }
+    .o { background: #0f3460; color: #63b3ed; }
+    .e { background: #e94560; color: #fff; grid-column: span 2; }
+    .s { background: #1a2744; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="index.html">&#8592; 首頁</a>
+  🔢 計算機
+</header>
+
+<div class="wrap">
+  <div class="calculator">
+    <div class="display">
+      <div class="expr" id="expr"></div>
+      <div class="num"  id="num">0</div>
+    </div>
+    <div class="buttons">
+      <button class="s" onclick="ac()">AC</button>
+      <button class="s" onclick="sign()">+/-</button>
+      <button class="s" onclick="pct()">%</button>
+      <button class="o" onclick="op('/')">÷</button>
+
+      <button class="n" onclick="digit('7')">7</button>
+      <button class="n" onclick="digit('8')">8</button>
+      <button class="n" onclick="digit('9')">9</button>
+      <button class="o" onclick="op('*')">×</button>
+
+      <button class="n" onclick="digit('4')">4</button>
+      <button class="n" onclick="digit('5')">5</button>
+      <button class="n" onclick="digit('6')">6</button>
+      <button class="o" onclick="op('-')">−</button>
+
+      <button class="n" onclick="digit('1')">1</button>
+      <button class="n" onclick="digit('2')">2</button>
+      <button class="n" onclick="digit('3')">3</button>
+      <button class="o" onclick="op('+')">+</button>
+
+      <button class="n" style="grid-column:span 2" onclick="digit('0')">0</button>
+      <button class="n" onclick="dot()">.</button>
+      <button class="e" onclick="eq()">=</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let cur = '0', prev = '', oper = null, reset = false;
+
+  const numEl  = document.getElementById('num');
+  const exprEl = document.getElementById('expr');
+  const SYM = { '+':'+', '-':'−', '*':'×', '/':'÷' };
+
+  function show() { numEl.textContent = cur; }
+
+  function digit(d) {
+    if (reset) { cur = d; reset = false; }
+    else cur = cur === '0' ? d : cur + d;
+    show();
+  }
+
+  function dot() {
+    if (reset) { cur = '0.'; reset = false; }
+    else if (!cur.includes('.')) cur += '.';
+    show();
+  }
+
+  function op(o) {
+    if (oper && !reset) calc(true);
+    prev = cur; oper = o; reset = true;
+    exprEl.textContent = `${prev} ${SYM[o]}`;
+  }
+
+  function calc(chained = false) {
+    if (!oper || !prev) return;
+    const a = parseFloat(prev), b = parseFloat(cur);
+    const map = { '+': a+b, '-': a-b, '*': a*b, '/': b ? a/b : 'Error' };
+    const res = map[oper];
+    if (!chained) {
+      exprEl.textContent = `${prev} ${SYM[oper]} ${cur} =`;
+      oper = null;
+    }
+    cur = typeof res === 'number' ? String(parseFloat(res.toFixed(10))) : res;
+    reset = true;
+    show();
+  }
+
+  function eq()   { calc(); }
+  function ac()   { cur = '0'; prev = ''; oper = null; reset = false; exprEl.textContent = ''; show(); }
+  function sign() { cur = String(parseFloat(cur) * -1); show(); }
+  function pct()  { cur = String(parseFloat(cur) / 100); show(); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') digit(e.key);
+    else if (e.key === '.')                       dot();
+    else if (e.key === '+')                       op('+');
+    else if (e.key === '-')                       op('-');
+    else if (e.key === '*')                       op('*');
+    else if (e.key === '/') { e.preventDefault(); op('/'); }
+    else if (e.key === 'Enter' || e.key === '=')  eq();
+    else if (e.key === 'Escape')                  ac();
+    else if (e.key === 'Backspace') {
+      cur = cur.length > 1 ? cur.slice(0, -1) : '0';
+      show();
+    }
+  });
+</script>
+</body>
+</html>
