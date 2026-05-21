@@ -3,336 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>點餐系統</title>
+  <title>功能入口</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f7f3ef;
-      color: #2d2d2d;
+      background: #f0f2f5;
       min-height: 100vh;
     }
 
     header {
-      background: #c0392b;
+      background: #2c3e50;
       color: #fff;
-      padding: 18px 24px;
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: 1px;
+      padding: 20px 32px;
     }
 
-    .container {
-      display: flex;
-      gap: 24px;
-      max-width: 1000px;
-      margin: 24px auto;
-      padding: 0 16px;
-      align-items: flex-start;
+    header h1 { font-size: 22px; font-weight: 700; }
+    header p  { font-size: 13px; color: #aab; margin-top: 4px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 960px;
+      margin: 36px auto;
+      padding: 0 24px;
     }
 
-    /* ── 菜單 ── */
-    .menu { flex: 1; }
-
-    .category-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: #c0392b;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin: 20px 0 10px;
-      border-bottom: 2px solid #e8d5d0;
-      padding-bottom: 4px;
-    }
-
-    .item-card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-
-    .item-emoji { font-size: 32px; flex-shrink: 0; }
-
-    .item-info { flex: 1; }
-    .item-name { font-size: 16px; font-weight: 600; }
-    .item-desc { font-size: 12px; color: #888; margin-top: 2px; }
-    .item-price { font-weight: 700; color: #c0392b; margin-top: 4px; }
-
-    .qty-ctrl {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
-    .qty-ctrl button {
-      width: 30px; height: 30px;
-      border-radius: 50%;
-      border: 2px solid #c0392b;
-      background: #fff;
-      color: #c0392b;
-      font-size: 18px;
-      font-weight: 700;
-      cursor: pointer;
-      line-height: 1;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .qty-ctrl button:hover { background: #c0392b; color: #fff; }
-    .qty-ctrl .qty { font-size: 16px; font-weight: 700; min-width: 20px; text-align: center; }
-
-    /* ── 購物車 ── */
-    .cart {
-      width: 280px;
+    .card {
       background: #fff;
       border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      position: sticky;
-      top: 24px;
-    }
-
-    .cart h2 {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 16px;
+      padding: 28px 24px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: transform 0.15s, box-shadow 0.15s;
       display: flex;
-      align-items: center;
-      gap: 8px;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .cart-empty { color: #aaa; font-size: 14px; text-align: center; padding: 24px 0; }
-
-    .cart-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
-      padding: 6px 0;
-      border-bottom: 1px solid #f0f0f0;
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.13);
     }
 
-    .cart-item-name { flex: 1; }
-    .cart-item-qty { color: #888; margin: 0 8px; }
-    .cart-item-price { font-weight: 600; }
+    .card .icon  { font-size: 40px; }
+    .card .title { font-size: 17px; font-weight: 700; }
+    .card .desc  { font-size: 13px; color: #888; line-height: 1.5; }
 
-    .cart-total {
-      margin-top: 14px;
-      font-size: 18px;
-      font-weight: 700;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .cart-total span:last-child { color: #c0392b; }
-
-    .order-btn {
-      width: 100%;
-      margin-top: 16px;
-      padding: 14px;
-      background: #c0392b;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
-    }
-
-    .order-btn:hover { background: #a93226; }
-    .order-btn:active { transform: scale(0.97); }
-    .order-btn:disabled { background: #ccc; cursor: not-allowed; }
-
-    /* ── 成功提示 ── */
-    .modal-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.4);
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-    }
-
-    .modal-overlay.show { display: flex; }
-
-    .modal {
-      background: #fff;
-      border-radius: 20px;
-      padding: 36px 40px;
-      text-align: center;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    }
-
-    .modal .icon { font-size: 56px; margin-bottom: 12px; }
-    .modal h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
-    .modal p { color: #666; margin-bottom: 20px; }
-
-    .modal button {
-      padding: 12px 32px;
-      background: #c0392b;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
+    .card .tag {
+      display: inline-block;
+      font-size: 11px;
       font-weight: 600;
-      cursor: pointer;
-    }
-
-    @media (max-width: 640px) {
-      .container { flex-direction: column; }
-      .cart { width: 100%; position: static; }
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: #eef2ff;
+      color: #4361ee;
+      width: fit-content;
     }
   </style>
 </head>
 <body>
 
-<header>🍱 快速點餐</header>
+<header>
+  <h1>功能入口</h1>
+  <p>選擇一個功能開始使用</p>
+</header>
 
-<div class="container">
-  <div class="menu" id="menu"></div>
+<div class="grid">
 
-  <div class="cart">
-    <h2>🛒 我的訂單</h2>
-    <div id="cart-list"><div class="cart-empty">尚未選擇餐點</div></div>
-    <div class="cart-total" id="cart-total" style="display:none">
-      <span>總計</span><span id="total-price">$0</span>
-    </div>
-    <button class="order-btn" id="order-btn" onclick="placeOrder()" disabled>確認送出</button>
-  </div>
+  <a class="card" href="order.html">
+    <div class="icon">🍱</div>
+    <div class="title">快速點餐</div>
+    <div class="desc">瀏覽菜單、加入購物車、一鍵送出訂單</div>
+    <span class="tag">餐飲</span>
+  </a>
+
+  <!-- 未來新增功能的卡片放在這裡 -->
+
 </div>
 
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <div class="icon">🎉</div>
-    <h3>訂單已送出！</h3>
-    <p>預計 15-20 分鐘後完成<br>請稍候取餐</p>
-    <button onclick="resetOrder()">再點一次</button>
-  </div>
-</div>
-
-<script>
-  const MENU = [
-    {
-      category: '主食',
-      items: [
-        { id: 1, name: '招牌滷肉飯', desc: '古早味滷汁，香Q米飯', price: 60, emoji: '🍚' },
-        { id: 2, name: '雞腿便當',   desc: '嫩烤雞腿附三樣配菜',  price: 110, emoji: '🍱' },
-        { id: 3, name: '牛肉麵',     desc: '紅燒牛腱，湯頭濃郁',  price: 150, emoji: '🍜' },
-        { id: 4, name: '蛋炒飯',     desc: '蔥花雞蛋，粒粒分明',  price: 80,  emoji: '🍳' },
-      ]
-    },
-    {
-      category: '小菜',
-      items: [
-        { id: 5, name: '滷蛋',     desc: '入味滷製，Q彈好吃', price: 15, emoji: '🥚' },
-        { id: 6, name: '燙青菜',   desc: '時令蔬菜，清爽健康', price: 30, emoji: '🥦' },
-        { id: 7, name: '貢丸湯',   desc: '手工貢丸，鮮甜湯底', price: 40, emoji: '🍲' },
-      ]
-    },
-    {
-      category: '飲料',
-      items: [
-        { id: 8, name: '珍珠奶茶', desc: '現搖，甜度冰塊可調', price: 60, emoji: '🧋' },
-        { id: 9, name: '紅茶',     desc: '錫蘭紅茶，清香回甘', price: 25, emoji: '🍵' },
-        { id: 10, name: '可樂',    desc: '冰涼暢快',           price: 30, emoji: '🥤' },
-      ]
-    }
-  ];
-
-  const cart = {};
-
-  function renderMenu() {
-    const menuEl = document.getElementById('menu');
-    menuEl.innerHTML = MENU.map(cat => `
-      <div class="category-title">${cat.category}</div>
-      ${cat.items.map(item => `
-        <div class="item-card">
-          <div class="item-emoji">${item.emoji}</div>
-          <div class="item-info">
-            <div class="item-name">${item.name}</div>
-            <div class="item-desc">${item.desc}</div>
-            <div class="item-price">$${item.price}</div>
-          </div>
-          <div class="qty-ctrl">
-            <button onclick="changeQty(${item.id}, -1)">−</button>
-            <span class="qty" id="qty-${item.id}">0</span>
-            <button onclick="changeQty(${item.id}, +1)">+</button>
-          </div>
-        </div>
-      `).join('')}
-    `).join('');
-  }
-
-  function findItem(id) {
-    for (const cat of MENU) {
-      const item = cat.items.find(i => i.id === id);
-      if (item) return item;
-    }
-  }
-
-  function changeQty(id, delta) {
-    const current = cart[id] || 0;
-    const next = Math.max(0, current + delta);
-    if (next === 0) delete cart[id];
-    else cart[id] = next;
-    document.getElementById(`qty-${id}`).textContent = next;
-    renderCart();
-  }
-
-  function renderCart() {
-    const ids = Object.keys(cart);
-    const listEl = document.getElementById('cart-list');
-    const totalEl = document.getElementById('cart-total');
-    const orderBtn = document.getElementById('order-btn');
-
-    if (ids.length === 0) {
-      listEl.innerHTML = '<div class="cart-empty">尚未選擇餐點</div>';
-      totalEl.style.display = 'none';
-      orderBtn.disabled = true;
-      return;
-    }
-
-    let total = 0;
-    listEl.innerHTML = ids.map(id => {
-      const item = findItem(Number(id));
-      const subtotal = item.price * cart[id];
-      total += subtotal;
-      return `
-        <div class="cart-item">
-          <span class="cart-item-name">${item.name}</span>
-          <span class="cart-item-qty">x${cart[id]}</span>
-          <span class="cart-item-price">$${subtotal}</span>
-        </div>
-      `;
-    }).join('');
-
-    document.getElementById('total-price').textContent = `$${total}`;
-    totalEl.style.display = 'flex';
-    orderBtn.disabled = false;
-  }
-
-  function placeOrder() {
-    document.getElementById('modal').classList.add('show');
-  }
-
-  function resetOrder() {
-    Object.keys(cart).forEach(id => {
-      cart[id] = 0;
-      delete cart[id];
-      document.getElementById(`qty-${id}`).textContent = '0';
-    });
-    renderCart();
-    document.getElementById('modal').classList.remove('show');
-  }
-
-  renderMenu();
-</script>
 </body>
 </html>
