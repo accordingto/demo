@@ -18,7 +18,7 @@
     #stars {
       position: fixed;
       inset: 0;
-      background: radial-gradient(ellipse at 60% 30%, #0e2a6e 0%, #060e2b 60%, #020818 100%);
+      background: radial-gradient(ellipse at 60% 30%, #061840 0%, #020810 60%, #010408 100%);
       z-index: 0;
     }
 
@@ -82,7 +82,7 @@
       border: 1px solid rgba(80, 130, 220, 0.4);
       border-radius: 14px;
       padding: 14px 18px;
-      font-size: 17px;
+      font-size: 34px;
       font-weight: 500;
       color: #fff;
       cursor: pointer;
@@ -120,7 +120,7 @@
       align-self: flex-start;
       background: #1a5dbf;
       color: #fff;
-      font-size: 15px;
+      font-size: 30px;
       font-weight: 500;
       padding: 8px 16px;
       border-radius: 20px;
@@ -130,7 +130,7 @@
     .badge-large {
       background: #1a3d8f;
       color: #fff;
-      font-size: 15px;
+      font-size: 30px;
       font-weight: 400;
       padding: 12px 16px;
       border-radius: 14px;
@@ -139,7 +139,7 @@
 
     /* plain text response */
     .msg-text {
-      font-size: 16px;
+      font-size: 32px;
       color: #e8e8e8;
       line-height: 1.65;
     }
@@ -174,7 +174,7 @@
       border: none;
       outline: none;
       color: #bcd;
-      font-size: 17px;
+      font-size: 34px;
       resize: none;
       font-family: inherit;
       line-height: 1.4;
@@ -275,24 +275,24 @@
 
   function drawStars() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const count = 220;
+    const count = 180;
     for (let i = 0; i < count; i++) {
-      const x    = Math.random() * canvas.width;
-      const y    = Math.random() * canvas.height;
-      const r    = Math.random() * 1.4 + 0.2;
-      const alpha = Math.random() * 0.7 + 0.2;
+      const x     = Math.random() * canvas.width;
+      const y     = Math.random() * canvas.height;
+      const r     = Math.random() * 1.0 + 0.2;
+      const alpha = Math.random() * 0.3 + 0.08;
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(255,255,255,${alpha})`;
       ctx.fill();
     }
-    // A few brighter stars
-    for (let i = 0; i < 12; i++) {
+    // A few slightly brighter stars
+    for (let i = 0; i < 10; i++) {
       const x = Math.random() * canvas.width;
       const y = Math.random() * canvas.height;
       ctx.beginPath();
-      ctx.arc(x, y, Math.random() * 1.8 + 0.8, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(180,220,255,${Math.random()*0.5+0.5})`;
+      ctx.arc(x, y, Math.random() * 1.2 + 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(180,220,255,${Math.random()*0.2+0.15})`;
       ctx.fill();
     }
   }
