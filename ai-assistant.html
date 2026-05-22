@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    /* ── Starfield background ── */
+    #stars {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 60% 30%, #0e2a6e 0%, #060e2b 60%, #020818 100%);
+      z-index: 0;
+    }
+
+    /* ── Layout wrapper ── */
+    .page {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 20px 16px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 22px;
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      font-size: 42px;
+      font-weight: 800;
+      color: #00e5ff;
+      text-shadow: 0 0 20px rgba(0,229,255,0.5);
+      letter-spacing: 0.5px;
+    }
+
+    .header-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .header-btns button {
+      background: transparent;
+      border: 2px solid #00e5ff;
+      color: #00e5ff;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 6px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+    }
+
+    /* ── Suggested questions ── */
+    .suggestions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+
+    .suggestion-card {
+      background: rgba(10, 35, 110, 0.75);
+      border: 1px solid rgba(80, 130, 220, 0.4);
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 17px;
+      font-weight: 500;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    /* ── Chat section ── */
+    .chat-label {
+      font-size: 30px;
+      font-weight: 700;
+      color: #00e5ff;
+      text-shadow: 0 0 16px rgba(0,229,255,0.4);
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+      margin-bottom: 12px;
+    }
+
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(0,229,255,0.3);
+      border-radius: 3px;
+    }
+
+    /* small badge (tool result short) */
+    .badge {
+      display: inline-block;
+      align-self: flex-start;
+      background: #1a5dbf;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 20px;
+    }
+
+    /* large badge (tool result with long text) */
+    .badge-large {
+      background: #1a3d8f;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 400;
+      padding: 12px 16px;
+      border-radius: 14px;
+      line-height: 1.5;
+    }
+
+    /* plain text response */
+    .msg-text {
+      font-size: 16px;
+      color: #e8e8e8;
+      line-height: 1.65;
+    }
+
+    .msg-text b { font-weight: 700; color: #fff; }
+
+    .msg-text ul {
+      list-style: none;
+      margin: 4px 0;
+    }
+
+    .msg-text ul li::before {
+      content: '• ';
+    }
+
+    /* ── Input area ── */
+    .input-area {
+      flex-shrink: 0;
+      background: rgba(10, 35, 110, 0.65);
+      border: 1px solid rgba(80, 130, 220, 0.35);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      min-height: 72px;
+    }
+
+    .input-area textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #bcd;
+      font-size: 17px;
+      resize: none;
+      font-family: inherit;
+      line-height: 1.4;
+    }
+
+    .input-area textarea::placeholder { color: #6080b0; }
+
+    .send-btn {
+      background: #00c8e8;
+      color: #fff;
+      border: none;
+      border-radius: 22px;
+      padding: 9px 22px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>AI Assistant</h1>
+    <div class="header-btns">
+      <button>New</button>
+      <button>Logout</button>
+    </div>
+  </div>
+
+  <!-- Suggested questions -->
+  <div class="suggestions">
+    <div class="suggestion-card">SD01 had a bag filter failure on 3/21. When did this last happen?</div>
+    <div class="suggestion-card">Was JM's yield on 3/21 worse than the previous three days?</div>
+    <div class="suggestion-card">What is SD01's Availability on 3/21?</div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-label">Chat</div>
+
+  <div class="chat-messages">
+
+    <span class="badge">sql_query: Missing required arg: skill</span>
+
+    <div class="badge-large">
+      sql_query: SQL execution failed: relation "mes.lot_yield" does not exist LINE 2:<br>
+      SELECT date, yield FROM mes.lot_yield WHERE machi...
+    </div>
+
+    <div class="badge-large">
+      read_file: Read file: C:\codex\llm_iframe_test\skills\sql_mes\SKILL.md (2752
+      chars) (C:\codex\llm_iframe_test\skills\sql_mes\SKILL.md)
+    </div>
+
+    <span class="badge">sql_query: Query ok: 0 rows</span>
+    <span class="badge">sql_query: Query ok: 6 rows</span>
+    <span class="badge">sql_query: Query ok: 3 rows</span>
+
+    <div class="msg-text">
+      <b>Based on the query results:</b>
+      <ul>
+        <li>March 20 (previous day): 70.00% yield</li>
+        <li>March 21 (JM's yield): 50.00% yield</li>
+        <li>March 22: No data (null)</li>
+      </ul>
+      Yes, JM's yield on March 21 (50.00%) was worse than the previous day (March
+      20, 70.00%).<br>
+      However, we only have data for 2 days (March 20 and 21), not the full "previous
+      three days" since March 22 has no data. If we consider only the available data
+      from the previous days, March 21's yield was worse than March 20's yield.
+    </div>
+
+  </div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <textarea placeholder="Ask anything" rows="1"></textarea>
+    <button class="send-btn">Send</button>
+  </div>
+
+</div>
+
+<script>
+  // Starfield
+  const canvas = document.getElementById('stars');
+  const ctx    = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    drawStars();
+  }
+
+  function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const count = 220;
+    for (let i = 0; i < count; i++) {
+      const x    = Math.random() * canvas.width;
+      const y    = Math.random() * canvas.height;
+      const r    = Math.random() * 1.4 + 0.2;
+      const alpha = Math.random() * 0.7 + 0.2;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fill();
+    }
+    // A few brighter stars
+    for (let i = 0; i < 12; i++) {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      ctx.beginPath();
+      ctx.arc(x, y, Math.random() * 1.8 + 0.8, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(180,220,255,${Math.random()*0.5+0.5})`;
+      ctx.fill();
+    }
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+</script>
+</body>
+</html>
