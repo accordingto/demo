@@ -1,0 +1,10 @@
+{
+  "name": "reading-club",
+  "version": "1.0.0",
+  "private": true,
+  "description": "線上英文讀書會文章產生器",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}
