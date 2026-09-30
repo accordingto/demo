@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英文閱讀</title>
+<style>
+  :root { --bg:#fbfaf7; --ink:#222; --muted:#6b7280; --accent:#2f6f5e; --line:#e4e0d6; --fs:20px; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC",sans-serif; }
+  .bar { position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line); padding:8px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; z-index:2; }
+  .bar button { font-size:.95rem; padding:6px 12px; border:1px solid var(--accent); background:#fff; color:var(--accent); border-radius:8px; cursor:pointer; }
+  .bar label { font-size:.9rem; margin-left:auto; display:flex; align-items:center; gap:4px; }
+  main { max-width:680px; margin:0 auto; padding:16px 16px 96px; }
+  h1 { font-family:Georgia,serif; font-size:1.7rem; line-height:1.25; margin:16px 0 4px; }
+  .meta { color:var(--muted); font-size:.9rem; margin-bottom:16px; }
+  #body p { font-family:Georgia,"Times New Roman",serif; font-size:var(--fs); line-height:1.75; margin:0 0 1em; }
+  .w { cursor:pointer; border-radius:3px; } .w.hit { border-bottom:2px dotted var(--accent); } .w:hover { background:#e6f0ec; }
+  h3 { margin-top:2em; }
+  li { margin-bottom:.5em; line-height:1.6; }
+  #pop { position:fixed; left:12px; right:12px; bottom:12px; max-width:560px; margin:0 auto; background:#fff; border:1px solid var(--accent); border-radius:12px; padding:12px 16px; box-shadow:0 4px 16px rgba(0,0,0,.15); display:none; z-index:3; }
+  #pop.show { display:block; } #pop b { font-size:1.1rem; } #pop .x { float:right; border:0; background:none; font-size:1.2rem; cursor:pointer; }
+  .err { padding:32px 16px; text-align:center; color:#b3261e; }
+  @media print { .bar, #pop { display:none !important; } }
+</style>
+</head>
+<body>
+<div class="bar" id="bar" hidden>
+  <button id="dec" aria-label="縮小字體">A−</button>
+  <button id="inc" aria-label="放大字體">A+</button>
+  <button id="tq">理解題：顯示</button>
+  <button id="td">討論題：顯示</button>
+</div>
+<main id="main"></main>
+<div id="pop" role="dialog"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---- 解碼：base64url →（inflate-raw 解壓）→ UTF-8 → JSON ----
+async function decodeShare(hash) {
+  const [kind, b64] = [hash.slice(0, 2), hash.slice(2)];
+  const bin = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+  let bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  if (kind === 'z.') {
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+  } else if (kind !== 'b.') throw new Error('bad');
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+let vocab = new Map(); // 小寫單字 → { word, definition, zh }
+
+// 找單字：完全相同，或去掉常見字尾後相同（例如 markets → market）
+function lookup(raw) {
+  const w = raw.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, '');
+  if (vocab.has(w)) return vocab.get(w);
+  for (const suf of ['s', 'es', 'ed', 'd', 'ing', 'ly']) {
+    if (w.endsWith(suf) && vocab.has(w.slice(0, -suf.length))) return vocab.get(w.slice(0, -suf.length));
+  }
+  return null;
+}
+
+function show(a) {
+  a.vo.forEach(([word, definition, zh]) => vocab.set(word.toLowerCase(), { word, definition, zh }));
+  const words = a.b.trim().split(/\s+/).length;
+  const mins = Math.max(1, Math.round(words / 200));
+  // 每個單字包成 span 供點擊；單字表內的字加底線提示
+  const para = (p) => `<p>${p.split(/(\s+)/).map((t) => /\S/.test(t) ? `<span class="w${lookup(t) ? ' hit' : ''}">${esc(t)}</span>` : t).join('')}</p>`;
+  const list = (id, title, arr) => arr.length ? `<section id="${id}"><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
+  document.title = a.t;
+  $('main').innerHTML =
+    `<h1>${esc(a.t)}</h1><div class="meta">程度 ${esc(a.l)} ・ ${words} 字 ・ 預估閱讀 ${mins} 分鐘</div>` +
+    `<div id="body">${a.b.split(/\n\s*\n/).map(para).join('')}</div>` +
+    (a.vo.length ? `<h3>單字表</h3><ul>${a.vo.map(([w, d, z]) => `<li><b>${esc(w)}</b> — ${esc(d)}（${esc(z)}）</li>`).join('')}</ul>` : '') +
+    list('qs', '理解題', a.q) + list('ds', '討論題', a.d);
+  $('bar').hidden = false;
+  if (!a.q.length) $('tq').hidden = true;
+  if (!a.d.length) $('td').hidden = true;
+}
+
+// 字體大小（記在 localStorage，失敗就忽略）
+let fs = 20;
+try { fs = Number(localStorage.getItem('fs')) || 20; } catch {}
+const setFs = (n) => { fs = Math.min(36, Math.max(14, n)); document.documentElement.style.setProperty('--fs', fs + 'px'); try { localStorage.setItem('fs', fs); } catch {} };
+setFs(fs);
+$('inc').onclick = () => setFs(fs + 2);
+$('dec').onclick = () => setFs(fs - 2);
+
+// 顯示/隱藏理解題、討論題
+function toggle(btn, secId, label) {
+  btn.onclick = () => {
+    const s = $(secId); if (!s) return;
+    s.hidden = !s.hidden;
+    btn.textContent = `${label}：${s.hidden ? '隱藏' : '顯示'}`;
+  };
+}
+toggle($('tq'), 'qs', '理解題'); toggle($('td'), 'ds', '討論題');
+
+// 點擊單字顯示解釋
+document.addEventListener('click', (e) => {
+  const pop = $('pop');
+  if (e.target.classList.contains('x')) return pop.classList.remove('show');
+  if (!e.target.classList.contains('w')) return;
+  const v = lookup(e.target.textContent);
+  pop.innerHTML = v
+    ? `<button class="x" aria-label="關閉">×</button><b>${esc(v.word)}</b><div>${esc(v.definition)}</div><div>${esc(v.zh)}</div>`
+    : `<button class="x" aria-label="關閉">×</button>單字表中沒有「${esc(e.target.textContent.replace(/^[^\w]+|[^\w]+$/g, ''))}」`;
+  pop.classList.add('show');
+});
+
+(async () => {
+  try {
+    const a = await decodeShare(location.hash.slice(1));
+    if (typeof a.b !== 'string' || typeof a.t !== 'string') throw new Error('bad');
+    a.vo = Array.isArray(a.vo) ? a.vo : []; a.q = Array.isArray(a.q) ? a.q : []; a.d = Array.isArray(a.d) ? a.d : [];
+    show(a);
+  } catch {
+    $('main').innerHTML = '<div class="err">找不到文章，連結可能不完整或已損壞。<br>請向主持人重新索取連結。</div>';
+  }
+})();
+</script>
+</body>
+</html>

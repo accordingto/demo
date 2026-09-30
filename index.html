@@ -1,107 +1,179 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>功能入口</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="功能入口">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f2f5;
-      min-height: 100vh;
-    }
-
-    header {
-      background: #2c3e50;
-      color: #fff;
-      padding: 20px 32px;
-    }
-
-    header h1 { font-size: 22px; font-weight: 700; }
-    header p  { font-size: 13px; color: #aab; margin-top: 4px; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 20px;
-      max-width: 960px;
-      margin: 36px auto;
-      padding: 0 24px;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 28px 24px;
-      text-decoration: none;
-      color: inherit;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      transition: transform 0.15s, box-shadow 0.15s;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.13);
-    }
-
-    .card .icon  { font-size: 40px; }
-    .card .title { font-size: 17px; font-weight: 700; }
-    .card .desc  { font-size: 13px; color: #888; line-height: 1.5; }
-
-    .card .tag {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 20px;
-      background: #eef2ff;
-      color: #4361ee;
-      width: fit-content;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>讀書會文章產生器</title>
+<style>
+  :root { --bg:#f6f4ef; --card:#fff; --ink:#1f2933; --muted:#6b7280; --accent:#2f6f5e; --line:#e2ded5; --err:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif; line-height:1.6; }
+  main { max-width:760px; margin:0 auto; padding:16px; }
+  h1 { font-size:1.4rem; margin:8px 0 16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin:12px 0 4px; font-size:.95rem; }
+  input[type=text], input[type=password], input[type=number], select { width:100%; padding:10px; font-size:1rem; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .checks label { display:inline-flex; align-items:center; gap:6px; font-weight:400; margin:8px 16px 0 0; }
+  button { font-size:1rem; padding:10px 16px; border:0; border-radius:8px; background:var(--accent); color:#fff; cursor:pointer; }
+  button.secondary { background:#fff; color:var(--accent); border:1px solid var(--accent); }
+  button:disabled { opacity:.5; cursor:wait; }
+  .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  .msg { margin-top:12px; font-size:.95rem; }
+  .err { color:var(--err); } .warn { color:#8a5a00; }
+  .meta { color:var(--muted); font-size:.9rem; }
+  article h2 { margin:.2em 0; }
+  article p { font-family:Georgia,serif; font-size:1.05rem; }
+  .share { width:100%; margin-top:8px; font-size:.8rem; }
+  .hidden { display:none; }
+  @media print { form, .actions, .share, #status, h1 { display:none !important; } body { background:#fff; } .card { border:0; } }
+  @media (max-width:520px) { .row { grid-template-columns:1fr; } }
+</style>
 </head>
 <body>
+<main>
+  <h1>📖 讀書會文章產生器（主持人）</h1>
 
-<header>
-  <h1>功能入口</h1>
-  <p>選擇一個功能開始使用</p>
-</header>
+  <form id="form" class="card">
+    <label for="code">存取碼</label>
+    <input type="password" id="code" autocomplete="off" required>
 
-<div class="grid">
+    <label for="topic">主題（最多 100 字）</label>
+    <input type="text" id="topic" maxlength="100" placeholder="例如：the history of coffee" required>
 
-  <a class="card" href="order.html">
-    <div class="icon">🍱</div>
-    <div class="title">快速點餐</div>
-    <div class="desc">瀏覽菜單、加入購物車、一鍵送出訂單</div>
-    <span class="tag">餐飲</span>
-  </a>
+    <div class="row">
+      <div>
+        <label for="words">字數（100–2000）</label>
+        <input type="number" id="words" min="100" max="2000" value="300" required>
+      </div>
+      <div>
+        <label for="level">CEFR 程度</label>
+        <select id="level">
+          <option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option>
+        </select>
+      </div>
+    </div>
 
-  <a class="card" href="calculator.html">
-    <div class="icon">🔢</div>
-    <div class="title">計算機</div>
-    <div class="desc">加減乘除、百分比、支援鍵盤輸入</div>
-    <span class="tag">工具</span>
-  </a>
+    <label for="genre">文體（選填）</label>
+    <select id="genre">
+      <option value="">不指定</option>
+      <option value="explanation">說明文</option>
+      <option value="story">故事</option>
+      <option value="news">新聞風格</option>
+    </select>
 
-  <a class="card" href="ai-assistant.html">
-    <div class="icon">🤖</div>
-    <div class="title">AI Assistant</div>
-    <div class="desc">星空背景 AI 聊天介面 mockup</div>
-    <span class="tag">介面</span>
-  </a>
+    <div class="checks">
+      <label><input type="checkbox" id="vocab" checked> 附單字表</label>
+      <label><input type="checkbox" id="questions" checked> 附理解題</label>
+      <label><input type="checkbox" id="discussion" checked> 附討論題</label>
+    </div>
 
-  <!-- 未來新增功能的卡片放在這裡 -->
+    <div class="actions"><button type="submit" id="go">產生文章</button></div>
+    <div id="status" class="msg" role="status"></div>
+  </form>
 
-</div>
+  <section id="preview" class="card hidden">
+    <article id="article"></article>
+    <div class="actions">
+      <button type="button" id="regen" class="secondary">重新產生</button>
+      <button type="button" id="mkLink">產生分享連結</button>
+      <button type="button" id="copy" class="secondary hidden">複製連結</button>
+      <button type="button" id="print" class="secondary">列印</button>
+    </div>
+    <input type="text" id="link" class="share hidden" readonly>
+    <div id="linkMsg" class="msg"></div>
+  </section>
+</main>
 
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let current = null; // 目前預覽的文章
+
+// ---- 分享連結編碼：JSON → UTF-8 → deflate-raw 壓縮 → base64url，放在網址 hash ----
+const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+async function encodeShare(obj) {
+  const raw = new TextEncoder().encode(JSON.stringify(obj));
+  if (typeof CompressionStream === 'undefined') return 'b.' + b64url(raw); // 不支援壓縮時退回純 base64
+  const stream = new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+  return 'z.' + b64url(new Uint8Array(await new Response(stream).arrayBuffer()));
+}
+
+// 讀取 SSE 串流：progress / result / error
+async function generate(payload, onProgress) {
+  const res = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  if (!res.ok) { // 驗證階段的錯誤是一般 JSON
+    const j = await res.json().catch(() => ({}));
+    throw new Error(j.error || `請求失敗（${res.status}）`);
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '', result = null;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf('\n\n')) >= 0) {
+      const block = buf.slice(0, i); buf = buf.slice(i + 2);
+      const ev = /event: (\w+)/.exec(block)?.[1];
+      const data = JSON.parse(/data: (.*)/.exec(block)?.[1] || '{}');
+      if (ev === 'progress') onProgress(data.chars);
+      else if (ev === 'error') throw new Error(data.error);
+      else if (ev === 'result') result = data;
+    }
+  }
+  if (!result) throw new Error('連線中斷，未收到完整文章，請重試');
+  return result;
+}
+
+function render(a) {
+  const mins = Math.max(1, Math.round(a.wordCount / 200));
+  const list = (title, arr, ordered) => arr.length ? `<h3>${title}</h3><${ordered ? 'ol' : 'ul'}>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>` : '';
+  $('article').innerHTML =
+    `<h2>${esc(a.title)}</h2>` +
+    `<div class="meta">程度 ${a.level} ・ 實際字數 ${a.wordCount}（目標 ${a.targetWords}）・ 預估閱讀 ${mins} 分鐘</div>` +
+    (a.withinTolerance ? '' : `<div class="msg warn">⚠ 實際字數與目標相差超過 10%，可按「重新產生」再試一次。</div>`) +
+    a.body.split(/\n\s*\n/).map((p) => `<p>${esc(p)}</p>`).join('') +
+    (a.vocabulary.length ? `<h3>單字表</h3><ul>${a.vocabulary.map((v) => `<li><b>${esc(v.word)}</b> — ${esc(v.definition)}（${esc(v.zh)}）</li>`).join('')}</ul>` : '') +
+    list('理解題', a.questions, true) + list('討論題', a.discussion, true);
+  $('preview').classList.remove('hidden');
+  $('link').classList.add('hidden'); $('copy').classList.add('hidden'); $('linkMsg').textContent = '';
+}
+
+async function run() {
+  const payload = {
+    code: $('code').value, topic: $('topic').value, words: Number($('words').value), level: $('level').value,
+    genre: $('genre').value, vocab: $('vocab').checked, questions: $('questions').checked, discussion: $('discussion').checked,
+  };
+  $('go').disabled = $('regen').disabled = true;
+  $('status').className = 'msg'; $('status').textContent = '⏳ AI 產生中…';
+  try {
+    current = await generate(payload, (n) => { $('status').textContent = `⏳ AI 產生中…（已收到 ${n} 字元）`; });
+    $('status').textContent = '';
+    render(current);
+    $('preview').scrollIntoView({ behavior: 'smooth' });
+  } catch (e) {
+    $('status').className = 'msg err'; $('status').textContent = '❌ ' + e.message;
+  } finally { $('go').disabled = $('regen').disabled = false; }
+}
+
+$('form').addEventListener('submit', (e) => { e.preventDefault(); run(); });
+$('regen').addEventListener('click', run);
+$('print').addEventListener('click', () => window.print());
+
+$('mkLink').addEventListener('click', async () => {
+  if (!current) return;
+  const a = current; // 只放閱讀頁需要的欄位
+  const data = await encodeShare({ v: 1, t: a.title, l: a.level, w: a.wordCount, b: a.body, vo: a.vocabulary.map((x) => [x.word, x.definition, x.zh]), q: a.questions, d: a.discussion });
+  const url = new URL('read.html', location.href).href + '#' + data;
+  $('link').value = url; $('link').classList.remove('hidden'); $('copy').classList.remove('hidden');
+  $('linkMsg').textContent = `連結長度 ${url.length} 字元` + (url.length > 8000 ? '（較長，部分通訊軟體可能截斷，請先自行測試）' : '');
+});
+$('copy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('link').value); $('linkMsg').textContent = '✅ 已複製連結'; }
+  catch { $('link').select(); $('linkMsg').textContent = '請手動複製上方連結'; }
+});
+</script>
 </body>
 </html>
