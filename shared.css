@@ -24,7 +24,7 @@ button:disabled { opacity:.5; cursor:wait; }
 /* 文章 */
 .doc { display:grid; gap:24px; grid-template-columns:1fr; }
 .doc h2 { margin:.1em 0; font-size:1.5rem; }
-.doc .text p { font-family:Georgia,"Times New Roman",serif; font-size:var(--fs,18px); line-height:1.8; margin:0 0 1em; }
+.doc .text p { font-family:inherit; font-size:var(--fs,18px); line-height:1.8; margin:0 0 1em; }   /* 與標題同一種字型 */
 #preview { position:relative; }
 /* 字體按鈕與標題同一列（按鈕靠右、與標題垂直置中）；手機只留 A−／A+ */
 .fsbar { position:absolute; top:16px; right:16px; margin:0; z-index:1; display:flex; align-items:center; justify-content:flex-end; gap:6px; }
