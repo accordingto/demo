@@ -102,13 +102,15 @@
 
   <section id="library" class="card hidden">
     <div class="head">
-      <h3>📚 Library (saved in this browser)</h3>
+      <h3 id="libTitle">📚 Library (saved in this browser)</h3>
       <div class="btns">
+        <button type="button" id="libUpload" class="hidden">⬆ Upload local articles</button>
         <button type="button" id="libExport" class="secondary">Export backup</button>
         <button type="button" id="libImport" class="secondary">Import backup</button>
         <input type="file" id="libFile" accept="application/json,.json" class="hidden">
       </div>
     </div>
+    <div id="libMsg" class="meta" role="status" style="margin-bottom:8px"></div>
     <ul id="libList" class="libList"></ul>
   </section>
 
@@ -252,11 +254,19 @@ async function buildLink(a, vocab = []) {
   const data = await encodeShare({ v: 1, t: a.title, l: a.level || '', w: a.wordCount, b: a.body, q: a.questions, d: a.discussion, ...(hv.length ? { hv } : {}) });
   return new URL('read.html', location.href).href + '#' + data;
 }
-$('mkLink').addEventListener('click', async () => {
-  if (!current) return;
-  const url = await buildLink(current, Vocab.getItems());
+function showLink(url) {
   $('link').value = url; $('link').classList.remove('hidden'); $('copy').classList.remove('hidden');
   $('openReader').href = url; $('openReader').classList.remove('hidden');
+}
+$('mkLink').addEventListener('click', async () => {
+  if (!current) return;
+  if (cloud) { // 雲端：存到雲端文章庫並產生短連結
+    try { const id = currentLibId || await cloudSave(); showLink(shortLink(id)); $('linkMsg').textContent = '✅ Short share link ready. It works on any device and always shows the latest version (new words you add here update it automatically).'; refreshCloud(); }
+    catch (e) { $('linkMsg').textContent = '❌ ' + e.message; }
+    return;
+  }
+  const url = await buildLink(current, Vocab.getItems());
+  showLink(url);
   $('linkMsg').textContent = `Link length: ${url.length} characters` + (url.length > 8000 ? ' (long — some messaging apps may truncate it, so test it first)' : '') + '. The link contains the whole article, so keep it and it will open forever.';
 });
 
@@ -303,42 +313,98 @@ $('pasteUse').addEventListener('click', () => {
   $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-// ---- 文章庫：保存在本機瀏覽器（localStorage），可匯出/匯入備份 ----
+// ---- 文章庫 ----
+// 雲端模式（後端已設定 Upstash Redis）：文章存在雲端，任何裝置輸入存取碼都看得到；分享連結是短連結，內容永遠是最新版。
+// 本機模式（沒設定雲端）：存在這台瀏覽器的 localStorage，可匯出/匯入備份；分享連結把文章壓縮放在網址裡。
+let cloud = false;     // 是否使用雲端文章庫（啟動時向後端詢問）
+let cloudItems = [];   // 雲端文章清單（摘要）
+let cloudErr = '';     // 最近一次讀取雲端清單的錯誤
+const shortLink = (id) => new URL('read.html', location.href).href + '?a=' + encodeURIComponent(id);
+async function cloudCall(body) {
+  const code = $('code').value.trim();
+  if (!code) throw new Error('Enter the access code first');
+  const r = await fetch('/api/library', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, ...body }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `Request failed (${r.status})`);
+  return j;
+}
+async function refreshCloud() {
+  if (!cloud) return;
+  try { cloudItems = (await cloudCall({ action: 'list' })).items; cloudErr = ''; } catch (e) { cloudItems = []; cloudErr = e.message; }
+  renderLib();
+}
+
 const LIB_KEY = 'rc-library';
 const libLoad = () => { try { const l = JSON.parse(localStorage.getItem(LIB_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch { return []; } };
 const libStore = (l) => { try { localStorage.setItem(LIB_KEY, JSON.stringify(l)); return true; } catch { return false; } };
 const validArticle = (a) => a && typeof a.title === 'string' && typeof a.body === 'string';
 
-function renderLib() {
-  const l = libLoad();
-  $('libBtn').innerHTML = `📚 <span class="lbl">Library </span>(${l.length})`;
-  $('libList').innerHTML = l.length ? l.map((it) => {
-    const a = it.article;
-    return `<li data-id="${esc(it.id)}"><div class="t">${esc(a.title)}</div>` +
-      `<div class="m">${a.level ? 'Level ' + esc(a.level) : '✍ Pasted text'} ・ ${a.wordCount || ''} words ・ 📖 ${(it.vocab || []).length} vocabulary ・ saved ${new Date(it.savedAt).toLocaleDateString()}</div>` +
-      `<div class="b"><button type="button" data-act="open">Open</button><button type="button" class="secondary" data-act="copy">Copy link</button><button type="button" class="secondary danger" data-act="del">Delete</button></div></li>`;
-  }).join('') : '<li style="grid-column:1/-1;color:var(--muted)">No saved articles yet. Generate one and press “💾 Save article”.</li>';
+// 雲端與本機統一成同一種清單格式
+function libEntries() {
+  return cloud
+    ? cloudItems.map((i) => ({ id: i.id, title: i.title, level: i.level, words: i.wordCount, vocab: i.vocabCount, ts: i.updatedAt }))
+    : libLoad().map((it) => ({ id: it.id, title: it.article.title, level: it.article.level, words: it.article.wordCount, vocab: (it.vocab || []).length, ts: it.savedAt }));
 }
-$('libBtn').addEventListener('click', () => $('library').classList.toggle('hidden'));
+function renderLib() {
+  const l = libEntries(), local = libLoad();
+  $('libBtn').innerHTML = `${cloud ? '☁' : '📚'} <span class="lbl">Library </span>(${cloud && cloudErr ? '–' : l.length})`;
+  $('libTitle').textContent = cloud ? '☁ Library (cloud — open it on any device)' : '📚 Library (saved in this browser)';
+  $('libExport').classList.toggle('hidden', cloud); $('libImport').classList.toggle('hidden', cloud);
+  $('libUpload').classList.toggle('hidden', !(cloud && local.length));
+  $('libUpload').textContent = `⬆ Upload ${local.length} article${local.length > 1 ? 's' : ''} from this browser`;
+  if (cloud && cloudErr) {
+    $('libList').innerHTML = `<li style="grid-column:1/-1;color:var(--err)">${esc(cloudErr)}${/access code/i.test(cloudErr) ? '' : ''}</li>`;
+    return;
+  }
+  $('libList').innerHTML = l.length ? l.map((it) =>
+    `<li data-id="${esc(it.id)}"><div class="t">${esc(it.title)}</div>` +
+    `<div class="m">${it.level ? 'Level ' + esc(it.level) : '✍ Pasted text'} ・ ${it.words || ''} words ・ 📖 ${it.vocab} vocabulary ・ ${cloud ? 'updated' : 'saved'} ${new Date(it.ts).toLocaleDateString()}</div>` +
+    `<div class="b"><button type="button" data-act="open">Open</button><button type="button" class="secondary" data-act="copy">Copy link</button><button type="button" class="secondary danger" data-act="del">Delete</button></div></li>`
+  ).join('') : `<li style="grid-column:1/-1;color:var(--muted)">No saved articles yet. Generate or paste one and press “💾 Save article”.</li>`;
+}
+$('libBtn').addEventListener('click', () => { $('library').classList.toggle('hidden'); if (cloud && !$('library').classList.contains('hidden')) refreshCloud(); });
+$('code').addEventListener('change', () => { if (cloud) refreshCloud(); });
 
 // 目前單字表（只存查詢完成的字）
 const settledVocab = () => Vocab.getItems().filter((v) => !v.loading && !v.failed).map(({ word, pos, definition, zh, kk, lemma }) => ({ word, pos, definition, zh, kk, lemma }));
+
+// 存到雲端（新文章 → 新 id；已在雲端的文章 → 更新同一個 id，短連結不變）
+async function cloudSave() {
+  const res = await cloudCall({ action: 'save', id: currentLibId || undefined, article: current, vocab: settledVocab() });
+  currentLibId = res.id;
+  return res.id;
+}
 
 // 文章已在文章庫時，單字表一有變動就自動同步（等查詢完成、稍微延遲後存）
 let syncTimer = null;
 function syncLib() {
   if (!currentLibId) return;
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(() => {
+  syncTimer = setTimeout(async () => {
     if (!currentLibId || Vocab.getItems().some((v) => v.loading)) return; // 還在查詢中，查完會再觸發一次
+    if (cloud) {
+      try { await cloudCall({ action: 'save', id: currentLibId, article: current, vocab: settledVocab() }); $('vmsg').textContent = `Vocabulary saved to the cloud library (${settledVocab().length}).`; refreshCloud(); }
+      catch (e) { $('vmsg').textContent = `Could not sync to the cloud: ${e.message}`; }
+      return;
+    }
     const l = libLoad(); const it = l.find((x) => x.id === currentLibId); if (!it) return;
     it.vocab = settledVocab();
     if (libStore(l)) { renderLib(); $('vmsg').textContent = `Vocabulary saved to library (${it.vocab.length}).`; }
   }, 400);
 }
 
-$('save').addEventListener('click', () => {
+$('save').addEventListener('click', async () => {
   if (!current) return;
+  if (cloud) {
+    $('save').disabled = true;
+    try {
+      const id = await cloudSave(); showLink(shortLink(id));
+      $('linkMsg').textContent = `✅ Saved to the cloud library with ${settledVocab().length} vocabulary words. The share link below works on any device; edits you make here (like new words) update it automatically.`;
+      await refreshCloud();
+    } catch (e) { $('linkMsg').textContent = '❌ ' + e.message; }
+    finally { $('save').disabled = false; }
+    return;
+  }
   const l = libLoad();
   const dup = l.find((it) => it.article.body === current.body && it.article.title === current.title);
   const vocab = settledVocab();
@@ -354,19 +420,61 @@ $('save').addEventListener('click', () => {
 
 $('libList').addEventListener('click', async (e) => {
   const btn = e.target.closest('button[data-act]'); if (!btn) return;
-  const id = btn.closest('li').dataset.id;
+  const id = btn.closest('li').dataset.id, act = btn.dataset.act;
+  if (cloud) {
+    try {
+      if (act === 'open') {
+        const r = await cloudCall({ action: 'get', id });
+        current = { ...r.article, withinTolerance: true }; render(current, r.vocab || []); currentLibId = id;
+        showLink(shortLink(id)); $('linkMsg').textContent = 'Opened from the cloud library. Its share link is ready below.';
+        $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (act === 'copy') {
+        const url = shortLink(id);
+        try { await navigator.clipboard.writeText(url); btn.textContent = 'Copied ✓'; } catch { prompt('Copy the link manually', url); }
+        setTimeout(() => { btn.textContent = 'Copy link'; }, 1500);
+      } else if (act === 'del') {
+        const title = btn.closest('li').querySelector('.t').textContent;
+        if (!confirm(`Delete “${title}” from the cloud library?\nIts share link will stop working for everyone.`)) return;
+        await cloudCall({ action: 'delete', id });
+        if (currentLibId === id) currentLibId = null;
+        await refreshCloud();
+      }
+    } catch (err) { $('libMsg').textContent = '❌ ' + err.message; }
+    return;
+  }
   const l = libLoad(); const it = l.find((x) => x.id === id); if (!it) return;
-  if (btn.dataset.act === 'open') {
+  if (act === 'open') {
     current = it.article; render(current, it.vocab || []); currentLibId = it.id; // 開啟後，單字表的變動會自動同步回文章庫
     $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } else if (btn.dataset.act === 'copy') {
+  } else if (act === 'copy') {
     const url = await buildLink(it.article, it.vocab || []);
     try { await navigator.clipboard.writeText(url); btn.textContent = 'Copied ✓'; } catch { prompt('Copy the link manually', url); }
     setTimeout(() => { btn.textContent = 'Copy link'; }, 1500);
-  } else if (btn.dataset.act === 'del') {
+  } else if (act === 'del') {
     if (!confirm(`Delete “${it.article.title}”? Links you already shared are not affected.`)) return;
     libStore(l.filter((x) => x.id !== id)); renderLib();
   }
+});
+
+// 把這個瀏覽器裡的舊文章庫上傳到雲端（已存在同標題同字數的會略過）
+$('libUpload').addEventListener('click', async () => {
+  const local = libLoad(); if (!local.length) return;
+  $('libUpload').disabled = true; $('libMsg').textContent = 'Uploading…';
+  let n = 0, skipped = 0;
+  try {
+    await refreshCloud(); if (cloudErr) throw new Error(cloudErr);
+    const have = new Set(cloudItems.map((i) => `${i.title}|${i.wordCount}`));
+    for (const it of local.slice().reverse()) { // 舊的先傳，讓清單順序保持
+      const key = `${it.article.title}|${it.article.wordCount}`;
+      if (have.has(key)) { skipped++; continue; }
+      await cloudCall({ action: 'save', article: it.article, vocab: it.vocab || [] });
+      have.add(key); n++;
+    }
+    await refreshCloud();
+    $('libMsg').textContent = `✅ Uploaded ${n} article${n === 1 ? '' : 's'}${skipped ? ` (${skipped} already in the cloud)` : ''}.`;
+    if (confirm(`Uploaded ${n}, skipped ${skipped}.\nRemove the local copies from this browser? (The cloud copies stay.)`)) { libStore([]); renderLib(); }
+  } catch (e) { $('libMsg').textContent = '❌ ' + e.message; }
+  finally { $('libUpload').disabled = false; }
 });
 
 $('libExport').addEventListener('click', () => {
@@ -391,7 +499,16 @@ $('libFile').addEventListener('change', async () => {
   } catch { alert('Import failed: not a valid backup file'); }
   renderLib();
 });
+
 renderLib();
+(async () => {   // 後端已設定雲端儲存 → 改用雲端文章庫
+  try {
+    const j = await (await fetch('/api/library', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'status' }) })).json();
+    cloud = !!j.configured;
+  } catch { cloud = false; }
+  renderLib();
+  if (cloud && $('code').value.trim()) refreshCloud();
+})();
 
 $('copy').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText($('link').value); $('linkMsg').textContent = '✅ Link copied'; }

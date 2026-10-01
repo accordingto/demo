@@ -8,6 +8,9 @@
 |---|---|
 | `index.html` | 主持人設定頁（存取碼、條件、預覽、分享連結、列印） |
 | `read.html` | 成員閱讀頁（從網址 hash 解碼文章） |
+| `api/library.js` | 雲端文章庫（需存取碼）：list / get / save / delete；儲存在 Upstash Redis |
+| `api/article.js` | 公開讀取單篇文章（短連結用，不需存取碼） |
+| `api/_store.js`、`api/_util.js` | 儲存層與共用工具（底線開頭，不會變成 API 路由） |
 | `shared.css`、`vocab.js` | 主持人頁與閱讀頁共用的版面樣式、單字表、雙擊加字、文章標示、字體大小（兩頁行為一致） |
 | `api/generate.js` | 產生文章的 API（驗證、限流、呼叫 Groq、串流回應） |
 | `api/define.js` | 查單字的 API（Groq）：詞性、KK 音標、英文解釋、中文翻譯；公開端點，每 IP 每分鐘 30 次 |
@@ -22,6 +25,20 @@
 | `HOST_CODE` | 主持人存取碼（自訂） |
 
 金鑰與存取碼只存在伺服器端環境變數，不會出現在前端或 repo。
+
+## 雲端文章庫（選用，建議）
+沒有設定時，文章庫存在各自瀏覽器、分享連結把整篇文章壓在網址裡（長連結）。設定雲端儲存後：
+- 文章庫跨裝置：任何裝置輸入存取碼都看得到同一份。
+- 分享連結變成短連結（`read.html?a=代碼`），內容永遠是最新版；主持人改單字，成員重新整理就看到；刪除文章後連結失效。
+- 舊的長連結仍可使用。
+
+設定步驟（免費）：
+1. Vercel → 專案 → **Storage** → **Create Database** → 選 **Upstash**（Redis）→ 選免費方案 → 連結到此專案（Environments 全部勾選）。
+2. Vercel 會自動加入 `KV_REST_API_URL`、`KV_REST_API_TOKEN`（也支援 `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`）。
+3. **Redeploy**。重新整理主持人頁後，文章庫標題會變成 ☁ Library；舊的本機文章可按「Upload … from this browser」搬到雲端。
+
+資料結構：`rc:a:<代碼>` = 文章 JSON，`rc:idx` = 依更新時間排序的代碼清單。文章庫最多 500 篇，單篇上限約 12 萬字元。
+安全：清單與寫入都要存取碼；成員只能用「猜不到的 12 字元代碼」讀單篇文章。
 
 ## 本機測試
 ```bash
