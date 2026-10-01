@@ -43,6 +43,17 @@ module.exports = async function handler(req, res) {
   // 用來判斷前端要用雲端還是本機文章庫（不需存取碼）
   if (b.action === 'status') return res.status(200).json({ configured: store.configured() });
 
+  // 檢查雲端設定（需存取碼）：只回報「找到哪些相關變數的名稱」與連線測試結果，不回傳任何值或 token
+  if (b.action === 'diagnose') {
+    if (!(process.env.HOST_CODE || '').trim() || !safeEqual(b.code ?? '', process.env.HOST_CODE)) return res.status(401).json({ error: 'Incorrect access code' });
+    const names = Object.keys(process.env).filter((k) => /KV_|UPSTASH|REDIS|REST_API/i.test(k)).sort();
+    const c = store.conf();
+    const out = { configured: store.configured(), relatedVariables: names, usingUrlVariable: c.urlKey || null, usingTokenVariable: c.tokenKey || null, urlHost: null, ping: null };
+    if (c.url) { try { out.urlHost = new URL(c.url).host; } catch { out.urlHost = '(invalid URL)'; } }
+    if (store.configured()) { try { out.ping = await store.cmd('PING'); } catch (e) { out.ping = `failed: ${e.message}`; } }
+    return res.status(200).json(out);
+  }
+
   if (!store.configured()) return res.status(503).json({ error: 'Cloud storage is not configured', configured: false });
   if (!(process.env.HOST_CODE || '').trim()) return res.status(500).json({ error: 'Server is missing HOST_CODE' });
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });

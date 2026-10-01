@@ -36,7 +36,8 @@
 1. Vercel → 專案 → **Storage** → **Create Database** → 選 **Upstash**（Redis）→ 選免費方案 → 連結到此專案（Environments 全部勾選）。
    - 注意是 **Upstash**，不是清單裡另一項「Redis（Official Redis for Vercel）」：後者只有付費方案，而且連線方式（`REDIS_URL`）也和本專案不相容。
    - 方案選 **Free**；若有 High Availability 選項，選 None。
-2. Vercel 會自動加入 `KV_REST_API_URL`、`KV_REST_API_TOKEN`（也支援 `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`）。
+2. Vercel 會自動加入 `KV_REST_API_URL`、`KV_REST_API_TOKEN`（也支援 `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`）。（若建立時設定了 Custom Prefix，例如 `STORAGE_`，變數會變成 `STORAGE_KV_REST_API_URL` 等，程式以結尾比對，同樣可用。）
+   - 排查：主持人頁輸入存取碼後，打開 Library 面板按「☁ Check cloud setup」，會列出伺服器找到的相關變數名稱與連線測試（不顯示任何值）。
 3. **Redeploy**。重新整理主持人頁後，文章庫標題會變成 ☁ Library；舊的本機文章可按「Upload … from this browser」搬到雲端。
 
 資料結構：`rc:a:<代碼>` = 文章 JSON，`rc:idx` = 依更新時間排序的代碼清單。文章庫最多 500 篇，單篇上限約 12 萬字元。

@@ -104,6 +104,7 @@
     <div class="head">
       <h3 id="libTitle">📚 Library (saved in this browser)</h3>
       <div class="btns">
+        <button type="button" id="libDiag" class="secondary hidden">☁ Check cloud setup</button>
         <button type="button" id="libUpload" class="hidden">⬆ Upload local articles</button>
         <button type="button" id="libExport" class="secondary">Export backup</button>
         <button type="button" id="libImport" class="secondary">Import backup</button>
@@ -351,6 +352,7 @@ function renderLib() {
   $('libTitle').textContent = cloud ? '☁ Library (cloud — open it on any device)' : '📚 Library (saved in this browser)';
   $('libExport').classList.toggle('hidden', cloud); $('libImport').classList.toggle('hidden', cloud);
   $('libUpload').classList.toggle('hidden', !(cloud && local.length));
+  $('libDiag').classList.toggle('hidden', cloud); // 還沒啟用雲端時，提供「檢查雲端設定」
   $('libUpload').textContent = `⬆ Upload ${local.length} article${local.length > 1 ? 's' : ''} from this browser`;
   if (cloud && cloudErr) {
     $('libList').innerHTML = `<li style="grid-column:1/-1;color:var(--err)">${esc(cloudErr)}${/access code/i.test(cloudErr) ? '' : ''}</li>`;
@@ -454,6 +456,21 @@ $('libList').addEventListener('click', async (e) => {
     if (!confirm(`Delete “${it.article.title}”? Links you already shared are not affected.`)) return;
     libStore(l.filter((x) => x.id !== id)); renderLib();
   }
+});
+
+// 檢查雲端設定：列出伺服器找到的相關環境變數「名稱」與連線測試（需存取碼，不會顯示任何值）
+$('libDiag').addEventListener('click', async () => {
+  $('libMsg').className = 'meta'; $('libMsg').textContent = 'Checking…';
+  try {
+    const code = $('code').value.trim(); if (!code) throw new Error('Enter the access code first');
+    const r = await fetch('/api/library', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'diagnose', code }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Request failed (${r.status})`);
+    const vars = j.relatedVariables.length ? j.relatedVariables.join(', ') : '(none found)';
+    $('libMsg').innerHTML = `<b>Cloud storage: ${j.configured ? '✅ configured' : '❌ not configured'}</b><br>Related environment variables on the server: <code>${esc(vars)}</code><br>` +
+      (j.configured ? `Using <code>${esc(j.usingUrlVariable)}</code> + <code>${esc(j.usingTokenVariable)}</code> → ${esc(j.urlHost || '')} → ping: <b>${esc(String(j.ping))}</b>${j.ping === 'PONG' ? '<br>✅ Connected. Reload this page (the button should become ☁ Library).' : ''}`
+      : 'Need a REST URL and a REST token variable (e.g. KV_REST_API_URL / KV_REST_API_TOKEN). If none are listed: connect the Upstash database to this project in Vercel → Storage, enable Production, then Redeploy.');
+  } catch (e) { $('libMsg').className = 'msg err'; $('libMsg').textContent = '❌ ' + e.message; }
 });
 
 // 把這個瀏覽器裡的舊文章庫上傳到雲端（已存在同標題同字數的會略過）
