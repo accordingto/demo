@@ -50,7 +50,6 @@ mark.vh.now { background:#ffb840; color:#1b1f24; box-shadow:0 0 0 2px #fff0c2; a
 #hlbar button { min-height:28px; padding:0 10px; font-size:.95rem; background:transparent; color:#ffd48a; border:1px solid rgba(255,184,64,.6); }
 #vocabList li.active { border-color:#ffb840; background:rgba(255,184,64,.08); }
 #vocabList li[data-w] { cursor:pointer; }
-.cnt { color:#ffb840; font-size:.78em; margin-left:.45em; font-weight:600; }
 
 /* 題目區：上下排列，跟著文字大小設定 */
 .qa { display:grid; gap:12px; grid-template-columns:1fr; margin-top:16px; }
@@ -80,7 +79,7 @@ mark.vh.now { background:#ffb840; color:#1b1f24; box-shadow:0 0 0 2px #fff0c2; a
 
 @media print {
   mark.vh, mark.vh.cur, mark.vh.now { background:none; box-shadow:none; color:inherit; animation:none; }
-  .s.hit { background:none; } #hlbar, .cnt { display:none !important; }
+  .s.hit { background:none; } #hlbar { display:none !important; }
   .fsbar, #vocabPanel .addrow, #vmsg, .del { display:none !important; }
   body { background:#fff; color:#000; } .layout { display:block; padding:0; }
   .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }

@@ -44,7 +44,6 @@
       .map((p) => `<p>${sentences(p).map((st) => `<span class="s">${st.split(/([A-Za-z][A-Za-z’'-]*)/).map(wrap).join('')}</span>`).join('')}</p>`).join('');
   }
 
-  const count = (v) => marksOf(v).length;
   // ---- 點單字表的某個字 → 文章中這個字的每一處（含整句）特別標示，並可逐一跳到每一處 ----
   let active = null; // { key: 單字（小寫）, idx: 目前是第幾處 }
   const keysOf = (v) => new Set([v.word.toLowerCase(), v.lemma ? v.lemma.toLowerCase() : ''].filter(Boolean));
@@ -82,7 +81,7 @@
         : v.failed ? `<div class="def">${esc(v.err || 'Lookup failed')} — click to retry</div>`
         : `<div class="def">${v.pos ? `<span class="pos">${esc(posLabel(v.pos))}</span> ` : ''}${esc(v.definition || '(no definition)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : ''}`;
       return `<li data-w="${k}" class="${v.failed ? 'fail' : ''}">${v.locked ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
-        `<b>${esc(v.word)}</b>${count(v) ? `<span class="cnt" title="Occurrences in the text (click the word to find them)">📍${count(v)}</span>` : ''}${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}${detail}</li>`;
+        `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}${detail}</li>`;
     }).join('') : '<li class="empty">No words yet. Double-click (or double-tap) a word in the article, or type one above.</li>';
     applyActive();
     cfg.onChange(items);
