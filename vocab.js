@@ -30,8 +30,9 @@
   const findItem = (w) => items.find((v) => stems(w).includes(v.word.toLowerCase()));
 
   // ---- 在主文章上標示：每個字包成 span.w（供雙擊），已加入的字用底色標示（含變化形）----
+  let frozen = false; // 就地編輯期間暫停重畫文章（避免打字時內容被覆蓋）
   function paintBody() {
-    const el = $('bodyText'); if (!el) return;
+    const el = $('bodyText'); if (!el || frozen) return;
     const keys = new Set();
     items.forEach((v) => { keys.add(v.word.toLowerCase()); if (v.lemma) keys.add(v.lemma.toLowerCase()); });
 
@@ -187,6 +188,7 @@
     getItems: () => items,
     setItems(list) { items = (list || []).map((v) => ({ ...v })); active = null; $('vmsg').textContent = ''; renderVocab(); },
     repaint: renderVocab,
+    freeze(on) { frozen = !!on; },
     sentenceOf, fillWord,
   };
 })();

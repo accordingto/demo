@@ -51,6 +51,18 @@
   #pasteTitle { margin-bottom:8px; height:36px; font-size:1rem; }
   #pasteBody { width:100%; min-height:220px; resize:vertical; padding:10px 12px; font-family:inherit; font-size:1.05rem; line-height:1.7; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
   #pasteMsg { margin-top:8px; font-size:.9rem; }
+  /* 就地編輯（所見即所得） */
+  #editBar { position:sticky; top:8px; z-index:5; display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:var(--card); border:1px solid var(--accent); border-radius:10px; padding:8px 12px; margin:0 0 14px; box-shadow:0 4px 14px rgba(0,0,0,.45); }
+  #editBar .grow { flex:1 1 260px; font-size:.88rem; }
+  #editBar button { min-height:34px; padding:0 14px; }
+  .editing #doc h2[contenteditable], .editing #bodyText[contenteditable], .qtext { outline:1px dashed rgba(79,184,154,.65); outline-offset:3px; border-radius:6px; caret-color:#ffb840; }
+  .editing #bodyText[contenteditable] { white-space:pre-wrap; background:rgba(79,184,154,.06); padding:8px 10px; min-height:8em; }
+  .editing #doc h2[contenteditable]:focus, .editing #bodyText:focus, .qtext:focus { outline:2px solid var(--accent); }
+  .qtext { display:inline-block; min-width:55%; padding:1px 6px; }
+  .qdel { min-height:0; padding:0 6px; margin-left:6px; background:none; border:0; color:var(--muted); font-size:1.1rem; line-height:1; }
+  .qdel:hover { color:var(--err); }
+  .addq { min-height:30px; padding:0 12px; font-size:.85rem; margin:2px 0 8px; }
+  .editing #hlbar, .editing #link, .editing #linkMsg, .editing #copy, .editing #openReader { display:none !important; }
   #pastePanel .qrow { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
   #pastePanel .qrow label { display:block; font-size:.8rem; color:var(--ink); margin-bottom:3px; }
   .pta { width:100%; resize:vertical; padding:8px 10px; font-family:inherit; font-size:.95rem; line-height:1.5; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
@@ -64,7 +76,7 @@
     #go { flex:1 1 100%; height:40px; }
     .actions button { flex:1 1 40%; }
   }
-  @media print { #form, #library, #pastePanel, #empty, #openReader, .actions, .share, #status, #linkMsg { display:none !important; } }
+  @media print { #editBar, #form, #library, #pastePanel, #empty, #openReader, .actions, .share, #status, #linkMsg { display:none !important; } }
 </style>
 </head>
 <body>
@@ -91,7 +103,7 @@
 
   <section id="pastePanel" class="card hidden">
     <div class="head">
-      <h3 id="pasteHead">✍ Paste your own text</h3>
+      <h3>✍ Paste your own text</h3>
       <span class="meta" id="pasteInfo">0 words</span>
     </div>
     <input type="text" id="pasteTitle" maxlength="120" placeholder="Title (optional)" autocomplete="off">
@@ -128,8 +140,13 @@
     <div id="empty" class="card"><div class="big">📖</div>Set your options and press “Generate”. The preview will appear here.</div>
     <section id="preview" class="card hidden">
       <div class="fsbar"><span class="meta">Text size</span><button type="button" id="fsDec" class="secondary" aria-label="Smaller text">A−</button><span id="fsVal" class="meta">18px</span><button type="button" id="fsInc" class="secondary" aria-label="Larger text">A+</button></div>
+      <div id="editBar" class="hidden" role="toolbar">
+        <span class="grow"><b>✍ Editing</b> — click the title, the text or a question and type. <span id="editInfo" class="meta"></span> <span id="editMsg" class="err"></span></span>
+        <button type="button" id="editSave">Save changes</button>
+        <button type="button" id="editCancel" class="secondary">Cancel</button>
+      </div>
       <div id="doc" class="doc"></div>
-      <div class="actions">
+      <div class="actions" id="previewActions">
         <button type="button" id="regen" class="secondary">Regenerate</button>
         <button type="button" id="editText" class="secondary">✍ Edit</button>
         <button type="button" id="save" class="secondary">💾 Save article</button>
@@ -224,7 +241,7 @@ function render(a, vocab = []) {
   const ol = (title, arr) => arr.length ? `<section><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
   $('doc').innerHTML =
     `<div class="text"><h2>${esc(a.title)}</h2>` +
-    `<div class="meta">${a.source === 'pasted' ? 'Your text' : `Level ${a.level}`} ・ ${a.wordCount} words${a.source === 'pasted' ? '' : ` (target ${a.targetWords})`} ・ ~${mins} min read</div>` +
+    `<div class="meta">${a.source === 'pasted' ? 'Your text' : `Level ${a.level}`} ・ ${a.wordCount} words${a.source === 'pasted' || !a.targetWords || a.targetWords === a.wordCount ? '' : ` (target ${a.targetWords})`} ・ ~${mins} min read</div>` +
     (a.withinTolerance ? '' : `<div class="msg warn">⚠ The word count is more than 10% off the target. Press “Regenerate” to try again.</div>`) +
     `<div id="bodyText" style="margin-top:1em"></div></div>`;
   Vocab.repaint();
@@ -290,30 +307,25 @@ function normalizePasted(raw) {
 }
 const PASTE_KEY = 'rc-paste-draft';
 const PF = { t: 'pasteTitle', b: 'pasteBody', q: 'pasteQ', d: 'pasteD' };
-let editing = false; // true = 正在編輯目前這篇文章；false = 貼上新文章
 const PASTE_NOTE = 'No access code needed — pasted text is not sent to the AI. You can look up words, save it to your library and share it just like a generated article. URLs in the text become clickable links.';
-function savePasteDraft() { if (editing) return; try { localStorage.setItem(PASTE_KEY, JSON.stringify(Object.fromEntries(Object.entries(PF).map(([k, id]) => [k, $(id).value])))); } catch {} } // 編輯既有文章時不動「貼上草稿」
+function savePasteDraft() { try { localStorage.setItem(PASTE_KEY, JSON.stringify(Object.fromEntries(Object.entries(PF).map(([k, id]) => [k, $(id).value])))); } catch {} } // 編輯既有文章時不動「貼上草稿」
 function updatePasteInfo() { $('pasteInfo').textContent = `${countWordsIn($('pasteBody').value)} words`; }
 function fillPaste(o) { Object.entries(PF).forEach(([k, id]) => { $(id).value = o[k] || ''; }); updatePasteInfo(); }
 function loadDraft() { let d = {}; try { d = JSON.parse(localStorage.getItem(PASTE_KEY) || '{}') || {}; } catch {} fillPaste(d); }
 loadDraft();
 const toLines = (v) => v.split('\n').map((l) => l.replace(/^\s*(?:\d+[.)]|[-*•])\s*/, '').trim()).filter(Boolean).slice(0, 5);
 function setPasteMsg(t, err) { $('pasteMsg').className = err ? 'msg err' : 'meta'; $('pasteMsg').textContent = t; }
-function openPaste(article) { // article 有值 = 編輯這篇文章；沒有 = 貼上新文章
-  editing = !!article;
-  if (article) fillPaste({ t: article.title, b: article.body, q: (article.questions || []).join('\n'), d: (article.discussion || []).join('\n') }); else loadDraft();
-  $('pasteHead').textContent = editing ? '✍ Edit article' : '✍ Paste your own text';
-  $('pasteUse').textContent = editing ? 'Save changes' : 'Use this text';
-  setPasteMsg(editing ? (currentLibId ? 'Changes are saved back to your library' + (cloud ? ' and the share link shows the updated article.' : '.') : 'Changes apply to the article on screen. Press “Save article” afterwards to keep it in your library.') : PASTE_NOTE);
+function openPaste() {
+  loadDraft();
+  setPasteMsg(PASTE_NOTE);
   $('pastePanel').classList.remove('hidden'); $('library').classList.add('hidden');
   $('pasteBody').focus(); $('pastePanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
-function closePaste() { $('pastePanel').classList.add('hidden'); editing = false; }
-$('pasteBtn').addEventListener('click', () => ($('pastePanel').classList.contains('hidden') || editing) ? openPaste() : closePaste());
+function closePaste() { $('pastePanel').classList.add('hidden'); }
+$('pasteBtn').addEventListener('click', () => $('pastePanel').classList.contains('hidden') ? openPaste() : closePaste());
 $('pasteCancel').addEventListener('click', closePaste);
 $('pasteClear').addEventListener('click', () => { fillPaste({}); savePasteDraft(); $('pasteBody').focus(); });
 Object.values(PF).forEach((id) => $(id).addEventListener('input', () => { if (id === 'pasteBody') updatePasteInfo(); savePasteDraft(); }));
-$('editText').addEventListener('click', () => { if (current) openPaste(current); });
 
 // 編輯後：文章已在文章庫 → 存回文章庫（雲端：同一個 id，短連結內容跟著更新）
 async function persistEdit() {
@@ -333,19 +345,91 @@ $('pasteUse').addEventListener('click', async () => {
   if (!/[A-Za-z]{3}/.test(body)) return setPasteMsg('This does not look like English text.', true);
   const title = $('pasteTitle').value.replace(/\s+/g, ' ').trim() || body.split(/\s+/).slice(0, 6).join(' ').replace(/[.,;:!?"“”]+$/, '') + '…';
   const questions = toLines($('pasteQ').value), discussion = toLines($('pasteD').value);
-  if (editing && current) { // 編輯目前這篇：保留單字、程度、文章庫連結
-    const libId = currentLibId, keep = settledVocab();
-    current = { ...current, title, body, wordCount: n, targetWords: n, withinTolerance: true, questions, discussion };
-    render(current, keep); currentLibId = libId;
-    closePaste();
-    if (libId) await persistEdit(); else $('linkMsg').textContent = 'Changes applied. Press “Save article” to keep them in your library.';
-    return;
-  }
   current = { source: 'pasted', title, body, level: '', targetWords: n, wordCount: n, withinTolerance: true, questions, discussion };
   render(current, []);
   closePaste();
   $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
   setPasteMsg(n > 3000 ? `Using ${n} words. Long texts make a long share link — test it before sending.` : PASTE_NOTE);
+});
+
+// ---- 就地編輯（所見即所得）：標題、本文、題目直接在畫面上改 ----
+let editState = null; // { dirty, libId }
+const PLAIN = (el) => { el.contentEditable = 'plaintext-only'; if (el.contentEditable !== 'plaintext-only') el.contentEditable = 'true'; el.spellcheck = false; }; // 只接受純文字（不支援的瀏覽器退回一般模式，並攔截貼上）
+const qItem = (t) => `<li><span class="qtext">${esc(t)}</span><button type="button" class="qdel" title="Remove this question" aria-label="Remove this question">×</button></li>`;
+const qSection = (kind, title, arr) => `<section data-kind="${kind}"><h3>${title}</h3><ol>${arr.map(qItem).join('')}</ol><button type="button" class="secondary addq" data-kind="${kind}">＋ Add question</button></section>`;
+const plainTexts = (root) => root.querySelectorAll('.qtext').forEach(PLAIN);
+function startEdit() {
+  if (!current || editState) return;
+  closePaste(); $('library').classList.add('hidden');
+  editState = { dirty: false, libId: currentLibId };
+  Vocab.freeze(true);
+  document.body.classList.add('editing');
+  const h = $('doc').querySelector('h2'); PLAIN(h);
+  const body = $('bodyText'); PLAIN(body);
+  body.textContent = current.body.split(/\n\s*\n/).filter((p) => p.trim()).map((p) => p.replace(/\s*\n\s*/g, ' ')).join('\n\n');
+  $('qa').innerHTML = qSection('q', 'Comprehension questions', current.questions || []) + qSection('d', 'Discussion questions', current.discussion || []);
+  plainTexts($('qa'));
+  $('editBar').classList.remove('hidden'); $('previewActions').classList.add('hidden');
+  $('editMsg').textContent = ''; updateEditInfo();
+  $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  body.focus();
+}
+const bodyText = () => $('bodyText').innerText.replace(/\r/g, '').split(/\n+/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean); // 每個換行 = 一個段落
+function updateEditInfo() { $('editInfo').textContent = `${countWordsIn(bodyText().join(' '))} words`; }
+const readQ = (kind) => [...$('qa').querySelectorAll(`section[data-kind="${kind}"] .qtext`)].map((e) => e.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, 5);
+function endEdit() { editState = null; Vocab.freeze(false); document.body.classList.remove('editing'); $('editBar').classList.add('hidden'); $('previewActions').classList.remove('hidden'); }
+async function saveEdit() {
+  if (!editState) return;
+  const paras = bodyText(), n = countWordsIn(paras.join(' '));
+  const fail = (t) => { $('editMsg').textContent = t; };
+  if (n < 20) return fail('Please keep at least 20 words.');
+  if (n > 8000) return fail(`That is ${n} words — please keep it under 8000.`);
+  if (!/[A-Za-z]{3}/.test(paras.join(' '))) return fail('This does not look like English text.');
+  const title = $('doc').querySelector('h2').textContent.replace(/\s+/g, ' ').trim().slice(0, 200) || paras[0].split(/\s+/).slice(0, 6).join(' ') + '…';
+  const libId = editState.libId;
+  current = { ...current, title, body: paras.join('\n\n'), wordCount: n, targetWords: 0, withinTolerance: true, questions: readQ('q'), discussion: readQ('d') }; // 編輯過就沒有「目標字數」
+  const keep = settledVocab();
+  endEdit(); render(current, keep); currentLibId = libId;
+  if (libId) await persistEdit(); else $('linkMsg').textContent = 'Changes applied. Press “Save article” to keep them in your library.';
+}
+function cancelEdit() {
+  if (!editState) return;
+  if (editState.dirty && !confirm('Discard your changes?')) return;
+  const libId = editState.libId, keep = settledVocab();
+  endEdit(); render(current, keep); currentLibId = libId;
+}
+$('editText').addEventListener('click', startEdit);
+$('editSave').addEventListener('click', saveEdit);
+$('editCancel').addEventListener('click', cancelEdit);
+// 輸入：標記為已修改、更新字數；標題按 Enter 不換行；題目按 Enter 新增一題
+const markDirty = () => { if (editState) { editState.dirty = true; $('editMsg').textContent = ''; } };
+$('preview').addEventListener('input', (e) => { if (!editState) return; markDirty(); if (e.target.id === 'bodyText') updateEditInfo(); });
+$('preview').addEventListener('keydown', (e) => {
+  if (!editState) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveEdit(); return; }
+  if (e.key === 'Enter' && e.target.matches('h2')) e.preventDefault();
+  if (e.key === 'Enter' && e.target.matches('.qtext')) {
+    e.preventDefault();
+    const ol = e.target.closest('ol'); if (ol.children.length >= 5) return;
+    const li = document.createElement('li'); li.innerHTML = qItem('').replace(/^<li>|<\/li>$/g, ''); e.target.closest('li').after(li);
+    plainTexts(li); li.querySelector('.qtext').focus(); markDirty();
+  }
+});
+$('preview').addEventListener('paste', (e) => { // 一律貼成純文字
+  if (!editState || !e.target.closest('[contenteditable]')) return;
+  e.preventDefault();
+  let t = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r/g, '');
+  if (!e.target.closest('#bodyText')) t = t.replace(/\s*\n\s*/g, ' '); // 標題與題目是單行
+  document.execCommand('insertText', false, t);
+});
+$('qa').addEventListener('click', (e) => {
+  if (!editState) return;
+  const del = e.target.closest('.qdel'); if (del) { del.closest('li').remove(); markDirty(); return; }
+  const add = e.target.closest('.addq'); if (add) {
+    const ol = add.closest('section').querySelector('ol'); if (ol.children.length >= 5) return;
+    const li = document.createElement('li'); li.innerHTML = qItem('').replace(/^<li>|<\/li>$/g, ''); ol.append(li);
+    plainTexts(li); li.querySelector('.qtext').focus(); markDirty();
+  }
 });
 
 // ---- 文章庫 ----
@@ -463,7 +547,7 @@ $('libList').addEventListener('click', async (e) => {
         const r = await cloudCall({ action: 'get', id });
         current = { ...r.article, withinTolerance: true }; render(current, r.vocab || []); currentLibId = id;
         showLink(shortLink(id)); $('linkMsg').textContent = 'Opened from the cloud library. Its share link is ready below.';
-        if (act === 'edit') openPaste(current); else $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (act === 'edit') startEdit(); else $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else if (act === 'copy') {
         const url = shortLink(id);
         try { await navigator.clipboard.writeText(url); btn.textContent = 'Copied ✓'; } catch { prompt('Copy the link manually', url); }
@@ -481,7 +565,7 @@ $('libList').addEventListener('click', async (e) => {
   const l = libLoad(); const it = l.find((x) => x.id === id); if (!it) return;
   if (act === 'open' || act === 'edit') {
     current = it.article; render(current, it.vocab || []); currentLibId = it.id; // 開啟後，單字表的變動會自動同步回文章庫
-    if (act === 'edit') openPaste(current); else $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (act === 'edit') startEdit(); else $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (act === 'copy') {
     const url = await buildLink(it.article, it.vocab || []);
     try { await navigator.clipboard.writeText(url); btn.textContent = 'Copied ✓'; } catch { prompt('Copy the link manually', url); }
