@@ -2,7 +2,7 @@
 const crypto = require('crypto');
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1'];
+const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 const GENRES = { explanation: 'an expository (explanatory) article', story: 'a short story', news: 'a news-style article' };
 // 各文體的「起承轉合」寫法
 const ARC = {
@@ -31,7 +31,7 @@ const ARC = {
     close: 'Conclude with a resolution or a takeaway (合).',
   },
 };
-const AVG_SENTENCE = { A1: 7, A2: 10, B1: 14, B2: 18, C1: 22 }; // 各程度平均句長（字）
+const AVG_SENTENCE = { A1: 7, A2: 10, B1: 14, B2: 18, C1: 22, C2: 26 }; // 各程度平均句長（字）
 const TIMEOUT_MS = 55000; // 需小於 vercel.json 的 maxDuration
 const TOLERANCE = 0.1;
 
@@ -42,6 +42,7 @@ const LEVEL_GUIDE = {
   B1: 'Medium sentences (10-18 words). Present perfect, past continuous, first conditional, simple passive. Common vocabulary plus some topic words. A few very common idioms/phrasal verbs are ok. Simple relative clauses.',
   B2: 'Varied sentences (12-25 words). All main tenses, second/third conditionals, passive, reported speech. Broad vocabulary incl. abstract words and common idioms. Complex clauses allowed.',
   C1: 'Sophisticated, varied sentences (15-30 words). Full range of tenses and structures, inversion, participle clauses. Advanced, nuanced vocabulary, collocations, idioms, and a natural formal/informal register.',
+  C2: 'Mastery level, as in quality essays, literary or academic prose (sentences of 15-40 words, highly varied rhythm). Complete command of every tense, mood and structure: subjunctive, inversion, cleft sentences, nominalisation, ellipsis. Rich, precise and low-frequency vocabulary, abstract and specialised terms, idioms, figurative language, irony and subtle shades of meaning, implied rather than stated ideas. Sophisticated cohesion and a distinct authorial voice.',
 };
 
 // ---- 簡易限流：每 IP 每分鐘 5 次。存在記憶體，僅單一函式實例有效；
@@ -67,7 +68,7 @@ function safeEqual(a, b) {
 function validate(b) {
   const words = Number(b.words);
   if (!Number.isInteger(words) || words < 100 || words > 2000) return { error: 'Word count must be an integer from 100 to 2000' };
-  if (!LEVELS.includes(b.level)) return { error: 'Level must be one of A1, A2, B1, B2, C1' };
+  if (!LEVELS.includes(b.level)) return { error: 'Level must be one of A1, A2, B1, B2, C1, C2' };
   // 主題：移除控制字元與換行，限制長度
   const topic = String(b.topic ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
   if (topic.length < 1 || topic.length > 100) return { error: 'Topic is required and must be at most 100 characters' };
