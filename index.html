@@ -76,6 +76,15 @@
   .fsbar { display:flex; align-items:center; justify-content:flex-end; gap:6px; margin:-4px 0 8px; }
   .fsbar button { min-height:32px; padding:0 12px; font-size:.9rem; }
   .fsbar .meta { margin-right:4px; }
+  /* 字體按鈕與標題同一列（按鈕靠右、與標題垂直置中）；手機只留 A−／A+ */
+  #preview { position:relative; }
+  .fsbar { position:absolute; top:16px; right:16px; margin:0; z-index:1; }
+  .doc .text h2 { min-height:32px; display:flex; align-items:center; margin:0 0 .3em; padding-right:110px; }
+  @media (min-width:640px) {
+    .fsbar { top:20px; right:20px; }
+    .doc .text h2 { padding-right:230px; }
+  }
+  @media (max-width:639px) { .fsbar .meta { display:none; } }
   .spk { min-height:0; padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; }
   .del { float:right; min-height:0; padding:0 4px; background:none; border:0; color:var(--muted); font-size:1.1rem; line-height:1; }
   .del:hover { color:var(--err); }
