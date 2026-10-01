@@ -11,7 +11,7 @@
   const posLabel = (p) => { const k = String(p || '').trim().toLowerCase().replace(/\.$/, ''); return k ? `(${POS_FULL[k] || k})` : ''; };
 
   // ---- 發音：瀏覽器內建語音合成（免費、不需 API）----
-  const canSpeak = 'speechSynthesis' in window;
+  const canSpeak = !!window.speechSynthesis && typeof window.SpeechSynthesisUtterance === 'function';
   const spkBtn = (w) => canSpeak ? `<button type="button" class="spk" data-say="${esc(w)}" aria-label="Play pronunciation of ${esc(w)}" title="Play pronunciation">🔊</button>` : '';
   function speak(text) {
     if (!canSpeak) return;
@@ -106,9 +106,10 @@
       getSelection()?.removeAllRanges();
       if (t && t.trim()) addWord(t);
     });
-    // 點標示的字 → 單字庫中對應的項目反白並捲到可見位置
+    // 點標示的字 → 發音，並讓單字庫中對應的項目反白、捲到可見位置
     $('doc').addEventListener('click', (e) => {
       const m = e.target.closest('mark.vh'); if (!m) return;
+      speak(m.textContent.replace(/^[^A-Za-z]+|[^A-Za-z]+$/g, '')); // 點標示的字 → 自動發音（文章上出現的原樣，例如 called）
       const c = clean(m.textContent);
       const v = findItem(c) || items.find((x) => x.lemma && stems(c).includes(x.lemma.toLowerCase()));
       if (v) flash(v);
