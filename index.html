@@ -73,6 +73,8 @@
   .def { margin-top:2px; } .zhl { color:#f0c36d; }
   #vocabList li > b { color:#7cc7ff; font-size:1.12em; letter-spacing:.2px; }  /* 單字：醒目的天藍色 */
   .def .pos { color:var(--accent); font-style:normal; font-weight:600; margin-right:2px; }
+  mark.vh { background:rgba(124,199,255,.30); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; box-shadow:0 0 0 1px rgba(124,199,255,.35) inset; cursor:pointer; }  /* 已加入單字庫的字：底色標示 */
+  mark.vh:hover { background:rgba(124,199,255,.5); }
   .fsbar { display:flex; align-items:center; justify-content:flex-end; gap:6px; margin:-4px 0 8px; }
   .fsbar button { min-height:32px; padding:0 12px; font-size:.9rem; }
   .fsbar .meta { margin-right:4px; }
@@ -108,6 +110,7 @@
   }
 
   @media print {
+    mark.vh { background:none; box-shadow:none; }
     #form, #library, #empty, #openReader, .fsbar, #vocabPanel .addrow, #vmsg, .del, .actions, .share, #status, #linkMsg { display:none !important; }
     body { background:#fff; color:#000; } .layout { display:block; padding:0; }
     .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }
@@ -200,6 +203,7 @@ function stems(w) { // 可能的原形（markets → market…）
 }
 const findItem = (w) => items.find((v) => stems(w).includes(v.word.toLowerCase()));
 function renderVocab() {
+  paintBody(); // 單字庫有變動就重新標示文章中的單字
   $('vocabList').innerHTML = items.length ? items.map((v) => {
     const k = esc(v.word.toLowerCase());
     const detail = v.loading ? '<div class="def">Looking up…</div>'
@@ -220,6 +224,25 @@ function setFs(n) {
 $('fsInc').onclick = () => setFs(fs + 2);
 $('fsDec').onclick = () => setFs(fs - 2);
 setFs(fs);
+
+// ---- 在主文章上標示已加入單字庫的字（含變化形，例如 called → call）----
+function vocabKeys() {
+  const keys = new Set();
+  items.forEach((v) => { keys.add(v.word.toLowerCase()); if (v.lemma) keys.add(v.lemma.toLowerCase()); });
+  return keys;
+}
+function paintBody() {
+  const el = $('bodyText'); if (!el || !current) return;
+  const keys = vocabKeys();
+  const mark = (t) => (/^[A-Za-z]/.test(t) && stems(clean(t)).some((k) => keys.has(k))) ? `<mark class="vh">${esc(t)}</mark>` : esc(t);
+  el.innerHTML = current.body.split(/\n\s*\n/).map((p) => `<p>${p.split(/([A-Za-z][A-Za-z’'-]*)/).map(mark).join('')}</p>`).join('');
+}
+// 點標示的字 → 單字庫中對應的項目反白並捲到可見位置
+$('doc').addEventListener('click', (e) => {
+  const m = e.target.closest('mark.vh'); if (!m) return;
+  const v = findItem(clean(m.textContent)) || items.find((x) => x.lemma && stems(clean(m.textContent)).includes(x.lemma.toLowerCase()));
+  if (v) flash(v);
+});
 
 // 找出文章中含該字的句子，當作查詢的上下文（讓 AI 依語境給出正確意思）
 function sentenceOf(text, word) {
@@ -324,7 +347,8 @@ function render(a, vocab = []) {
     `<div class="text"><h2>${esc(a.title)}</h2>` +
     `<div class="meta">Level ${a.level} ・ ${a.wordCount} words (target ${a.targetWords}) ・ ~${mins} min read</div>` +
     (a.withinTolerance ? '' : `<div class="msg warn">⚠ The word count is more than 10% off the target. Press “Regenerate” to try again.</div>`) +
-    `<div style="margin-top:1em">${a.body.split(/\n\s*\n/).map((p) => `<p>${esc(p)}</p>`).join('')}</div></div>`;
+    `<div id="bodyText" style="margin-top:1em"></div></div>`;
+  paintBody();
   $('qa').innerHTML = ol('Comprehension questions', a.questions) + ol('Discussion questions', a.discussion); // 在按鈕下方
   $('empty').classList.add('hidden');
   $('preview').classList.remove('hidden');
