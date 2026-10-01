@@ -5,35 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>讀書會文章產生器</title>
 <style>
-  :root { --bg:#f6f4ef; --card:#fff; --ink:#1f2933; --muted:#6b7280; --accent:#2f6f5e; --line:#e2ded5; --err:#b3261e; }
+  :root { color-scheme:dark; --bg:#14171c; --card:#1d222a; --ink:#e6e8eb; --muted:#9aa4b2; --accent:#4fb89a; --line:#333b47; --err:#ff8a80; --field:#12151a; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif; line-height:1.6; }
   main { max-width:760px; margin:0 auto; padding:16px; }
-  h1 { font-size:1.4rem; margin:8px 0 16px; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
   label { display:block; font-weight:600; margin:12px 0 4px; font-size:.95rem; }
-  input[type=text], input[type=password], input[type=number], select { width:100%; padding:10px; font-size:1rem; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  input[type=text], input[type=password], input[type=number], select { width:100%; padding:10px; font-size:1rem; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
   .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .checks label { display:inline-flex; align-items:center; gap:6px; font-weight:400; margin:8px 16px 0 0; }
-  button { font-size:1rem; padding:10px 16px; border:0; border-radius:8px; background:var(--accent); color:#fff; cursor:pointer; }
-  button.secondary { background:#fff; color:var(--accent); border:1px solid var(--accent); }
+  button { font-size:1rem; padding:10px 16px; border:0; border-radius:8px; background:var(--accent); color:#0b1a15; font-weight:600; cursor:pointer; }
+  button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
   button:disabled { opacity:.5; cursor:wait; }
   .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
   .msg { margin-top:12px; font-size:.95rem; }
-  .err { color:var(--err); } .warn { color:#8a5a00; }
+  .err { color:var(--err); } .warn { color:#f0c36d; }
   .meta { color:var(--muted); font-size:.9rem; }
   article h2 { margin:.2em 0; }
   article p { font-family:Georgia,serif; font-size:1.05rem; }
   .share { width:100%; margin-top:8px; font-size:.8rem; }
   .hidden { display:none; }
-  @media print { form, .actions, .share, #status, h1 { display:none !important; } body { background:#fff; } .card { border:0; } }
+  @media print { form, .actions, .share, #status { display:none !important; } body { background:#fff; color:#000; } .card { border:0; background:#fff; color:#000; } .meta { color:#444; } }
   @media (max-width:520px) { .row { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>📖 讀書會文章產生器（主持人）</h1>
-
   <form id="form" class="card">
     <label for="code">存取碼</label>
     <input type="password" id="code" autocomplete="off" required>
