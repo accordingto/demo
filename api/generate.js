@@ -87,9 +87,9 @@ async function callGroq(messages, onDelta, signal) {
   const r = await fetch(GROQ_URL, {
     method: 'POST',
     signal,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.GROQ_API_KEY.trim()}` },
     body: JSON.stringify({
-      model: process.env.AI_MODEL,
+      model: process.env.AI_MODEL.trim().replace(/^["']|["']$/g, ''),
       messages,
       stream: true,
       temperature: 0.7,
@@ -101,7 +101,7 @@ async function callGroq(messages, onDelta, signal) {
     const t = await r.text().catch(() => '');
     const err = new Error(`AI 服務回應錯誤（${r.status}）`);
     err.status = r.status;
-    err.detail = t.slice(0, 200);
+    try { err.detail = JSON.parse(t).error?.message || ''; } catch { err.detail = ''; } // Groq 的錯誤說明（不含金鑰）
     throw err;
   }
   const dec = new TextDecoder();
@@ -187,6 +187,8 @@ module.exports = async function handler(req, res) {
     if (e.name === 'AbortError') msg = 'AI 產生逾時，請減少字數後重試';
     else if (e.status === 401) msg = 'AI 金鑰無效，請檢查 GROQ_API_KEY';
     else if (e.status === 429) msg = 'AI 服務額度或速率已達上限，請稍後再試';
+    else if (e.status === 404) msg = `找不到 AI 模型，請檢查 AI_MODEL 設定。${e.detail || ''}`;
+    else if (e.status && e.detail) msg = `${e.message}：${e.detail}`;
     send(res, 'error', { error: msg });
   } finally {
     clearTimeout(timer);
