@@ -65,7 +65,7 @@ function show(a) {
   const ol = (title, arr) => arr.length ? `<section><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
   $('doc').innerHTML =
     `<div class="text"><h2>${esc(a.t)}</h2>` +
-    `<div class="meta">Level ${esc(a.l)} ・ ${words} words ・ ~${mins} min read</div>` +
+    `<div class="meta">${a.l ? `Level ${esc(a.l)}` : 'Shared text'} ・ ${words} words ・ ~${mins} min read</div>` +
     `<div id="bodyText" style="margin-top:1em"></div></div>`;
   $('qa').innerHTML = ol('Comprehension questions', a.q) + ol('Discussion questions', a.d);
 
