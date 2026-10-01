@@ -4,99 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>English Reading</title>
-<style>
-  :root { color-scheme:dark; --bg:#14171c; --ink:#e3e5e8; --muted:#9aa4b2; --accent:#4fb89a; --line:#333b47; --card:#1d222a; --fs:20px; }
-  * { box-sizing: border-box; }
-  body { touch-action:manipulation; margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC",sans-serif; }
-  button { font-family:inherit; }
-
-  /* 版面：手機/平板 = 上方工具列 + 文章 + 下方單字題目；電腦 = 左工具欄 / 中文章 / 右單字題目 */
-  .layout { max-width:1700px; margin:0 auto; display:block; }
-  .bar { position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line); padding:8px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; z-index:2; }
-  .bar button { font-size:.95rem; padding:8px 14px; min-height:40px; border:1px solid var(--accent); background:transparent; color:var(--accent); border-radius:8px; cursor:pointer; }
-  .bar .info { color:var(--muted); font-size:.85rem; margin-left:auto; }
-  .bar .group { display:flex; gap:8px; flex-wrap:wrap; }
-  main { padding:16px 16px 24px; max-width:760px; margin:0 auto; }
-  h1 { font-family:Georgia,serif; font-size:1.7rem; line-height:1.25; margin:16px 0 4px; }
-  .meta { color:var(--muted); font-size:.9rem; margin-bottom:16px; }
-  #body p { font-family:Georgia,"Times New Roman",serif; font-size:var(--fs); line-height:1.75; margin:0 0 1em; }
-  .w.hit { background:rgba(124,199,255,.30); box-shadow:0 0 0 1px rgba(124,199,255,.35) inset; }  /* 已加入單字表的字：底色標示 */
-  .w { cursor:pointer; border-radius:3px; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; } .w.hit { border-bottom:2px dotted var(--accent); } .w:hover { background:#27424a; }
-
-  aside.side { padding:0 16px 16px; }
-  aside.side section, section.bottom section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:4px 16px 12px; }
-  aside.side h3, section.bottom h3 { margin:.9em 0 .4em; font-size:1.05rem; color:var(--accent); }
-  aside.side ul, section.bottom ol { margin:0; padding-left:1.3em; }
-  section.bottom li { font-size:var(--fs); line-height:1.6; }  /* 題目區跟著文字大小設定 */
-  section.bottom h3 { font-size:calc(var(--fs) * .95); }
-  section.bottom { padding:0 16px 96px; display:grid; gap:12px; align-content:start; }
-  li { margin-bottom:.5em; line-height:1.6; }
-  .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
-  .lem { color:var(--muted); font-size:.85em; margin-left:.3em; }
-  .def { margin-top:2px; } .zhl { color:#f0c36d; }
-  #vocabList li > b, #pop > b { color:#7cc7ff; font-size:1.12em; letter-spacing:.2px; }  /* 單字：醒目的天藍色 */
-  .pos { color:var(--accent); font-style:normal; font-weight:600; margin-right:2px; }
-  .spk { padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; cursor:pointer; }
-  .spk:hover { border-color:var(--accent); }
-  .addrow { display:flex; gap:6px; margin:4px 0 8px; }
-  .addrow input { flex:1; min-width:0; height:36px; padding:0 10px; font-size:.95rem; background:#12151a; color:var(--ink); border:1px solid var(--line); border-radius:8px; }
-  .addrow button { height:36px; padding:0 14px; border:1px solid var(--accent); background:transparent; color:var(--accent); border-radius:8px; cursor:pointer; }
-  .hint { font-size:.7rem; font-weight:400; color:var(--muted); margin-left:6px; }
-  .del { float:right; border:0; background:none; color:var(--muted); cursor:pointer; font-size:1.1rem; line-height:1; padding:0 4px; }
-  .del:hover { color:#ff8a80; }
-  .user b::after { content:' ＋'; color:var(--accent); font-weight:400; font-size:.8em; }
-  #vocabList li.empty { list-style:none; margin-left:-1.3em; color:var(--muted); cursor:default; }
-  #vocabList li.fail { color:#f0c36d; }
-  .note { color:var(--accent); font-size:.85rem; margin-top:4px; }
-  #vocabList li { cursor:pointer; } #vocabList li.on { background:#27424a; border-radius:4px; }
-
-  #pop { position:fixed; left:12px; right:12px; bottom:12px; max-width:560px; margin:0 auto; background:var(--card); border:1px solid var(--accent); border-radius:12px; padding:12px 16px; box-shadow:0 4px 16px rgba(0,0,0,.5); display:none; z-index:3; }
-  #pop.show { display:block; } #pop b { font-size:1.1rem; } #pop .x { float:right; border:0; background:none; color:var(--ink); font-size:1.3rem; cursor:pointer; padding:0 4px; }
-  .err { padding:32px 16px; text-align:center; color:#ff8a80; }
-
-  /* 平板 */
-  @media (min-width:700px) {
-    main { padding:24px 32px; }
-    aside.side { padding:0 32px 16px; max-width:1100px; margin:0 auto; }
-    section.bottom { padding:0 32px 96px; max-width:760px; margin:0 auto; }
-  }
-  /* 電腦：左工具欄 / 中文章 / 右單字表，理解題與討論題在最下方 */
-  @media (min-width:1100px) {
-    .layout { display:grid; grid-template-columns:240px minmax(0,1fr) 380px; gap:0 32px; align-items:start; padding:0 24px; }
-    .bar { grid-column:1; grid-row:1 / span 2; position:sticky; top:0; align-self:start; flex-direction:column; align-items:stretch; border:0; padding:24px 0; height:100vh; overflow:auto; }
-    .bar button { text-align:left; }
-    .bar .group { flex-direction:column; }
-    .bar .info { margin:16px 0 0; }
-    main { grid-column:2; grid-row:1; padding:24px 0; max-width:none; width:100%; }
-    #body, main > h1, main > .meta { max-width:780px; margin-left:auto; margin-right:auto; }
-    aside.side { grid-column:3; grid-row:1 / span 2; position:sticky; top:0; max-height:100vh; overflow:auto; padding:24px 0; max-width:none; margin:0; }
-    section.bottom { grid-column:2; grid-row:2; width:100%; max-width:780px; margin:0 auto; padding:0 0 96px; grid-template-columns:1fr; }
-  }
-  @media print {
-    .bar, #pop { display:none !important; } body { background:#fff; color:#000; } .layout { display:block; }
-    aside.side section, section.bottom section { background:#fff; border:0; } aside.side h3, section.bottom h3 { color:#000; } .meta { color:#444; }
-  }
-</style>
+<link rel="stylesheet" href="shared.css">
 </head>
 <body>
+<!-- 版面與功能和主持人頁相同（共用 shared.css / vocab.js）：左＝文章（含題目），右＝單字表 -->
 <div class="layout">
-  <div class="bar" id="bar" hidden>
-    <div class="group">
-      <button id="dec" aria-label="Smaller text">A−</button>
-      <button id="inc" aria-label="Larger text">A+</button>
+  <div class="work">
+    <div>
+      <section id="preview" class="card">
+        <div class="fsbar"><span class="meta">Text size</span><button type="button" id="fsDec" class="secondary" aria-label="Smaller text">A−</button><span id="fsVal" class="meta">18px</span><button type="button" id="fsInc" class="secondary" aria-label="Larger text">A+</button></div>
+        <div id="doc" class="doc"></div>
+        <div id="qa" class="qa"></div>
+      </section>
     </div>
-    <div class="group">
-      <button id="tq">Questions: Show</button>
-      <button id="td">Discussion: Show</button>
-    </div>
-    <div class="info" id="info"></div>
+    <aside id="vocabPanel" class="card">
+      <h3>Vocabulary<span class="hint">double-click a word in the article</span></h3>
+      <form id="addForm" class="addrow"><input type="text" id="addInput" maxlength="40" placeholder="Or type / paste a word" autocomplete="off"><button type="submit" class="secondary">Add</button></form>
+      <div id="vmsg" role="status"></div>
+      <ul id="vocabList"></ul>
+    </aside>
   </div>
-  <main id="main"></main>
-  <aside class="side" id="side"></aside>
-  <section class="bottom" id="bottom"></section>
 </div>
-<div id="pop" role="dialog"></div>
 
+<script src="vocab.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -113,212 +43,53 @@ async function decodeShare(hash) {
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 
-// ---- 發音：瀏覽器內建語音合成（免費、不需 API） ----
-const canSpeak = 'speechSynthesis' in window;
-const spkBtn = (w) => canSpeak ? `<button type="button" class="spk" data-say="${esc(w)}" aria-label="Play pronunciation of ${esc(w)}" title="Play pronunciation">🔊</button>` : '';
-function speak(text) {
-  if (!canSpeak) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US'; u.rate = 0.85;
-  const v = speechSynthesis.getVoices().find((x) => /^en[-_]US/i.test(x.lang));
-  if (v) u.voice = v;
-  speechSynthesis.speak(u);
-}
-
-// ---- 單字資料 ----
-// 詞性：縮寫 → 全名，顯示成 (verb)、(noun)…
-const POS_FULL = { n: 'noun', v: 'verb', vt: 'verb', vi: 'verb', adj: 'adjective', adv: 'adverb', prep: 'preposition', conj: 'conjunction', pron: 'pronoun', det: 'determiner', interj: 'interjection', int: 'interjection', art: 'article', num: 'numeral' };
-const posLabel = (p) => { const k = String(p || '').trim().toLowerCase().replace(/\.$/, ''); return k ? `(${POS_FULL[k] || k})` : ''; };
-const known = new Map(); // 文章附帶（AI 產生）的單字資料：雙擊時優先使用，不會一開始就顯示
-const vocab = new Map(); // 使用者雙擊加入的單字（顯示在右側單字表，一開始是空的）
-let items = [];
+let current = null; // 目前顯示的文章 { title, body, ... }
+let ready = false;  // 還原完成前不要寫入本機儲存
 const hashKey = 'rc-user-' + [...location.hash].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7); // 以連結內容區分文章
 
-const clean = (raw) => raw.toLowerCase().replace(/[’‘]/g, "'").replace(/^[^a-z]+|[^a-z]+$/g, '');
-// 可能的原形（markets → market、studies → study、running → run…）
-function stems(w) {
-  const out = [w];
-  for (const [suf, add] of [['ies', 'y'], ['es', ''], ['s', ''], ['ed', ''], ['ed', 'e'], ['ing', ''], ['ing', 'e'], ['ly', '']]) {
-    if (w.length > suf.length + 2 && w.endsWith(suf)) out.push(w.slice(0, -suf.length) + add);
-  }
-  return out;
-}
-const findIn = (map, w) => { for (const c of stems(w)) if (map.has(c)) return map.get(c); return null; };
-const lookup = (raw) => findIn(vocab, clean(raw)); // 文章上的字是否已加入單字表（用於底線標示）
-
-function renderVocab() {
-  const ul = $('vocabList'); if (!ul) return;
-  ul.innerHTML = items.length ? items.map((v) => {
-    const k = esc(v.word.toLowerCase());
-    const detail = v.loading ? '<div class="def">Looking up…</div>'
-      : v.failed ? `<div class="def">${esc(v.err || 'Lookup failed')} — tap to retry</div>`
-      : `<div class="def">${v.pos ? `<span class="pos">${esc(posLabel(v.pos))}</span> ` : ''}${esc(v.definition || '(no definition)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : ''}`;
-    return `<li data-w="${k}" class="user${v.failed ? ' fail' : ''}">${v.host ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
-      `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}${detail}</li>`;
-  }).join('') : '<li class="empty">Double-click a word in the article to add it here.</li>';
-}
-// 找出文章中含該字的句子，當作查詢的上下文（讓 AI 依語境給出正確意思）
-let ARTICLE = '';
-function sentenceOf(text, word) {
-  const re = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
-  return ((text || '').match(/[^.!?\n]+[.!?]*/g) || []).find((x) => re.test(x))?.trim().slice(0, 300) || '';
-}
-function refreshHits() { document.querySelectorAll('.w').forEach((el) => el.classList.toggle('hit', !!lookup(el.textContent))); }
-function persistUser() {
-  try { localStorage.setItem(hashKey, JSON.stringify(items.filter((v) => !v.host && !v.loading && !v.failed).map(({ word, pos, definition, zh, kk, lemma }) => ({ word, pos, definition, zh, kk, lemma })))); } catch {}
-}
-
-// ---- 呼叫後端 /api/define（Groq）：詞性、KK 音標、英文解釋、中文翻譯（失敗可點一下重試）----
-async function fillWord(v) {
-  v.loading = true; v.failed = false; renderVocab();
+// 成員自己加入的單字，存在自己的瀏覽器（主持人挑的字隨連結帶入，不存）
+function persist(items) {
+  if (!ready) return;
   try {
-    const r = await fetch('/api/define', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ word: v.word, context: v.ctx || '' }) });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.error || `Lookup failed (${r.status})`);
-    Object.assign(v, { pos: j.pos || '', kk: j.kk || '', definition: j.definition || '', zh: j.zh || '', lemma: j.lemma && j.lemma.toLowerCase() !== v.word.toLowerCase() ? j.lemma : '', err: '' });
-  } catch (e) { v.failed = true; v.err = e.message; }
-  v.loading = false;
-  renderVocab(); persistUser();
-  if ($('pop').classList.contains('show') && $('pop').dataset.w === v.word.toLowerCase()) popup(v, null, $('pop').dataset.note);
+    localStorage.setItem(hashKey, JSON.stringify(items.filter((v) => !v.locked && !v.loading && !v.failed)
+      .map(({ word, pos, definition, zh, kk, lemma }) => ({ word, pos, definition, zh, kk, lemma }))));
+  } catch { /* 無痕模式或被封鎖時略過 */ }
 }
-
-// 雙擊單字 → 加入右側單字表。回傳 { v, dup }
-function addWord(raw) {
-  const w = clean(raw);
-  if (w.length < 2) return {};
-  const exist = findIn(vocab, w);
-  if (exist) return { v: exist, dup: true };
-  const k = findIn(known, w); // 文章附帶的資料（含 KK 音標）優先
-  const v = k ? { word: k.word, definition: k.definition, zh: k.zh, kk: k.kk || '' } : { word: w, pos: '', definition: '', zh: '', kk: '', lemma: '', ctx: sentenceOf(ARTICLE, w) };
-  vocab.set(v.word.toLowerCase(), v); items.push(v);
-  renderVocab(); refreshHits(); persistUser();
-  if (!k) fillWord(v);
-  return { v };
-}
-function flash(v) { // 讓單字表中對應的項目短暫反白，並捲到可見位置
-  const li = [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === v.word.toLowerCase());
-  if (!li) return;
-  li.classList.add('on'); li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  setTimeout(() => li.classList.remove('on'), 1800);
-}
+Vocab.init({ getBody: () => current?.body, onChange: persist });
 
 function show(a) {
-  ARTICLE = a.b;
-  a.vo.forEach(([word, definition, zh, kk]) => known.set(word.toLowerCase(), { word, definition, zh, kk: kk || '' }));
-  // 主持人挑選的單字（隨連結帶入）
-  a.hv.forEach(([word, definition, zh, kk, pos, lemma]) => { const v = { word, definition, zh, kk: kk || '', pos: pos || '', lemma: lemma || '', host: true }; vocab.set(word.toLowerCase(), v); items.push(v); });
-  // 還原這篇文章先前自己加入的單字
-  try {
-    JSON.parse(localStorage.getItem(hashKey) || '[]').forEach((u) => {
-      if (!u?.word || vocab.has(u.word.toLowerCase())) return;
-      const v = { word: u.word, pos: u.pos || '', definition: u.definition || '', zh: u.zh || '', kk: u.kk || '', lemma: u.lemma || '', ctx: sentenceOf(a.b, u.word) };
-      vocab.set(v.word.toLowerCase(), v); items.push(v);
-      if (!v.definition && !v.zh) fillWord(v);
-    });
-  } catch {}
+  current = { title: a.t, body: a.b, level: a.l, questions: a.q, discussion: a.d };
+  document.title = a.t;
   const words = a.b.trim().split(/\s+/).length;
   const mins = Math.max(1, Math.round(words / 200));
-  const para = (p) => `<p>${p.split(/(\s+)/).map((t) => /\S/.test(t) ? `<span class="w${lookup(t) ? ' hit' : ''}">${esc(t)}</span>` : t).join('')}</p>`;
-  const list = (id, title, arr) => arr.length ? `<section id="${id}"><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
-  document.title = a.t;
-  $('main').innerHTML =
-    `<h1>${esc(a.t)}</h1><div class="meta">Level ${esc(a.l)} ・ ${words} words ・ ~${mins} min read</div>` +
-    `<div id="body">${a.b.split(/\n\s*\n/).map(para).join('')}</div>`;
-  $('side').innerHTML = `<section><h3>Vocabulary<span class="hint">double-click a word to add</span></h3><form id="addForm" class="addrow"><input type="text" id="addInput" maxlength="40" placeholder="Or type / paste a word" autocomplete="off"><button type="submit">Add</button></form><ul id="vocabList"></ul></section>`;
-  $('bottom').innerHTML = list('qs', 'Comprehension questions', a.q) + list('ds', 'Discussion questions', a.d);
-  renderVocab();
-  $('info').textContent = `Level ${a.l} ・ ${words} words ・ ~${mins} min`;
-  $('bar').hidden = false;
-  if (!a.q.length) $('tq').hidden = true;
-  if (!a.d.length) $('td').hidden = true;
+  const ol = (title, arr) => arr.length ? `<section><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
+  $('doc').innerHTML =
+    `<div class="text"><h2>${esc(a.t)}</h2>` +
+    `<div class="meta">Level ${esc(a.l)} ・ ${words} words ・ ~${mins} min read</div>` +
+    `<div id="bodyText" style="margin-top:1em"></div></div>`;
+  $('qa').innerHTML = ol('Comprehension questions', a.q) + ol('Discussion questions', a.d);
+
+  // 單字表：主持人挑的字（不可移除）+ 這位讀者先前自己加入的字
+  const list = a.hv.map(([word, definition, zh, kk, pos, lemma]) => ({ word, definition, zh, kk: kk || '', pos: pos || '', lemma: lemma || '', locked: true }));
+  try {
+    JSON.parse(localStorage.getItem(hashKey) || '[]').forEach((u) => {
+      if (u?.word && !list.some((x) => x.word.toLowerCase() === u.word.toLowerCase())) list.push({ word: u.word, pos: u.pos || '', definition: u.definition || '', zh: u.zh || '', kk: u.kk || '', lemma: u.lemma || '' });
+    });
+  } catch { /* 忽略 */ }
+  Vocab.setItems(list);
+  ready = true;
+  Vocab.getItems().filter((v) => !v.locked && !v.definition && !v.zh).forEach((v) => Vocab.fillWord(v)); // 先前沒查完的字重新查
 }
-
-// 字體大小（記在 localStorage，失敗就忽略）
-let fs = 20;
-try { fs = Number(localStorage.getItem('fs')) || 20; } catch {}
-const setFs = (n) => { fs = Math.min(36, Math.max(14, n)); document.documentElement.style.setProperty('--fs', fs + 'px'); try { localStorage.setItem('fs', fs); } catch {} };
-setFs(fs);
-$('inc').onclick = () => setFs(fs + 2);
-$('dec').onclick = () => setFs(fs - 2);
-
-// 顯示/隱藏理解題、討論題
-function toggle(btn, secId, label) {
-  btn.onclick = () => {
-    const s = $(secId); if (!s) return;
-    s.hidden = !s.hidden;
-    btn.textContent = `${label}: ${s.hidden ? 'Hide' : 'Show'}`;
-  };
-}
-toggle($('tq'), 'qs', 'Questions'); toggle($('td'), 'ds', 'Discussion');
-
-// 彈出視窗：顯示單字解釋（note = 附註，例如「已加入單字表」）
-function popup(v, raw, note) {
-  const pop = $('pop');
-  pop.innerHTML = v
-    ? `<button class="x" aria-label="Close">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}` +
-      (v.loading ? '<div>Looking up…</div>' : v.failed ? `<div>${esc(v.err || 'Lookup failed')}</div>` : `<div>${v.pos ? `<span class="pos">${esc(posLabel(v.pos))}</span> ` : ''}${esc(v.definition || '(no definition)')}</div><div class="zhl">${esc(v.zh)}</div>`) +
-      (note ? `<div class="note">${note}</div>` : '')
-    : '';
-  pop.dataset.w = v ? v.word.toLowerCase() : '';
-  pop.dataset.note = note || '';
-  pop.classList.toggle('show', !!v);
-}
-
-// 單擊：已加入的單字才顯示解釋。延遲一下，若緊接著是第二下（雙擊）就取消，避免彈出視窗擋住第二下
-let clickTimer = null;
-document.addEventListener('click', (e) => {
-  const sp = e.target.closest('.spk');
-  if (sp) return speak(sp.dataset.say); // 播放發音
-  if (e.target.classList.contains('x')) return $('pop').classList.remove('show');
-  if (!e.target.closest('#pop, .w, #vocabList')) $('pop').classList.remove('show'); // 點其他地方就關閉
-  clearTimeout(clickTimer);
-  if (e.target.classList.contains('w')) {
-    const el = e.target;
-    clickTimer = setTimeout(() => { const v = lookup(el.textContent); if (v) { popup(v); flash(v); } else $('pop').classList.remove('show'); }, 280);
-    return;
-  }
-  const del = e.target.closest('.del');
-  if (del) { // 移除單字
-    const k = del.dataset.del; vocab.delete(k); items = items.filter((v) => v.word.toLowerCase() !== k);
-    renderVocab(); refreshHits(); persistUser(); $('pop').classList.remove('show'); return;
-  }
-  const li = e.target.closest('#vocabList li[data-w]');
-  if (li) {
-    const v = vocab.get(li.dataset.w); if (!v) return;
-    if (v.failed) { fillWord(v); renderVocab(); return; } // 查詢失敗 → 點一下重試
-    popup(v);
-  }
-});
-
-// 手動輸入／貼上單字（雙擊的備案）
-document.addEventListener('submit', (e) => {
-  if (e.target.id !== 'addForm') return;
-  e.preventDefault();
-  const i = $('addInput'); if (!i.value.trim()) return;
-  const { v, dup } = addWord(i.value); i.value = '';
-  if (v) { popup(v, null, dup ? 'Already in your vocabulary' : '✓ Added to vocabulary'); flash(v); }
-});
-
-// 雙擊：加入單字表
-document.addEventListener('dblclick', (e) => {
-  const t = e.target.closest('.w'); if (!t) return;
-  clearTimeout(clickTimer);
-  getSelection()?.removeAllRanges();
-  const { v, dup } = addWord(t.textContent);
-  if (!v) return;
-  popup(v, null, dup ? 'Already in your vocabulary' : '✓ Added to vocabulary');
-  flash(v);
-});
 
 (async () => {
   try {
     const a = await decodeShare(location.hash.slice(1));
     if (typeof a.b !== 'string' || typeof a.t !== 'string') throw new Error('bad');
-    a.vo = Array.isArray(a.vo) ? a.vo : []; a.hv = Array.isArray(a.hv) ? a.hv : []; a.q = Array.isArray(a.q) ? a.q : []; a.d = Array.isArray(a.d) ? a.d : [];
+    a.q = Array.isArray(a.q) ? a.q : []; a.d = Array.isArray(a.d) ? a.d : []; a.hv = Array.isArray(a.hv) ? a.hv : [];
     show(a);
   } catch {
-    $('main').innerHTML = '<div class="err">Article not found. The link may be incomplete or damaged.<br>Please ask the host for a new link.</div>';
+    $('doc').innerHTML = '<div class="err" style="padding:32px 0;text-align:center">Article not found. The link may be incomplete or damaged.<br>Please ask the host for a new link.</div>';
+    $('preview').querySelector('.fsbar').classList.add('hidden');
   }
 })();
 </script>

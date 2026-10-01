@@ -1,0 +1,73 @@
+/* 主持人頁（index.html）與閱讀頁（read.html）共用的版面與樣式 */
+:root { color-scheme:dark; --bg:#14171c; --card:#1d222a; --ink:#e6e8eb; --muted:#9aa4b2; --accent:#4fb89a; --line:#333b47; --err:#ff8a80; --field:#12151a; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif; line-height:1.6; touch-action:manipulation; }
+.layout { max-width:1760px; margin:0 auto; padding:12px; display:grid; gap:12px; grid-template-columns:1fr; align-items:start; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+input[type=text], input[type=password], input[type=number], select { width:100%; padding:6px 8px; height:34px; font-size:.9rem; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
+button { font-family:inherit; font-size:.95rem; padding:8px 16px; min-height:40px; border:0; border-radius:8px; background:var(--accent); color:#0b1a15; font-weight:600; cursor:pointer; }
+button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+button:disabled { opacity:.5; cursor:wait; }
+.msg { margin-top:12px; font-size:.95rem; }
+.err { color:var(--err); } .warn { color:#f0c36d; }
+.meta { color:var(--muted); font-size:.9rem; }
+.hidden { display:none !important; }
+
+/* 工作區：左 = 文章，右 = 單字表（即使沒有單字也保留這個區塊） */
+.work { display:grid; gap:12px; grid-template-columns:1fr; align-items:start; }
+@media (min-width:640px) { .layout { padding:16px; } #preview { padding:20px; } }
+@media (min-width:1100px) {
+  .work { grid-template-columns:minmax(0,1fr) 360px; }
+  #vocabPanel { position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto; }
+}
+
+/* 文章 */
+.doc { display:grid; gap:24px; grid-template-columns:1fr; }
+.doc h2 { margin:.1em 0; font-size:1.5rem; }
+.doc .text p { font-family:Georgia,"Times New Roman",serif; font-size:var(--fs,18px); line-height:1.8; margin:0 0 1em; }
+#preview { position:relative; }
+/* 字體按鈕與標題同一列（按鈕靠右、與標題垂直置中）；手機只留 A−／A+ */
+.fsbar { position:absolute; top:16px; right:16px; margin:0; z-index:1; display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+.fsbar button { min-height:32px; padding:0 12px; font-size:.9rem; }
+.fsbar .meta { margin-right:4px; }
+.doc .text h2 { min-height:32px; display:flex; align-items:center; margin:0 0 .3em; padding-right:110px; }
+@media (min-width:640px) { .fsbar { top:20px; right:20px; } .doc .text h2 { padding-right:230px; } }
+@media (max-width:639px) { .fsbar .meta { display:none; } }
+/* 文章中的每個單字（供雙擊）；觸控裝置關閉系統的選字選單 */
+.w { border-radius:3px; }
+@media (pointer:coarse) { .w { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; } }
+mark.vh { background:rgba(124,199,255,.30); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; box-shadow:0 0 0 1px rgba(124,199,255,.35) inset; cursor:pointer; }  /* 已加入單字庫的字：底色標示 */
+mark.vh:hover { background:rgba(124,199,255,.5); }
+
+/* 題目區：上下排列，跟著文字大小設定 */
+.qa { display:grid; gap:12px; grid-template-columns:1fr; margin-top:16px; }
+.qa:empty { display:none; }
+.qa section { background:var(--field); border:1px solid var(--line); border-radius:10px; padding:4px 16px 12px; }
+.qa h3 { margin:.9em 0 .4em; font-size:calc(var(--fs,18px) * .95); color:var(--accent); }
+.qa ol { margin:0; padding-left:1.4em; } .qa li { margin-bottom:.5em; font-size:var(--fs,18px); line-height:1.6; }
+
+/* 單字表 */
+#vocabPanel h3 { margin:0 0 8px; font-size:1rem; color:var(--accent); }
+.hint { font-size:.72rem; font-weight:400; color:var(--muted); margin-left:6px; }
+.addrow { display:flex; gap:6px; margin-bottom:8px; }
+.addrow input { height:34px; } .addrow button { min-height:34px; padding:0 14px; }
+#vmsg { font-size:.8rem; color:var(--muted); min-height:1.2em; margin-bottom:6px; }
+#vocabList { list-style:none; margin:0; padding:0; }
+#vocabList li { background:var(--field); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:8px; line-height:1.5; }
+#vocabList li.empty { background:none; border-style:dashed; color:var(--muted); }
+#vocabList li.on { border-color:var(--accent); } #vocabList li.fail { color:#f0c36d; cursor:pointer; }
+.kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
+.lem { color:var(--muted); font-size:.85em; margin-left:.3em; }
+.def { margin-top:2px; } .zhl { color:#f0c36d; }
+#vocabList li > b { color:#7cc7ff; font-size:1.12em; letter-spacing:.2px; }  /* 單字：醒目的天藍色 */
+.def .pos { color:var(--accent); font-style:normal; font-weight:600; margin-right:2px; }
+.spk { min-height:0; padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; }
+.del { float:right; min-height:0; padding:0 4px; background:none; border:0; color:var(--muted); font-size:1.1rem; line-height:1; }
+.del:hover { color:var(--err); }
+
+@media print {
+  mark.vh { background:none; box-shadow:none; }
+  .fsbar, #vocabPanel .addrow, #vmsg, .del { display:none !important; }
+  body { background:#fff; color:#000; } .layout { display:block; padding:0; }
+  .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }
+}
