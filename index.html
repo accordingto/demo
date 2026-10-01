@@ -96,8 +96,8 @@
   .qa { display:grid; gap:12px; grid-template-columns:1fr; margin-top:16px; }
   .qa:empty { display:none; }
   .qa section { background:var(--field); border:1px solid var(--line); border-radius:10px; padding:4px 16px 12px; }
-  .qa h3 { margin:.9em 0 .4em; font-size:1.05rem; color:var(--accent); }
-  .qa ol { margin:0; padding-left:1.3em; } .qa li { margin-bottom:.5em; }
+  .qa h3 { margin:.9em 0 .4em; font-size:calc(var(--fs,18px) * .95); color:var(--accent); }  /* 題目區跟著文字大小設定 */
+  .qa ol { margin:0; padding-left:1.4em; } .qa li { margin-bottom:.5em; font-size:var(--fs,18px); line-height:1.6; }
   @media (min-width:900px) { .qa { grid-template-columns:1fr 1fr; align-items:start; } }
   /* 手機：欄位兩兩並排、按鈕滿版 */
   @media (max-width:639px) {
