@@ -36,8 +36,8 @@ button:disabled { opacity:.5; cursor:wait; }
 /* 文章中的每個單字（供雙擊）；觸控裝置關閉系統的選字選單 */
 .w { border-radius:3px; }
 @media (pointer:coarse) { .w { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; } }
-mark.vh { background:#fff3b0; color:#1b1f24; border-radius:4px; padding:1px 3px; margin:0 -1px; cursor:pointer; }  /* 已加入單字庫的字：淡黃色底色（像螢光筆），搭配深色文字確保清楚 */
-mark.vh:hover { background:#ffe97a; }
+mark.vh { background:rgba(255,232,140,.22); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; cursor:pointer; }  /* 已加入單字庫的字：柔和的半透明淡黃色底色，文字維持原色 */
+mark.vh:hover { background:rgba(255,232,140,.36); }
 
 /* 題目區：上下排列，跟著文字大小設定 */
 .qa { display:grid; gap:12px; grid-template-columns:1fr; margin-top:16px; }
