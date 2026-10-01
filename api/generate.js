@@ -1,5 +1,6 @@
 // POST /api/generate — 依條件產生英文閱讀文章（Groq，OpenAI 相容 API，串流）
 const crypto = require('crypto');
+const { modelName, reasoningParams, articleTokens } = require('./_model');
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
@@ -165,18 +166,16 @@ const send = (res, event, data) => res.write(`event: ${event}\ndata: ${JSON.stri
 
 // 呼叫 Groq（串流），逐塊回呼 onDelta，回傳完整文字
 async function callGroq(messages, onDelta, signal, maxTokens) {
-  const r = await fetch(GROQ_URL, {
+  const model = modelName();
+  const post = (extra) => fetch(GROQ_URL, {
     method: 'POST',
     signal,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.GROQ_API_KEY.trim()}` },
-    body: JSON.stringify({
-      model: process.env.AI_MODEL.trim().replace(/^["']|["']$/g, ''),
-      messages,
-      stream: true,
-      temperature: 0.7,
-      max_tokens: maxTokens,
-    }),
+    body: JSON.stringify({ model, messages, stream: true, temperature: 0.7, max_tokens: maxTokens, ...extra }),
   });
+  const extra = reasoningParams(model);
+  let r = await post(extra);
+  if (r.status === 400 && Object.keys(extra).length) r = await post({}); // 這個模型不接受「降低思考量」的參數 → 不帶參數重試
   if (!r.ok) {
     const t = await r.text().catch(() => '');
     const err = new Error(`AI service error (${r.status})`);
@@ -188,6 +187,7 @@ async function callGroq(messages, onDelta, signal, maxTokens) {
   let buf = '';
   let full = '';
   let finish = '';
+  let thinking = 0;
   for await (const chunk of r.body) {
     buf += dec.decode(chunk, { stream: true });
     let i;
@@ -201,7 +201,8 @@ async function callGroq(messages, onDelta, signal, maxTokens) {
         const choice = JSON.parse(payload).choices?.[0];
         if (choice?.finish_reason) finish = choice.finish_reason; // 'stop' = 正常結束，'length' = 被 token 上限截斷
         const delta = choice?.delta?.content;
-        if (delta) { full += delta; onDelta(full.length); }
+        if (choice?.delta?.reasoning) { thinking += choice.delta.reasoning.length; onDelta(full.length + thinking); } // 推理型模型的思考過程（不採用，只用來顯示進度）
+        if (delta) { full += delta; onDelta(full.length + thinking); }
       } catch { /* 忽略不完整的行 */ }
     }
   }
@@ -270,7 +271,7 @@ module.exports = async function handler(req, res) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
-    const { text, finish } = await callGroq(buildMessages(o), (n) => send(res, 'progress', { chars: n }), ctrl.signal, Math.min(12000, Math.ceil(o.words * 2.5) + 2500));
+    const { text, finish } = await callGroq(buildMessages(o), (n) => send(res, 'progress', { chars: n }), ctrl.signal, articleTokens(o.words));
     const article = parseArticle(text, o, finish);
     const actual = countWords(article.body);
     // 串流時不自動重試（重試需再次完整生成，可能超過函式時限）；超出 ±10% 時附上實際字數供前端提示
@@ -283,6 +284,7 @@ module.exports = async function handler(req, res) {
     else if (e.status === 429) msg = 'AI service quota or rate limit reached. Try again later.';
     else if (e.status === 404) msg = `AI model not found. Check AI_MODEL. ${e.detail || ''}`;
     else if (e.status && e.detail) msg = `${e.message}: ${e.detail}`;
+    if (/incomplete/.test(msg)) msg += ` [model: ${modelName()}]`; // 方便確認是哪個模型
     send(res, 'error', { error: msg });
   } finally {
     clearTimeout(timer);

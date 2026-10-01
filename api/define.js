@@ -1,5 +1,6 @@
 // POST /api/define — 查單字：詞性、KK 音標、英文解釋、中文翻譯（Groq）
 // 成員沒有存取碼，所以此端點是公開的，靠「單字格式限制 + 每 IP 限流 + 小 token 上限」防濫用。
+const { modelName, isReasoning, reasoningParams } = require('./_model');
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const TIMEOUT_MS = 20000;
 
@@ -43,18 +44,23 @@ module.exports = async function handler(req, res) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
-    const r = await fetch(GROQ_URL, {
+    const model = modelName();
+    const post = (extra) => fetch(GROQ_URL, {
       method: 'POST',
       signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.GROQ_API_KEY.trim()}` },
       body: JSON.stringify({
-        model: process.env.AI_MODEL.trim().replace(/^["']|["']$/g, ''),
+        model,
         messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: JSON.stringify({ word, context }) }],
         temperature: 0.2,
-        max_tokens: 300,
+        max_tokens: isReasoning(model) ? 1500 : 300,   // 推理型模型要多留思考用的額度
         response_format: { type: 'json_object' },
+        ...extra,
       }),
     });
+    const extra = reasoningParams(model);
+    let r = await post(extra);
+    if (r.status === 400 && Object.keys(extra).length) r = await post({}); // 模型不接受該參數 → 不帶參數重試
     if (!r.ok) {
       const t = await r.text().catch(() => '');
       let detail = ''; try { detail = JSON.parse(t).error?.message || ''; } catch { /* 忽略 */ }
