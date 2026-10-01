@@ -106,11 +106,13 @@
       getSelection()?.removeAllRanges();
       if (t && t.trim()) addWord(t);
     });
-    // 點標示的字 → 發音，並讓單字庫中對應的項目反白、捲到可見位置
+    // 點文章中的任何單字 → 發音（文章上出現的原樣，例如 called）；若是已標示的字，也讓單字庫中對應的項目反白、捲到可見位置
     $('doc').addEventListener('click', (e) => {
-      const m = e.target.closest('mark.vh'); if (!m) return;
-      speak(m.textContent.replace(/^[^A-Za-z]+|[^A-Za-z]+$/g, '')); // 點標示的字 → 自動發音（文章上出現的原樣，例如 called）
-      const c = clean(m.textContent);
+      if (!e.target.closest('#bodyText')) return;
+      const w = e.target.closest('.w'); if (!w) return;
+      speak(w.textContent.replace(/^[^A-Za-z]+|[^A-Za-z]+$/g, ''));
+      if (!w.matches('mark.vh')) return;
+      const c = clean(w.textContent);
       const v = findItem(c) || items.find((x) => x.lemma && stems(c).includes(x.lemma.toLowerCase()));
       if (v) flash(v);
     });
