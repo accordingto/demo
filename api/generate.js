@@ -118,8 +118,8 @@ function buildMessages(o, lengthNote) {
     cefr_level: o.level,
     style: o.genre ? GENRES[o.genre] : 'any suitable style',
     topic: o.topic,
-    include_comprehension_questions: o.questions ? '5 questions' : 'no',
-    include_discussion_questions: o.discussion ? '3 questions' : 'no',
+    include_comprehension_questions: o.questions ? 'exactly 2 questions' : 'no',
+    include_discussion_questions: o.discussion ? 'exactly 2 questions' : 'no',
   };
   const user =
     `Settings (JSON):\n${JSON.stringify(settings)}\n\n` +
@@ -127,8 +127,8 @@ function buildMessages(o, lengthNote) {
     `Length: the body must be about ${o.words} words (between ${Math.round(o.words * 0.95)} and ${Math.round(o.words * 1.05)}).\n` +
     `Structure: exactly ${n} paragraphs of roughly ${perPara} words each (about ${sentences} sentences per paragraph), following this plan:\n` +
     arcPlan(n, o.genre).join('\n') + '\n\n' +
-    (o.questions ? 'Comprehension questions should check understanding of the main idea, the details and the turn of the text.\n' : '') +
-    (o.discussion ? 'Discussion questions should be open-ended and invite personal opinions or experiences.\n' : '') +
+    (o.questions ? 'The 2 comprehension questions should check understanding: one about the main idea and one about an important detail or the turn of the text.\n' : '') +
+    (o.discussion ? 'The 2 discussion questions should be open-ended and invite personal opinions or experiences.\n' : '') +
     (lengthNote || '');
   return [{ role: 'system', content: system }, { role: 'user', content: user }];
 }
@@ -215,8 +215,8 @@ function parseArticle(text, o) {
   return {
     title: j.title.trim(),
     body: normalizeParagraphs(j.body.trim(), paragraphCount(o.words)),
-    questions: o.questions ? strs(j.questions) : [],
-    discussion: o.discussion ? strs(j.discussion) : [],
+    questions: o.questions ? strs(j.questions).slice(0, 2) : [],   // 各只保留 2 題
+    discussion: o.discussion ? strs(j.discussion).slice(0, 2) : [],
   };
 }
 
