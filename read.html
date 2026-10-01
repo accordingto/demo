@@ -31,6 +31,9 @@
   .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
   .spk { padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; cursor:pointer; }
   .spk:hover { border-color:var(--accent); }
+  .addrow { display:flex; gap:6px; margin:4px 0 8px; }
+  .addrow input { flex:1; min-width:0; height:36px; padding:0 10px; font-size:.95rem; background:#12151a; color:var(--ink); border:1px solid var(--line); border-radius:8px; }
+  .addrow button { height:36px; padding:0 14px; border:1px solid var(--accent); background:transparent; color:var(--accent); border-radius:8px; cursor:pointer; }
   .hint { font-size:.7rem; font-weight:400; color:var(--muted); margin-left:6px; }
   .del { float:right; border:0; background:none; color:var(--muted); cursor:pointer; font-size:1.1rem; line-height:1; padding:0 4px; }
   .del:hover { color:#ff8a80; }
@@ -139,13 +142,13 @@ function renderVocab() {
   ul.innerHTML = items.length ? items.map((v) => {
     const k = esc(v.word.toLowerCase());
     const body = v.loading ? 'Looking up…' : v.failed ? '(Lookup failed — tap to retry)' : `${esc(v.definition || '(no definition found)')}${v.zh ? `（${esc(v.zh)}）` : ''}`;
-    return `<li data-w="${k}" class="user${v.failed ? ' fail' : ''}"><button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>` +
+    return `<li data-w="${k}" class="user${v.failed ? ' fail' : ''}">${v.host ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
       `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)} — ${body}</li>`;
   }).join('') : '<li class="empty">Double-click a word in the article to add it here.</li>';
 }
 function refreshHits() { document.querySelectorAll('.w').forEach((el) => el.classList.toggle('hit', !!lookup(el.textContent))); }
 function persistUser() {
-  try { localStorage.setItem(hashKey, JSON.stringify(items.map(({ word, definition, zh, kk }) => ({ word, definition, zh, kk })))); } catch {}
+  try { localStorage.setItem(hashKey, JSON.stringify(items.filter((v) => !v.host).map(({ word, definition, zh, kk }) => ({ word, definition, zh, kk })))); } catch {}
 }
 
 // ---- 向免費字典／翻譯服務查詢（失敗就標記，可點一下重試） ----
@@ -201,6 +204,8 @@ function flash(v) { // 讓單字表中對應的項目短暫反白，並捲到可
 
 function show(a) {
   a.vo.forEach(([word, definition, zh, kk]) => known.set(word.toLowerCase(), { word, definition, zh, kk: kk || '' }));
+  // 主持人挑選的單字（隨連結帶入）
+  a.hv.forEach(([word, definition, zh, kk]) => { const v = { word, definition, zh, kk: kk || '', host: true }; vocab.set(word.toLowerCase(), v); items.push(v); });
   // 還原這篇文章先前自己加入的單字
   try {
     JSON.parse(localStorage.getItem(hashKey) || '[]').forEach((u) => {
@@ -218,7 +223,7 @@ function show(a) {
   $('main').innerHTML =
     `<h1>${esc(a.t)}</h1><div class="meta">Level ${esc(a.l)} ・ ${words} words ・ ~${mins} min read</div>` +
     `<div id="body">${a.b.split(/\n\s*\n/).map(para).join('')}</div>`;
-  $('side').innerHTML = `<section><h3>Vocabulary<span class="hint">double-click a word to add</span></h3><ul id="vocabList"></ul></section>`;
+  $('side').innerHTML = `<section><h3>Vocabulary<span class="hint">double-click a word to add</span></h3><form id="addForm" class="addrow"><input type="text" id="addInput" maxlength="40" placeholder="Or type / paste a word" autocomplete="off"><button type="submit">Add</button></form><ul id="vocabList"></ul></section>`;
   $('bottom').innerHTML = list('qs', 'Comprehension questions', a.q) + list('ds', 'Discussion questions', a.d);
   renderVocab();
   $('info').textContent = `Level ${a.l} ・ ${words} words ・ ~${mins} min`;
@@ -282,6 +287,15 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// 手動輸入／貼上單字（雙擊的備案）
+document.addEventListener('submit', (e) => {
+  if (e.target.id !== 'addForm') return;
+  e.preventDefault();
+  const i = $('addInput'); if (!i.value.trim()) return;
+  const { v, dup } = addWord(i.value); i.value = '';
+  if (v) { popup(v, null, dup ? 'Already in your vocabulary' : '✓ Added to vocabulary'); flash(v); }
+});
+
 // 雙擊：加入單字表
 document.addEventListener('dblclick', (e) => {
   const t = e.target.closest('.w'); if (!t) return;
@@ -297,7 +311,7 @@ document.addEventListener('dblclick', (e) => {
   try {
     const a = await decodeShare(location.hash.slice(1));
     if (typeof a.b !== 'string' || typeof a.t !== 'string') throw new Error('bad');
-    a.vo = Array.isArray(a.vo) ? a.vo : []; a.q = Array.isArray(a.q) ? a.q : []; a.d = Array.isArray(a.d) ? a.d : [];
+    a.vo = Array.isArray(a.vo) ? a.vo : []; a.hv = Array.isArray(a.hv) ? a.hv : []; a.q = Array.isArray(a.q) ? a.q : []; a.d = Array.isArray(a.d) ? a.d : [];
     show(a);
   } catch {
     $('main').innerHTML = '<div class="err">Article not found. The link may be incomplete or damaged.<br>Please ask the host for a new link.</div>';

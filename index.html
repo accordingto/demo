@@ -55,6 +55,25 @@
 
   /* 電腦／平板 */
   @media (min-width:640px) { .layout { padding:16px; } #preview { padding:20px; } }
+  /* 工作區：左 = 預覽，右 = 單字表（即使沒有單字也保留這個區塊） */
+  .work { display:grid; gap:12px; grid-template-columns:1fr; align-items:start; }
+  #vocabPanel h3 { margin:0 0 8px; font-size:1rem; color:var(--accent); }
+  .hint { font-size:.72rem; font-weight:400; color:var(--muted); margin-left:6px; }
+  .addrow { display:flex; gap:6px; margin-bottom:8px; }
+  .addrow input { height:34px; } .addrow button { min-height:34px; padding:0 14px; }
+  #vmsg { font-size:.8rem; color:var(--muted); min-height:1.2em; margin-bottom:6px; }
+  #vocabList { list-style:none; margin:0; padding:0; }
+  #vocabList li { background:var(--field); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:8px; line-height:1.5; }
+  #vocabList li.empty { background:none; border-style:dashed; color:var(--muted); }
+  #vocabList li.on { border-color:var(--accent); } #vocabList li.fail { color:#f0c36d; cursor:pointer; }
+  .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
+  .spk { min-height:0; padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; }
+  .del { float:right; min-height:0; padding:0 4px; background:none; border:0; color:var(--muted); font-size:1.1rem; line-height:1; }
+  .del:hover { color:var(--err); }
+  @media (min-width:1100px) {
+    .work { grid-template-columns:minmax(0,1fr) 360px; }
+    #vocabPanel { position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto; }
+  }
   /* 題目區：在按鈕下方，寬螢幕時兩欄並排 */
   .qa { display:grid; gap:12px; grid-template-columns:1fr; margin-top:16px; }
   .qa:empty { display:none; }
@@ -72,7 +91,7 @@
   }
 
   @media print {
-    #form, #library, #empty, .actions, .share, #status, #linkMsg { display:none !important; }
+    #form, #library, #empty, #vocabPanel .addrow, #vmsg, .del, .actions, .share, #status, #linkMsg { display:none !important; }
     body { background:#fff; color:#000; } .layout { display:block; padding:0; }
     .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }
   }
@@ -109,7 +128,8 @@
     <ul id="libList" class="libList"></ul>
   </section>
 
-  <div>
+  <div class="work">
+    <div>
     <div id="empty" class="card"><div class="big">📖</div>Set your options and press “Generate”. The preview will appear here.</div>
     <section id="preview" class="card hidden">
       <div id="doc" class="doc"></div>
@@ -124,6 +144,13 @@
       <div id="linkMsg" class="msg meta"></div>
       <div id="qa" class="qa"></div>
     </section>
+    </div>
+    <aside id="vocabPanel" class="card">
+      <h3>Vocabulary<span class="hint">double-click a word in the article</span></h3>
+      <form id="addForm" class="addrow"><input type="text" id="addInput" maxlength="40" placeholder="Or type / paste a word" autocomplete="off"><button type="submit" class="secondary">Add</button></form>
+      <div id="vmsg" role="status"></div>
+      <ul id="vocabList"></ul>
+    </aside>
   </div>
 </div>
 
@@ -131,6 +158,77 @@
 const $ = (id) => document.getElementById(id);
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null; // 目前預覽的文章
+
+// ---- 單字表（主持人挑選；會跟著文章存進文章庫、帶進分享連結） ----
+let items = [];
+const canSpeak = 'speechSynthesis' in window;
+const spkBtn = (w) => canSpeak ? `<button type="button" class="spk" data-say="${esc(w)}" aria-label="Play pronunciation of ${esc(w)}" title="Play pronunciation">🔊</button>` : '';
+function speak(text) {
+  if (!canSpeak) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.85;
+  const v = speechSynthesis.getVoices().find((x) => /^en[-_]US/i.test(x.lang)); if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+const clean = (raw) => raw.toLowerCase().replace(/[’‘]/g, "'").replace(/^[^a-z]+|[^a-z]+$/g, '').replace(/\s+/g, ' ');
+function stems(w) { // 可能的原形（markets → market…）
+  const out = [w];
+  for (const [suf, add] of [['ies', 'y'], ['es', ''], ['s', ''], ['ed', ''], ['ed', 'e'], ['ing', ''], ['ing', 'e'], ['ly', '']]) if (w.length > suf.length + 2 && w.endsWith(suf)) out.push(w.slice(0, -suf.length) + add);
+  return out;
+}
+const findItem = (w) => items.find((v) => stems(w).includes(v.word.toLowerCase()));
+function renderVocab() {
+  $('vocabList').innerHTML = items.length ? items.map((v) => {
+    const k = esc(v.word.toLowerCase());
+    const body = v.loading ? 'Looking up…' : v.failed ? '(Lookup failed — click to retry)' : `${esc(v.definition || '(no definition found)')}${v.zh ? `（${esc(v.zh)}）` : ''}`;
+    return `<li data-w="${k}" class="${v.failed ? 'fail' : ''}"><button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)} — ${body}</li>`;
+  }).join('') : '<li class="empty">No words yet. Double-click a word in the article, or type one above.</li>';
+}
+async function fetchJson(url, ms = 8000) {
+  const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); // 不用 AbortSignal.timeout，相容舊版 Safari
+  try { const r = await fetch(url, { signal: c.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); } finally { clearTimeout(t); }
+}
+async function dictEntry(w) {
+  for (const c of stems(w)) { try { const j = await fetchJson('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(c)); if (Array.isArray(j) && j[0]) return j[0]; } catch {} }
+  return null;
+}
+async function fillWord(v) { // 向免費字典／翻譯服務查詢
+  v.loading = true; v.failed = false; renderVocab();
+  const [d, t] = await Promise.allSettled([dictEntry(v.word), fetchJson('https://api.mymemory.translated.net/get?langpair=en|zh-TW&q=' + encodeURIComponent(v.word))]);
+  if (d.status === 'fulfilled' && d.value) {
+    const e = d.value, m = e.meanings?.[0];
+    v.kk = e.phonetic || e.phonetics?.find((x) => x.text)?.text || '';
+    if (m?.definitions?.[0]) v.definition = (m.partOfSpeech ? `(${m.partOfSpeech}) ` : '') + m.definitions[0].definition;
+  }
+  if (t.status === 'fulfilled') {
+    const r = t.value, z = r?.responseData?.translatedText;
+    if (z && Number(r.responseStatus) === 200 && !/MYMEMORY|INVALID|QUERY LENGTH/i.test(z) && z.toLowerCase() !== v.word.toLowerCase()) v.zh = z; // 額度用完時的警告文字要濾掉
+  }
+  v.loading = false; v.failed = !v.definition && !v.zh;
+  renderVocab();
+}
+function addWord(raw) {
+  const w = clean(raw);
+  if (w.length < 2 || w.length > 40) { $('vmsg').textContent = 'Please select a single word.'; return; }
+  const exist = findItem(w);
+  if (exist) { $('vmsg').textContent = `“${exist.word}” is already in the list.`; flash(exist); return; }
+  const v = { word: w, definition: '', zh: '', kk: '' };
+  items.push(v); $('vmsg').textContent = `Added “${w}”.`;
+  renderVocab(); flash(v); fillWord(v);
+}
+function flash(v) {
+  const li = [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === v.word.toLowerCase()); if (!li) return;
+  li.classList.add('on'); li.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); setTimeout(() => li.classList.remove('on'), 1800);
+}
+// 在文章上雙擊（瀏覽器會自動選取該字）→ 加入；也可手動輸入/貼上
+$('doc').addEventListener('dblclick', () => { const t = getSelection().toString().trim(); if (t) addWord(t); });
+$('addForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('addInput'); if (i.value.trim()) addWord(i.value); i.value = ''; });
+$('vocabList').addEventListener('click', (e) => {
+  const sp = e.target.closest('.spk'); if (sp) return speak(sp.dataset.say);
+  const del = e.target.closest('.del'); if (del) { items = items.filter((v) => v.word.toLowerCase() !== del.dataset.del); renderVocab(); return; }
+  const li = e.target.closest('li.fail'); if (li) { const v = items.find((x) => x.word.toLowerCase() === li.dataset.w); if (v) fillWord(v); }
+});
+renderVocab();
 
 // ---- 記住設定：存在這台裝置的瀏覽器（localStorage），下次開啟自動帶入 ----
 const SAVED = ['code', 'topic', 'words', 'level', 'genre', 'questions', 'discussion'];
@@ -188,7 +286,8 @@ async function generate(payload, onProgress) {
   return result;
 }
 
-function render(a) {
+function render(a, vocab = []) {
+  items = vocab.map((v) => ({ ...v })); renderVocab(); $('vmsg').textContent = '';
   const mins = Math.max(1, Math.round(a.wordCount / 200));
   const ol = (title, arr) => arr.length ? `<section><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
   $('doc').innerHTML =
@@ -225,13 +324,14 @@ $('regen').addEventListener('click', run);
 $('print').addEventListener('click', () => window.print());
 
 // 把文章壓成分享連結（整篇文章都在網址裡，連結本身即可永久開啟）
-async function buildLink(a) {
-  const data = await encodeShare({ v: 1, t: a.title, l: a.level, w: a.wordCount, b: a.body, q: a.questions, d: a.discussion });
+async function buildLink(a, vocab = []) {
+  const hv = vocab.filter((x) => !x.loading).map((x) => [x.word, x.definition, x.zh, x.kk || '']); // 主持人挑的單字
+  const data = await encodeShare({ v: 1, t: a.title, l: a.level, w: a.wordCount, b: a.body, q: a.questions, d: a.discussion, ...(hv.length ? { hv } : {}) });
   return new URL('read.html', location.href).href + '#' + data;
 }
 $('mkLink').addEventListener('click', async () => {
   if (!current) return;
-  const url = await buildLink(current);
+  const url = await buildLink(current, items);
   $('link').value = url; $('link').classList.remove('hidden'); $('copy').classList.remove('hidden');
   $('linkMsg').textContent = `Link length: ${url.length} characters` + (url.length > 8000 ? ' (long — some messaging apps may truncate it, so test it first)' : '') + '. The link contains the whole article, so keep it and it will open forever.';
 });
@@ -258,8 +358,9 @@ $('save').addEventListener('click', () => {
   if (!current) return;
   const l = libLoad();
   const dup = l.find((it) => it.article.body === current.body && it.article.title === current.title);
-  if (dup) { $('linkMsg').textContent = 'This article is already in your library'; return; }
-  l.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), savedAt: Date.now(), article: current });
+  const vocab = items.filter((v) => !v.loading).map(({ word, definition, zh, kk }) => ({ word, definition, zh, kk }));
+  if (dup) { dup.vocab = vocab; $('linkMsg').textContent = libStore(l) ? '✅ Library entry updated (including your vocabulary)' : '❌ Could not save'; renderLib(); return; }
+  l.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), savedAt: Date.now(), article: current, vocab });
   $('linkMsg').textContent = libStore(l) ? '✅ Saved to your library (stored in this browser only — export a backup now and then)' : '❌ Could not save: browser storage is full or blocked. Use “Create share link” instead.';
   renderLib();
 });
@@ -269,10 +370,10 @@ $('libList').addEventListener('click', async (e) => {
   const id = btn.closest('li').dataset.id;
   const l = libLoad(); const it = l.find((x) => x.id === id); if (!it) return;
   if (btn.dataset.act === 'open') {
-    current = it.article; render(current);
+    current = it.article; render(current, it.vocab || []);
     $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (btn.dataset.act === 'copy') {
-    const url = await buildLink(it.article);
+    const url = await buildLink(it.article, it.vocab || []);
     try { await navigator.clipboard.writeText(url); btn.textContent = 'Copied ✓'; } catch { prompt('Copy the link manually', url); }
     setTimeout(() => { btn.textContent = 'Copy link'; }, 1500);
   } else if (btn.dataset.act === 'del') {
@@ -296,7 +397,7 @@ $('libFile').addEventListener('change', async () => {
     const l = libLoad(); let n = 0;
     incoming.forEach((it) => {
       if (l.some((x) => x.id === it.id || (x.article.body === it.article.body && x.article.title === it.article.title))) return;
-      l.push({ id: String(it.id || Date.now() + Math.random()), savedAt: Number(it.savedAt) || Date.now(), article: it.article }); n++;
+      l.push({ id: String(it.id || Date.now() + Math.random()), savedAt: Number(it.savedAt) || Date.now(), article: it.article, vocab: Array.isArray(it.vocab) ? it.vocab : [] }); n++;
     });
     l.sort((a, b) => b.savedAt - a.savedAt);
     alert(libStore(l) ? `Imported ${n} article(s)` : 'Import failed: browser storage is full');
