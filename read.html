@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -72,12 +72,12 @@
 <div class="layout">
   <div class="bar" id="bar" hidden>
     <div class="group">
-      <button id="dec" aria-label="縮小字體">A−</button>
-      <button id="inc" aria-label="放大字體">A+</button>
+      <button id="dec" aria-label="Smaller text">A−</button>
+      <button id="inc" aria-label="Larger text">A+</button>
     </div>
     <div class="group">
-      <button id="tq">理解題：顯示</button>
-      <button id="td">討論題：顯示</button>
+      <button id="tq">Questions: Show</button>
+      <button id="td">Discussion: Show</button>
     </div>
     <div class="info" id="info"></div>
   </div>
@@ -105,7 +105,7 @@ async function decodeShare(hash) {
 
 // ---- 發音：瀏覽器內建語音合成（免費、不需 API） ----
 const canSpeak = 'speechSynthesis' in window;
-const spkBtn = (w) => canSpeak ? `<button type="button" class="spk" data-say="${esc(w)}" aria-label="播放 ${esc(w)} 發音" title="播放發音">🔊</button>` : '';
+const spkBtn = (w) => canSpeak ? `<button type="button" class="spk" data-say="${esc(w)}" aria-label="Play pronunciation of ${esc(w)}" title="Play pronunciation">🔊</button>` : '';
 function speak(text) {
   if (!canSpeak) return;
   speechSynthesis.cancel();
@@ -138,10 +138,10 @@ function renderVocab() {
   const ul = $('vocabList'); if (!ul) return;
   ul.innerHTML = items.length ? items.map((v) => {
     const k = esc(v.word.toLowerCase());
-    const body = v.loading ? '查詢中…' : v.failed ? '（查詢失敗，點一下重試）' : `${esc(v.definition || '（查無解釋）')}${v.zh ? `（${esc(v.zh)}）` : ''}`;
-    return `<li data-w="${k}" class="user${v.failed ? ' fail' : ''}"><button type="button" class="del" data-del="${k}" aria-label="移除 ${esc(v.word)}" title="移除">×</button>` +
+    const body = v.loading ? 'Looking up…' : v.failed ? '(Lookup failed — tap to retry)' : `${esc(v.definition || '(no definition found)')}${v.zh ? `（${esc(v.zh)}）` : ''}`;
+    return `<li data-w="${k}" class="user${v.failed ? ' fail' : ''}"><button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>` +
       `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)} — ${body}</li>`;
-  }).join('') : '<li class="empty">雙擊文章中的單字，就會加入這裡。</li>';
+  }).join('') : '<li class="empty">Double-click a word in the article to add it here.</li>';
 }
 function refreshHits() { document.querySelectorAll('.w').forEach((el) => el.classList.toggle('hit', !!lookup(el.textContent))); }
 function persistUser() {
@@ -216,12 +216,12 @@ function show(a) {
   const list = (id, title, arr) => arr.length ? `<section id="${id}"><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
   document.title = a.t;
   $('main').innerHTML =
-    `<h1>${esc(a.t)}</h1><div class="meta">程度 ${esc(a.l)} ・ ${words} 字 ・ 預估閱讀 ${mins} 分鐘</div>` +
+    `<h1>${esc(a.t)}</h1><div class="meta">Level ${esc(a.l)} ・ ${words} words ・ ~${mins} min read</div>` +
     `<div id="body">${a.b.split(/\n\s*\n/).map(para).join('')}</div>`;
-  $('side').innerHTML = `<section><h3>單字表<span class="hint">雙擊文章單字加入</span></h3><ul id="vocabList"></ul></section>`;
-  $('bottom').innerHTML = list('qs', '理解題', a.q) + list('ds', '討論題', a.d);
+  $('side').innerHTML = `<section><h3>Vocabulary<span class="hint">double-click a word to add</span></h3><ul id="vocabList"></ul></section>`;
+  $('bottom').innerHTML = list('qs', 'Comprehension questions', a.q) + list('ds', 'Discussion questions', a.d);
   renderVocab();
-  $('info').textContent = `程度 ${a.l} ・ ${words} 字 ・ 約 ${mins} 分鐘`;
+  $('info').textContent = `Level ${a.l} ・ ${words} words ・ ~${mins} min`;
   $('bar').hidden = false;
   if (!a.q.length) $('tq').hidden = true;
   if (!a.d.length) $('td').hidden = true;
@@ -240,16 +240,16 @@ function toggle(btn, secId, label) {
   btn.onclick = () => {
     const s = $(secId); if (!s) return;
     s.hidden = !s.hidden;
-    btn.textContent = `${label}：${s.hidden ? '隱藏' : '顯示'}`;
+    btn.textContent = `${label}: ${s.hidden ? 'Hide' : 'Show'}`;
   };
 }
-toggle($('tq'), 'qs', '理解題'); toggle($('td'), 'ds', '討論題');
+toggle($('tq'), 'qs', 'Questions'); toggle($('td'), 'ds', 'Discussion');
 
 // 彈出視窗：顯示單字解釋（note = 附註，例如「已加入單字表」）
 function popup(v, raw, note) {
   const pop = $('pop');
   pop.innerHTML = v
-    ? `<button class="x" aria-label="關閉">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}<div>${v.loading ? '查詢中…' : esc(v.definition || '（查無解釋）')}</div><div>${esc(v.zh)}</div>${note ? `<div class="note">${note}</div>` : ''}`
+    ? `<button class="x" aria-label="Close">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}<div>${v.loading ? 'Looking up…' : esc(v.definition || '(no definition found)')}</div><div>${esc(v.zh)}</div>${note ? `<div class="note">${note}</div>` : ''}`
     : '';
   pop.dataset.w = v ? v.word.toLowerCase() : '';
   pop.dataset.note = note || '';
@@ -289,7 +289,7 @@ document.addEventListener('dblclick', (e) => {
   getSelection()?.removeAllRanges();
   const { v, dup } = addWord(t.textContent);
   if (!v) return;
-  popup(v, null, dup ? '已在單字表中' : '✓ 已加入單字表');
+  popup(v, null, dup ? 'Already in your vocabulary' : '✓ Added to vocabulary');
   flash(v);
 });
 
@@ -300,7 +300,7 @@ document.addEventListener('dblclick', (e) => {
     a.vo = Array.isArray(a.vo) ? a.vo : []; a.q = Array.isArray(a.q) ? a.q : []; a.d = Array.isArray(a.d) ? a.d : [];
     show(a);
   } catch {
-    $('main').innerHTML = '<div class="err">找不到文章，連結可能不完整或已損壞。<br>請向主持人重新索取連結。</div>';
+    $('main').innerHTML = '<div class="err">Article not found. The link may be incomplete or damaged.<br>Please ask the host for a new link.</div>';
   }
 })();
 </script>

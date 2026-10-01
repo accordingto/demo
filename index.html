@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -40,12 +40,6 @@
   .doc h2 { margin:.1em 0; font-size:1.5rem; }
   .doc h3 { margin:1.2em 0 .4em; font-size:1.05rem; color:var(--accent); }
   .doc .text p { font-family:Georgia,"Times New Roman",serif; font-size:1.1rem; line-height:1.8; margin:0 0 1em; }
-  .extras ul, .extras ol { padding-left:1.3em; margin:0; }
-  .extras li { margin-bottom:.5em; }
-  .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
-  .spk { min-height:0; padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; vertical-align:baseline; }
-  .spk:hover { border-color:var(--accent); }
-  .extras section { background:var(--field); border:1px solid var(--line); border-radius:10px; padding:4px 16px 12px; margin-bottom:12px; }
   #library { padding:12px 16px; }
   #library h3 { margin:0; font-size:1rem; color:var(--accent); }
   #library .head { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-bottom:8px; }
@@ -61,16 +55,13 @@
 
   /* 電腦／平板 */
   @media (min-width:640px) { .layout { padding:16px; } #preview { padding:20px; } }
-  /* 寬螢幕：文章與單字/題目並排 */
-  @media (min-width:1100px) {
-    .doc.has-extras { grid-template-columns:minmax(0,1fr) 400px; }
-    .extras { position:sticky; top:12px; align-self:start; max-height:calc(100vh - 24px); overflow:auto; }
-  }
-  /* 平板（中等寬度）：單字與題目分欄排在文章下方 */
-  @media (min-width:640px) and (max-width:1099px) {
-    .extras { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; align-items:start; }
-    .extras section { margin:0; }
-  }
+  /* 題目區：在按鈕下方，寬螢幕時兩欄並排 */
+  .qa { display:grid; gap:12px; grid-template-columns:1fr; margin-top:16px; }
+  .qa:empty { display:none; }
+  .qa section { background:var(--field); border:1px solid var(--line); border-radius:10px; padding:4px 16px 12px; }
+  .qa h3 { margin:.9em 0 .4em; font-size:1.05rem; color:var(--accent); }
+  .qa ol { margin:0; padding-left:1.3em; } .qa li { margin-bottom:.5em; }
+  @media (min-width:900px) { .qa { grid-template-columns:1fr 1fr; align-items:start; } }
   /* 手機：欄位兩兩並排、按鈕滿版 */
   @media (max-width:639px) {
     .f { flex:1 1 40%; } .f.grow { flex-basis:100%; }
@@ -83,36 +74,35 @@
   @media print {
     #form, #library, #empty, .actions, .share, #status, #linkMsg { display:none !important; }
     body { background:#fff; color:#000; } .layout { display:block; padding:0; }
-    .card, .extras section { border:0; background:#fff; color:#000; } .meta { color:#444; } .doc { display:block; } .doc h3 { color:#000; }
+    .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }
   }
 </style>
 </head>
 <body>
 <div class="layout">
   <form id="form" class="card">
-    <div class="f"><label for="code">存取碼</label><input type="password" id="code" autocomplete="off" required></div>
-    <div class="f grow"><label for="topic">主題（最多 100 字）</label><input type="text" id="topic" maxlength="100" placeholder="例如：the history of coffee" required></div>
-    <div class="f"><label for="words">字數 100–2000</label><input type="number" id="words" min="100" max="2000" value="300" required></div>
+    <div class="f"><label for="code">Access code</label><input type="password" id="code" autocomplete="off" required></div>
+    <div class="f grow"><label for="topic">Topic (max 100 chars)</label><input type="text" id="topic" maxlength="100" placeholder="e.g. the history of coffee" required></div>
+    <div class="f"><label for="words">Words 100–2000</label><input type="number" id="words" min="100" max="2000" value="300" required></div>
     <div class="f"><label for="level">CEFR</label>
       <select id="level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option></select></div>
-    <div class="f"><label for="genre">文體（選填）</label>
-      <select id="genre"><option value="">不指定</option><option value="explanation">說明文</option><option value="story">故事</option><option value="news">新聞風格</option></select></div>
+    <div class="f"><label for="genre">Genre (optional)</label>
+      <select id="genre"><option value="">Any</option><option value="explanation">Explanation</option><option value="story">Story</option><option value="news">News style</option></select></div>
     <div class="checks">
-      <label><input type="checkbox" id="vocab" checked>單字表</label>
-      <label><input type="checkbox" id="questions" checked>理解題</label>
-      <label><input type="checkbox" id="discussion" checked>討論題</label>
+      <label><input type="checkbox" id="questions" checked>Comprehension</label>
+      <label><input type="checkbox" id="discussion" checked>Discussion</label>
     </div>
-    <button type="submit" id="go">產生文章</button>
-    <button type="button" id="libBtn" class="secondary" style="height:34px;min-height:0;padding:0 12px">📚 文章庫 (0)</button>
+    <button type="submit" id="go">Generate</button>
+    <button type="button" id="libBtn" class="secondary" style="height:34px;min-height:0;padding:0 12px">📚 Library (0)</button>
     <div id="status" class="msg" role="status"></div>
   </form>
 
   <section id="library" class="card hidden">
     <div class="head">
-      <h3>📚 文章庫（保存在這個瀏覽器）</h3>
+      <h3>📚 Library (saved in this browser)</h3>
       <div class="btns">
-        <button type="button" id="libExport" class="secondary">匯出備份</button>
-        <button type="button" id="libImport" class="secondary">匯入備份</button>
+        <button type="button" id="libExport" class="secondary">Export backup</button>
+        <button type="button" id="libImport" class="secondary">Import backup</button>
         <input type="file" id="libFile" accept="application/json,.json" class="hidden">
       </div>
     </div>
@@ -120,18 +110,19 @@
   </section>
 
   <div>
-    <div id="empty" class="card"><div class="big">📖</div>設定好條件後按「產生文章」，預覽會顯示在這裡。</div>
+    <div id="empty" class="card"><div class="big">📖</div>Set your options and press “Generate”. The preview will appear here.</div>
     <section id="preview" class="card hidden">
       <div id="doc" class="doc"></div>
       <div class="actions">
-        <button type="button" id="regen" class="secondary">重新產生</button>
-        <button type="button" id="save" class="secondary">💾 保存文章</button>
-        <button type="button" id="mkLink">產生分享連結</button>
-        <button type="button" id="copy" class="secondary hidden">複製連結</button>
-        <button type="button" id="print" class="secondary">列印</button>
+        <button type="button" id="regen" class="secondary">Regenerate</button>
+        <button type="button" id="save" class="secondary">💾 Save article</button>
+        <button type="button" id="mkLink">Create share link</button>
+        <button type="button" id="copy" class="secondary hidden">Copy link</button>
+        <button type="button" id="print" class="secondary">Print</button>
       </div>
       <input type="text" id="link" class="share hidden" readonly>
       <div id="linkMsg" class="msg meta"></div>
+      <div id="qa" class="qa"></div>
     </section>
   </div>
 </div>
@@ -142,7 +133,7 @@ const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>'
 let current = null; // 目前預覽的文章
 
 // ---- 記住設定：存在這台裝置的瀏覽器（localStorage），下次開啟自動帶入 ----
-const SAVED = ['code', 'topic', 'words', 'level', 'genre', 'vocab', 'questions', 'discussion'];
+const SAVED = ['code', 'topic', 'words', 'level', 'genre', 'questions', 'discussion'];
 function saveSettings() {
   try {
     const o = {};
@@ -160,19 +151,6 @@ loadSettings();
 $('form').addEventListener('input', saveSettings);
 $('form').addEventListener('change', saveSettings);
 
-// ---- 發音：瀏覽器內建語音合成（免費、不需 API） ----
-const canSpeak = 'speechSynthesis' in window;
-function speak(text) {
-  if (!canSpeak) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US'; u.rate = 0.85;
-  const v = speechSynthesis.getVoices().find((x) => /^en[-_]US/i.test(x.lang));
-  if (v) u.voice = v;
-  speechSynthesis.speak(u);
-}
-document.addEventListener('click', (e) => { const b = e.target.closest('.spk'); if (b) speak(b.dataset.say); });
-
 // ---- 分享連結編碼：JSON → UTF-8 → deflate-raw 壓縮 → base64url，放在網址 hash ----
 const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 async function encodeShare(obj) {
@@ -187,7 +165,7 @@ async function generate(payload, onProgress) {
   const res = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   if (!res.ok) { // 驗證階段的錯誤是一般 JSON
     const j = await res.json().catch(() => ({}));
-    throw new Error(j.error || `請求失敗（${res.status}）`);
+    throw new Error(j.error || `Request failed (${res.status})`);
   }
   const reader = res.body.getReader();
   const dec = new TextDecoder();
@@ -206,23 +184,19 @@ async function generate(payload, onProgress) {
       else if (ev === 'result') result = data;
     }
   }
-  if (!result) throw new Error('連線中斷，未收到完整文章，請重試');
+  if (!result) throw new Error('Connection lost before the article was complete. Please retry.');
   return result;
 }
 
 function render(a) {
   const mins = Math.max(1, Math.round(a.wordCount / 200));
   const ol = (title, arr) => arr.length ? `<section><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
-  const vocab = a.vocabulary.length ? `<section><h3>單字表</h3><ul>${a.vocabulary.map((v) => `<li><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${canSpeak ? `<button type="button" class="spk" data-say="${esc(v.word)}" aria-label="播放 ${esc(v.word)} 發音" title="播放發音">🔊</button>` : ''} — ${esc(v.definition)}（${esc(v.zh)}）</li>`).join('')}</ul></section>` : '';
-  const extras = vocab + ol('理解題', a.questions) + ol('討論題', a.discussion);
-  const doc = $('doc');
-  doc.classList.toggle('has-extras', !!extras);
-  doc.innerHTML =
+  $('doc').innerHTML =
     `<div class="text"><h2>${esc(a.title)}</h2>` +
-    `<div class="meta">程度 ${a.level} ・ 實際字數 ${a.wordCount}（目標 ${a.targetWords}）・ 預估閱讀 ${mins} 分鐘</div>` +
-    (a.withinTolerance ? '' : `<div class="msg warn">⚠ 實際字數與目標相差超過 10%，可按「重新產生」再試一次。</div>`) +
-    `<div style="margin-top:1em">${a.body.split(/\n\s*\n/).map((p) => `<p>${esc(p)}</p>`).join('')}</div></div>` +
-    (extras ? `<aside class="extras">${extras}</aside>` : '');
+    `<div class="meta">Level ${a.level} ・ ${a.wordCount} words (target ${a.targetWords}) ・ ~${mins} min read</div>` +
+    (a.withinTolerance ? '' : `<div class="msg warn">⚠ The word count is more than 10% off the target. Press “Regenerate” to try again.</div>`) +
+    `<div style="margin-top:1em">${a.body.split(/\n\s*\n/).map((p) => `<p>${esc(p)}</p>`).join('')}</div></div>`;
+  $('qa').innerHTML = ol('Comprehension questions', a.questions) + ol('Discussion questions', a.discussion); // 在按鈕下方
   $('empty').classList.add('hidden');
   $('preview').classList.remove('hidden');
   $('link').classList.add('hidden'); $('copy').classList.add('hidden'); $('linkMsg').textContent = '';
@@ -231,18 +205,18 @@ function render(a) {
 async function run() {
   const payload = {
     code: $('code').value, topic: $('topic').value, words: Number($('words').value), level: $('level').value,
-    genre: $('genre').value, vocab: $('vocab').checked, questions: $('questions').checked, discussion: $('discussion').checked,
+    genre: $('genre').value, questions: $('questions').checked, discussion: $('discussion').checked,
   };
   $('go').disabled = $('regen').disabled = true;
-  $('status').className = 'msg'; $('status').textContent = '⏳ AI 產生中…';
+  $('status').className = 'msg'; $('status').textContent = '⏳ Generating…';
   try {
-    current = await generate(payload, (n) => { $('status').textContent = `⏳ AI 產生中…（已收到 ${n} 字元）`; });
+    current = await generate(payload, (n) => { $('status').textContent = `⏳ Generating… (${n} characters received)`; });
     $('status').textContent = '';
     render(current);
     if (matchMedia('(max-width:1099px)').matches) $('preview').scrollIntoView({ behavior: 'smooth' }); // 窄螢幕才需要捲動
   } catch (e) {
     $('status').className = 'msg err'; $('status').textContent = '❌ ' + e.message;
-    if (e.message === '存取碼錯誤') { $('code').value = ''; saveSettings(); $('code').focus(); } // 存的是錯誤的碼就清掉
+    if (e.message === 'Incorrect access code') { $('code').value = ''; saveSettings(); $('code').focus(); } // 存的是錯誤的碼就清掉
   } finally { $('go').disabled = $('regen').disabled = false; }
 }
 
@@ -252,14 +226,14 @@ $('print').addEventListener('click', () => window.print());
 
 // 把文章壓成分享連結（整篇文章都在網址裡，連結本身即可永久開啟）
 async function buildLink(a) {
-  const data = await encodeShare({ v: 1, t: a.title, l: a.level, w: a.wordCount, b: a.body, vo: a.vocabulary.map((x) => [x.word, x.definition, x.zh, x.kk || '']), q: a.questions, d: a.discussion });
+  const data = await encodeShare({ v: 1, t: a.title, l: a.level, w: a.wordCount, b: a.body, q: a.questions, d: a.discussion });
   return new URL('read.html', location.href).href + '#' + data;
 }
 $('mkLink').addEventListener('click', async () => {
   if (!current) return;
   const url = await buildLink(current);
   $('link').value = url; $('link').classList.remove('hidden'); $('copy').classList.remove('hidden');
-  $('linkMsg').textContent = `連結長度 ${url.length} 字元` + (url.length > 8000 ? '（較長，部分通訊軟體可能截斷，請先自行測試）' : '') + '。連結內含整篇文章，保存好連結就能永久開啟。';
+  $('linkMsg').textContent = `Link length: ${url.length} characters` + (url.length > 8000 ? ' (long — some messaging apps may truncate it, so test it first)' : '') + '. The link contains the whole article, so keep it and it will open forever.';
 });
 
 // ---- 文章庫：保存在本機瀏覽器（localStorage），可匯出/匯入備份 ----
@@ -270,13 +244,13 @@ const validArticle = (a) => a && typeof a.title === 'string' && typeof a.body ==
 
 function renderLib() {
   const l = libLoad();
-  $('libBtn').textContent = `📚 文章庫 (${l.length})`;
+  $('libBtn').textContent = `📚 Library (${l.length})`;
   $('libList').innerHTML = l.length ? l.map((it) => {
     const a = it.article;
     return `<li data-id="${esc(it.id)}"><div class="t">${esc(a.title)}</div>` +
-      `<div class="m">程度 ${esc(a.level || '')} ・ ${a.wordCount || ''} 字 ・ 保存於 ${new Date(it.savedAt).toLocaleDateString()}</div>` +
-      `<div class="b"><button type="button" data-act="open">開啟</button><button type="button" class="secondary" data-act="copy">複製連結</button><button type="button" class="secondary danger" data-act="del">刪除</button></div></li>`;
-  }).join('') : '<li style="grid-column:1/-1;color:var(--muted)">尚無保存的文章。產生文章後按「💾 保存文章」。</li>';
+      `<div class="m">Level ${esc(a.level || '')} ・ ${a.wordCount || ''} words ・ saved ${new Date(it.savedAt).toLocaleDateString()}</div>` +
+      `<div class="b"><button type="button" data-act="open">Open</button><button type="button" class="secondary" data-act="copy">Copy link</button><button type="button" class="secondary danger" data-act="del">Delete</button></div></li>`;
+  }).join('') : '<li style="grid-column:1/-1;color:var(--muted)">No saved articles yet. Generate one and press “💾 Save article”.</li>';
 }
 $('libBtn').addEventListener('click', () => $('library').classList.toggle('hidden'));
 
@@ -284,9 +258,9 @@ $('save').addEventListener('click', () => {
   if (!current) return;
   const l = libLoad();
   const dup = l.find((it) => it.article.body === current.body && it.article.title === current.title);
-  if (dup) { $('linkMsg').textContent = '這篇文章已在文章庫中'; return; }
+  if (dup) { $('linkMsg').textContent = 'This article is already in your library'; return; }
   l.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), savedAt: Date.now(), article: current });
-  $('linkMsg').textContent = libStore(l) ? '✅ 已保存到文章庫（只存在這個瀏覽器，建議定期「匯出備份」）' : '❌ 保存失敗：瀏覽器儲存空間不足或被封鎖，請改用「產生分享連結」保存';
+  $('linkMsg').textContent = libStore(l) ? '✅ Saved to your library (stored in this browser only — export a backup now and then)' : '❌ Could not save: browser storage is full or blocked. Use “Create share link” instead.';
   renderLib();
 });
 
@@ -299,10 +273,10 @@ $('libList').addEventListener('click', async (e) => {
     $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (btn.dataset.act === 'copy') {
     const url = await buildLink(it.article);
-    try { await navigator.clipboard.writeText(url); btn.textContent = '已複製 ✓'; } catch { prompt('請手動複製連結', url); }
-    setTimeout(() => { btn.textContent = '複製連結'; }, 1500);
+    try { await navigator.clipboard.writeText(url); btn.textContent = 'Copied ✓'; } catch { prompt('Copy the link manually', url); }
+    setTimeout(() => { btn.textContent = 'Copy link'; }, 1500);
   } else if (btn.dataset.act === 'del') {
-    if (!confirm(`刪除「${it.article.title}」？已分享出去的連結不受影響。`)) return;
+    if (!confirm(`Delete “${it.article.title}”? Links you already shared are not affected.`)) return;
     libStore(l.filter((x) => x.id !== id)); renderLib();
   }
 });
@@ -325,15 +299,15 @@ $('libFile').addEventListener('change', async () => {
       l.push({ id: String(it.id || Date.now() + Math.random()), savedAt: Number(it.savedAt) || Date.now(), article: it.article }); n++;
     });
     l.sort((a, b) => b.savedAt - a.savedAt);
-    alert(libStore(l) ? `已匯入 ${n} 篇文章` : '匯入失敗：瀏覽器儲存空間不足');
-  } catch { alert('匯入失敗：不是有效的備份檔'); }
+    alert(libStore(l) ? `Imported ${n} article(s)` : 'Import failed: browser storage is full');
+  } catch { alert('Import failed: not a valid backup file'); }
   renderLib();
 });
 renderLib();
 
 $('copy').addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText($('link').value); $('linkMsg').textContent = '✅ 已複製連結'; }
-  catch { $('link').select(); $('linkMsg').textContent = '請手動複製上方連結'; }
+  try { await navigator.clipboard.writeText($('link').value); $('linkMsg').textContent = '✅ Link copied'; }
+  catch { $('link').select(); $('linkMsg').textContent = 'Please copy the link above manually'; }
 });
 </script>
 </body>
