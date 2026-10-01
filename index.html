@@ -42,6 +42,9 @@
   .doc .text p { font-family:Georgia,"Times New Roman",serif; font-size:1.1rem; line-height:1.8; margin:0 0 1em; }
   .extras ul, .extras ol { padding-left:1.3em; margin:0; }
   .extras li { margin-bottom:.5em; }
+  .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
+  .spk { min-height:0; padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; vertical-align:baseline; }
+  .spk:hover { border-color:var(--accent); }
   .extras section { background:var(--field); border:1px solid var(--line); border-radius:10px; padding:4px 16px 12px; margin-bottom:12px; }
   .share { width:100%; margin-top:8px; font-size:.8rem; }
   #preview .actions { border-top:1px solid var(--line); padding-top:16px; }
@@ -114,6 +117,19 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null; // 目前預覽的文章
 
+// ---- 發音：瀏覽器內建語音合成（免費、不需 API） ----
+const canSpeak = 'speechSynthesis' in window;
+function speak(text) {
+  if (!canSpeak) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US'; u.rate = 0.85;
+  const v = speechSynthesis.getVoices().find((x) => /^en[-_]US/i.test(x.lang));
+  if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+document.addEventListener('click', (e) => { const b = e.target.closest('.spk'); if (b) speak(b.dataset.say); });
+
 // ---- 分享連結編碼：JSON → UTF-8 → deflate-raw 壓縮 → base64url，放在網址 hash ----
 const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 async function encodeShare(obj) {
@@ -154,7 +170,7 @@ async function generate(payload, onProgress) {
 function render(a) {
   const mins = Math.max(1, Math.round(a.wordCount / 200));
   const ol = (title, arr) => arr.length ? `<section><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
-  const vocab = a.vocabulary.length ? `<section><h3>單字表</h3><ul>${a.vocabulary.map((v) => `<li><b>${esc(v.word)}</b> — ${esc(v.definition)}（${esc(v.zh)}）</li>`).join('')}</ul></section>` : '';
+  const vocab = a.vocabulary.length ? `<section><h3>單字表</h3><ul>${a.vocabulary.map((v) => `<li><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${canSpeak ? `<button type="button" class="spk" data-say="${esc(v.word)}" aria-label="播放 ${esc(v.word)} 發音" title="播放發音">🔊</button>` : ''} — ${esc(v.definition)}（${esc(v.zh)}）</li>`).join('')}</ul></section>` : '';
   const extras = vocab + ol('理解題', a.questions) + ol('討論題', a.discussion);
   const doc = $('doc');
   doc.classList.toggle('has-extras', !!extras);
@@ -193,7 +209,7 @@ $('print').addEventListener('click', () => window.print());
 $('mkLink').addEventListener('click', async () => {
   if (!current) return;
   const a = current; // 只放閱讀頁需要的欄位
-  const data = await encodeShare({ v: 1, t: a.title, l: a.level, w: a.wordCount, b: a.body, vo: a.vocabulary.map((x) => [x.word, x.definition, x.zh]), q: a.questions, d: a.discussion });
+  const data = await encodeShare({ v: 1, t: a.title, l: a.level, w: a.wordCount, b: a.body, vo: a.vocabulary.map((x) => [x.word, x.definition, x.zh, x.kk || '']), q: a.questions, d: a.discussion });
   const url = new URL('read.html', location.href).href + '#' + data;
   $('link').value = url; $('link').classList.remove('hidden'); $('copy').classList.remove('hidden');
   $('linkMsg').textContent = `連結長度 ${url.length} 字元` + (url.length > 8000 ? '（較長，部分通訊軟體可能截斷，請先自行測試）' : '');
