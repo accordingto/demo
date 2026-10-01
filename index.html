@@ -117,6 +117,25 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null; // 目前預覽的文章
 
+// ---- 記住設定：存在這台裝置的瀏覽器（localStorage），下次開啟自動帶入 ----
+const SAVED = ['code', 'topic', 'words', 'level', 'genre', 'vocab', 'questions', 'discussion'];
+function saveSettings() {
+  try {
+    const o = {};
+    SAVED.forEach((id) => { const el = $(id); o[id] = el.type === 'checkbox' ? el.checked : el.value; });
+    localStorage.setItem('rc-settings', JSON.stringify(o));
+  } catch { /* 無痕模式或被封鎖時略過，不影響使用 */ }
+}
+function loadSettings() {
+  try {
+    const o = JSON.parse(localStorage.getItem('rc-settings') || '{}');
+    SAVED.forEach((id) => { if (id in o) { const el = $(id); if (el.type === 'checkbox') el.checked = !!o[id]; else el.value = o[id]; } });
+  } catch { /* 忽略 */ }
+}
+loadSettings();
+$('form').addEventListener('input', saveSettings);
+$('form').addEventListener('change', saveSettings);
+
 // ---- 發音：瀏覽器內建語音合成（免費、不需 API） ----
 const canSpeak = 'speechSynthesis' in window;
 function speak(text) {
@@ -199,6 +218,7 @@ async function run() {
     if (matchMedia('(max-width:1099px)').matches) $('preview').scrollIntoView({ behavior: 'smooth' }); // 窄螢幕才需要捲動
   } catch (e) {
     $('status').className = 'msg err'; $('status').textContent = '❌ ' + e.message;
+    if (e.message === '存取碼錯誤') { $('code').value = ''; saveSettings(); $('code').focus(); } // 存的是錯誤的碼就清掉
   } finally { $('go').disabled = $('regen').disabled = false; }
 }
 
