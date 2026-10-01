@@ -31,6 +31,8 @@
   .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
   .lem { color:var(--muted); font-size:.85em; margin-left:.3em; }
   .def { margin-top:2px; } .zhl { color:#f0c36d; }
+  #vocabList li > b, #pop > b { color:#7cc7ff; font-size:1.12em; letter-spacing:.2px; }  /* 單字：醒目的天藍色 */
+  .pos { color:var(--accent); font-style:normal; font-weight:600; margin-right:2px; }
   .spk { padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; cursor:pointer; }
   .spk:hover { border-color:var(--accent); }
   .addrow { display:flex; gap:6px; margin:4px 0 8px; }
@@ -122,6 +124,9 @@ function speak(text) {
 }
 
 // ---- 單字資料 ----
+// 詞性：縮寫 → 全名，顯示成 (verb)、(noun)…
+const POS_FULL = { n: 'noun', v: 'verb', vt: 'verb', vi: 'verb', adj: 'adjective', adv: 'adverb', prep: 'preposition', conj: 'conjunction', pron: 'pronoun', det: 'determiner', interj: 'interjection', int: 'interjection', art: 'article', num: 'numeral' };
+const posLabel = (p) => { const k = String(p || '').trim().toLowerCase().replace(/\.$/, ''); return k ? `(${POS_FULL[k] || k})` : ''; };
 const known = new Map(); // 文章附帶（AI 產生）的單字資料：雙擊時優先使用，不會一開始就顯示
 const vocab = new Map(); // 使用者雙擊加入的單字（顯示在右側單字表，一開始是空的）
 let items = [];
@@ -145,7 +150,7 @@ function renderVocab() {
     const k = esc(v.word.toLowerCase());
     const detail = v.loading ? '<div class="def">Looking up…</div>'
       : v.failed ? `<div class="def">${esc(v.err || 'Lookup failed')} — tap to retry</div>`
-      : `<div class="def">${v.pos ? `<i>${esc(v.pos)}</i> ` : ''}${esc(v.definition || '(no definition)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : ''}`;
+      : `<div class="def">${v.pos ? `<span class="pos">${esc(posLabel(v.pos))}</span> ` : ''}${esc(v.definition || '(no definition)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : ''}`;
     return `<li data-w="${k}" class="user${v.failed ? ' fail' : ''}">${v.host ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
       `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}${detail}</li>`;
   }).join('') : '<li class="empty">Double-click a word in the article to add it here.</li>';
@@ -249,7 +254,7 @@ function popup(v, raw, note) {
   const pop = $('pop');
   pop.innerHTML = v
     ? `<button class="x" aria-label="Close">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}` +
-      (v.loading ? '<div>Looking up…</div>' : v.failed ? `<div>${esc(v.err || 'Lookup failed')}</div>` : `<div>${v.pos ? `<i>${esc(v.pos)}</i> ` : ''}${esc(v.definition || '(no definition)')}</div><div class="zhl">${esc(v.zh)}</div>`) +
+      (v.loading ? '<div>Looking up…</div>' : v.failed ? `<div>${esc(v.err || 'Lookup failed')}</div>` : `<div>${v.pos ? `<span class="pos">${esc(posLabel(v.pos))}</span> ` : ''}${esc(v.definition || '(no definition)')}</div><div class="zhl">${esc(v.zh)}</div>`) +
       (note ? `<div class="note">${note}</div>` : '')
     : '';
   pop.dataset.w = v ? v.word.toLowerCase() : '';

@@ -21,7 +21,7 @@ const SYSTEM = [
   'Reply with ONLY one JSON object with exactly these keys:',
   '{"lemma": string, "pos": string, "kk": string, "definition": string, "zh": string}',
   '"lemma": the base form (e.g. "call" for "called"); same as the word if already a base form or a proper noun.',
-  '"pos": short part of speech as used in the context, e.g. "n.", "v.", "adj.", "adv.", "prep.", "proper noun". For an inflected form, e.g. past tense, use "v." and mention the form in the definition.',
+  '"pos": the part of speech as used in the context, written as a FULL lowercase word: "noun", "verb", "adjective", "adverb", "preposition", "conjunction", "pronoun", "determiner", "interjection" or "proper noun". For an inflected form, e.g. past tense, use the word class of the base form (e.g. "verb") and mention the form in the definition.',
   '"kk": American KK (Kenyon & Knott) phonetic transcription of the word as given, inside square brackets, e.g. "[ˈtɛmpərətʃɚ]".',
   '"definition": ONE short, simple English definition that fits the context (max 20 words). For an inflected form start with e.g. "past tense of call: ...". For a proper noun say what it is if you know, otherwise "a proper name".',
   '"zh": the Traditional Chinese (Taiwan) translation that fits the context, short (max 12 characters).',
