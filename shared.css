@@ -40,6 +40,18 @@ button:disabled { opacity:.5; cursor:wait; }
 mark.vh { background:rgba(124,199,255,.30); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; box-shadow:0 0 0 1px rgba(124,199,255,.35) inset; cursor:pointer; }  /* 已加入單字庫的字：底色標示 */
 mark.vh:hover { background:rgba(124,199,255,.5); }
 
+/* 點單字表的字 → 文章中這個字的每一處（橘色）與所在的整句（淡橘底）；目前這一處更醒目 */
+.s.hit { background:rgba(255,184,64,.12); border-radius:4px; }
+mark.vh.cur { background:rgba(255,184,64,.50); box-shadow:0 0 0 1px rgba(255,184,64,.95) inset; }
+mark.vh.now { background:#ffb840; color:#1b1f24; box-shadow:0 0 0 2px #fff0c2; animation:nowpulse .9s ease-out 1; }
+@keyframes nowpulse { 0% { box-shadow:0 0 0 0 rgba(255,184,64,.9); } 100% { box-shadow:0 0 0 12px rgba(255,184,64,0); } }
+#hlbar { display:flex; align-items:center; gap:6px; margin:0 0 8px; padding:6px 8px; border:1px solid rgba(255,184,64,.6); border-radius:8px; background:rgba(255,184,64,.10); font-size:.9rem; }
+#hlbar span { flex:1; color:#ffd48a; }
+#hlbar button { min-height:28px; padding:0 10px; font-size:.95rem; background:transparent; color:#ffd48a; border:1px solid rgba(255,184,64,.6); }
+#vocabList li.active { border-color:#ffb840; background:rgba(255,184,64,.08); }
+#vocabList li[data-w] { cursor:pointer; }
+.cnt { color:#ffb840; font-size:.78em; margin-left:.45em; font-weight:600; }
+
 /* 題目區：上下排列，跟著文字大小設定 */
 .qa { display:grid; gap:12px; grid-template-columns:1fr; margin-top:16px; }
 .qa:empty { display:none; }
@@ -67,7 +79,8 @@ mark.vh:hover { background:rgba(124,199,255,.5); }
 .del:hover { color:var(--err); }
 
 @media print {
-  mark.vh { background:none; box-shadow:none; }
+  mark.vh, mark.vh.cur, mark.vh.now { background:none; box-shadow:none; color:inherit; animation:none; }
+  .s.hit { background:none; } #hlbar, .cnt { display:none !important; }
   .fsbar, #vocabPanel .addrow, #vmsg, .del { display:none !important; }
   body { background:#fff; color:#000; } .layout { display:block; padding:0; }
   .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }

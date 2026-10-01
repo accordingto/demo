@@ -38,8 +38,41 @@
       if (!/^[A-Za-z]/.test(t)) return esc(t);
       return stems(clean(t)).some((k) => keys.has(k)) ? `<mark class="vh w">${esc(t)}</mark>` : `<span class="w">${esc(t)}</span>`;
     };
-    el.innerHTML = String(cfg.getBody() || '').split(/\n\s*\n/).filter((p) => p.trim()).map((p) => `<p>${p.split(/([A-Za-z][A-Za-z’'-]*)/).map(wrap).join('')}</p>`).join('');
+    // 每個句子包成 span.s（點單字表時可整句標示）；句子內每個字包成 span.w / mark.vh
+    const sentences = (p) => (p.match(/[^.!?]+(?:[.!?]+["'”’)]*)?\s*/g) || [p]).filter((x) => x.length);
+    el.innerHTML = String(cfg.getBody() || '').split(/\n\s*\n/).filter((p) => p.trim())
+      .map((p) => `<p>${sentences(p).map((st) => `<span class="s">${st.split(/([A-Za-z][A-Za-z’'-]*)/).map(wrap).join('')}</span>`).join('')}</p>`).join('');
   }
+
+  const count = (v) => marksOf(v).length;
+  // ---- 點單字表的某個字 → 文章中這個字的每一處（含整句）特別標示，並可逐一跳到每一處 ----
+  let active = null; // { key: 單字（小寫）, idx: 目前是第幾處 }
+  const keysOf = (v) => new Set([v.word.toLowerCase(), v.lemma ? v.lemma.toLowerCase() : ''].filter(Boolean));
+  const marksOf = (v) => { const ks = keysOf(v); return [...document.querySelectorAll('#bodyText mark.vh')].filter((m) => stems(clean(m.textContent)).some((k) => ks.has(k))); };
+  const activeItem = () => (active ? items.find((x) => x.word.toLowerCase() === active.key) : null);
+  function applyActive() {
+    document.querySelectorAll('#bodyText .cur, #bodyText .now, #bodyText .s.hit').forEach((e) => e.classList.remove('cur', 'now', 'hit'));
+    document.querySelectorAll('#vocabList li.active').forEach((e) => e.classList.remove('active'));
+    const bar = $('hlbar'), v = activeItem();
+    if (!v) { active = null; if (bar) bar.classList.add('hidden'); return; }
+    const ms = marksOf(v);
+    const li = [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === active.key); if (li) li.classList.add('active');
+    if (bar) {
+      bar.classList.remove('hidden');
+      if (!ms.length) { $('hlText').textContent = `“${v.word}” does not appear in the text.`; $('hlPrev').classList.add('hidden'); $('hlNext').classList.add('hidden'); return; }
+      $('hlPrev').classList.toggle('hidden', ms.length < 2); $('hlNext').classList.toggle('hidden', ms.length < 2);
+    }
+    active.idx = ((active.idx % ms.length) + ms.length) % ms.length;
+    ms.forEach((m, i) => { m.classList.add('cur'); m.closest('.s')?.classList.add('hit'); if (i === active.idx) m.classList.add('now'); });
+    if (bar) $('hlText').textContent = `“${v.word}” ${active.idx + 1} / ${ms.length}`;
+  }
+  function scrollToNow() { document.querySelector('#bodyText mark.now')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  function pick(v, idx) { // idx 未指定：同一個字再點就跳到下一處；換字則從第一處開始
+    if (idx === undefined) idx = active && active.key === v.word.toLowerCase() ? active.idx + 1 : 0;
+    active = { key: v.word.toLowerCase(), idx };
+    applyActive(); scrollToNow();
+  }
+  function step(d) { if (active) { active.idx += d; applyActive(); scrollToNow(); } }
 
   function renderVocab() {
     paintBody();
@@ -49,8 +82,9 @@
         : v.failed ? `<div class="def">${esc(v.err || 'Lookup failed')} — click to retry</div>`
         : `<div class="def">${v.pos ? `<span class="pos">${esc(posLabel(v.pos))}</span> ` : ''}${esc(v.definition || '(no definition)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : ''}`;
       return `<li data-w="${k}" class="${v.failed ? 'fail' : ''}">${v.locked ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
-        `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}${detail}</li>`;
+        `<b>${esc(v.word)}</b>${count(v) ? `<span class="cnt" title="Occurrences in the text (click the word to find them)">📍${count(v)}</span>` : ''}${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}${detail}</li>`;
     }).join('') : '<li class="empty">No words yet. Double-click (or double-tap) a word in the article, or type one above.</li>';
+    applyActive();
     cfg.onChange(items);
   }
 
@@ -118,20 +152,23 @@
       speak(word);
       if (!w.matches('mark.vh')) return;
       const v = findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()));
-      if (v) flash(v);
+      if (v) { flash(v); pick(v, marksOf(v).indexOf(w)); } // 同時選取這個單字，標示文章中所有出現的位置
     });
     $('addForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('addInput'); if (i.value.trim()) addWord(i.value); i.value = ''; });
     $('vocabList').addEventListener('click', (e) => {
       const sp = e.target.closest('.spk'); if (sp) return speak(sp.dataset.say);
       const del = e.target.closest('.del'); if (del) { items = items.filter((v) => v.word.toLowerCase() !== del.dataset.del); renderVocab(); return; }
-      const li = e.target.closest('li.fail'); if (li) { const v = items.find((x) => x.word.toLowerCase() === li.dataset.w); if (v) fillWord(v); }
+      const failed = e.target.closest('li.fail'); if (failed) { const v = items.find((x) => x.word.toLowerCase() === failed.dataset.w); if (v) fillWord(v); return; }
+      const li = e.target.closest('li[data-w]'); if (li) { const v = items.find((x) => x.word.toLowerCase() === li.dataset.w); if (v) pick(v); } // 點單字 → 標示並跳到文章中的位置
     });
+    if ($('hlPrev')) { $('hlPrev').onclick = () => step(-1); $('hlNext').onclick = () => step(1); $('hlClear').onclick = () => { active = null; applyActive(); }; }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && active) { active = null; applyActive(); } });
   }
 
   window.Vocab = {
     init(c) { cfg = { ...cfg, ...c }; bind(); renderVocab(); },
     getItems: () => items,
-    setItems(list) { items = (list || []).map((v) => ({ ...v })); $('vmsg').textContent = ''; renderVocab(); },
+    setItems(list) { items = (list || []).map((v) => ({ ...v })); active = null; $('vmsg').textContent = ''; renderVocab(); },
     repaint: renderVocab,
     sentenceOf, fillWord,
   };
