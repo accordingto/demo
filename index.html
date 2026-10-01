@@ -8,37 +8,80 @@
   :root { color-scheme:dark; --bg:#14171c; --card:#1d222a; --ink:#e6e8eb; --muted:#9aa4b2; --accent:#4fb89a; --line:#333b47; --err:#ff8a80; --field:#12151a; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif; line-height:1.6; }
-  main { max-width:760px; margin:0 auto; padding:16px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  /* 版面：手機單欄 → 平板設定區兩欄 → 電腦左設定／右預覽 */
+  .layout { max-width:1760px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-columns:1fr; align-items:start; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
   label { display:block; font-weight:600; margin:12px 0 4px; font-size:.95rem; }
   input[type=text], input[type=password], input[type=number], select { width:100%; padding:10px; font-size:1rem; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
   .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .checks label { display:inline-flex; align-items:center; gap:6px; font-weight:400; margin:8px 16px 0 0; }
-  button { font-size:1rem; padding:10px 16px; border:0; border-radius:8px; background:var(--accent); color:#0b1a15; font-weight:600; cursor:pointer; }
+  .checks label { display:inline-flex; align-items:center; gap:6px; font-weight:400; margin:10px 16px 0 0; }
+  .checks input { width:18px; height:18px; }
+  button { font-size:1rem; padding:10px 16px; min-height:44px; border:0; border-radius:8px; background:var(--accent); color:#0b1a15; font-weight:600; cursor:pointer; }
   button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
   button:disabled { opacity:.5; cursor:wait; }
   .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
   .msg { margin-top:12px; font-size:.95rem; }
   .err { color:var(--err); } .warn { color:#f0c36d; }
   .meta { color:var(--muted); font-size:.9rem; }
-  article h2 { margin:.2em 0; }
-  article p { font-family:Georgia,serif; font-size:1.05rem; }
+  .hidden { display:none !important; }
+
+  /* 預覽區 */
+  #empty { text-align:center; color:var(--muted); padding:48px 16px; border-style:dashed; }
+  #empty .big { font-size:2.2rem; }
+  .doc { display:grid; gap:24px; grid-template-columns:1fr; }
+  .doc h2 { margin:.1em 0; font-size:1.5rem; }
+  .doc h3 { margin:1.2em 0 .4em; font-size:1.05rem; color:var(--accent); }
+  .doc .text p { font-family:Georgia,"Times New Roman",serif; font-size:1.1rem; line-height:1.8; margin:0 0 1em; }
+  .extras ul, .extras ol { padding-left:1.3em; margin:0; }
+  .extras li { margin-bottom:.5em; }
+  .extras section { background:var(--field); border:1px solid var(--line); border-radius:10px; padding:4px 16px 12px; margin-bottom:12px; }
   .share { width:100%; margin-top:8px; font-size:.8rem; }
-  .hidden { display:none; }
-  @media print { form, .actions, .share, #status { display:none !important; } body { background:#fff; color:#000; } .card { border:0; background:#fff; color:#000; } .meta { color:#444; } }
-  @media (max-width:520px) { .row { grid-template-columns:1fr; } }
+  #preview .actions { border-top:1px solid var(--line); padding-top:16px; }
+
+  /* 平板：設定欄位橫向排開 */
+  @media (min-width:640px) {
+    .layout { padding:24px; }
+    .fields { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
+    .fields .wide { grid-column:1 / -1; }
+  }
+  /* 電腦：左側固定設定欄、右側預覽 */
+  @media (min-width:1024px) {
+    .layout { grid-template-columns:380px minmax(0,1fr); }
+    #form { position:sticky; top:16px; max-height:calc(100vh - 32px); overflow:auto; }
+    .fields { display:block; }
+    #preview { padding:24px; }
+  }
+  /* 寬螢幕：文章與單字/題目並排 */
+  @media (min-width:1360px) {
+    .doc.has-extras { grid-template-columns:minmax(0,1fr) 380px; }
+    .extras { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; }
+  }
+  /* 平板（中等寬度）：單字與題目分欄排在文章下方 */
+  @media (min-width:640px) and (max-width:1359px) {
+    .extras { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; align-items:start; }
+    .extras section { margin:0; }
+  }
+  @media (max-width:420px) { .row { grid-template-columns:1fr; } .actions button { flex:1 1 40%; } }
+
+  @media print {
+    #form, #empty, .actions, .share, #status, #linkMsg { display:none !important; }
+    body { background:#fff; color:#000; } .layout { display:block; padding:0; }
+    .card, .extras section { border:0; background:#fff; color:#000; } .meta { color:#444; } .doc { display:block; } .doc h3 { color:#000; }
+  }
 </style>
 </head>
 <body>
-<main>
+<div class="layout">
   <form id="form" class="card">
-    <label for="code">存取碼</label>
-    <input type="password" id="code" autocomplete="off" required>
-
-    <label for="topic">主題（最多 100 字）</label>
-    <input type="text" id="topic" maxlength="100" placeholder="例如：the history of coffee" required>
-
-    <div class="row">
+    <div class="fields">
+      <div class="wide">
+        <label for="code" style="margin-top:0">存取碼</label>
+        <input type="password" id="code" autocomplete="off" required>
+      </div>
+      <div class="wide">
+        <label for="topic">主題（最多 100 字）</label>
+        <input type="text" id="topic" maxlength="100" placeholder="例如：the history of coffee" required>
+      </div>
       <div>
         <label for="words">字數（100–2000）</label>
         <input type="number" id="words" min="100" max="2000" value="300" required>
@@ -49,38 +92,40 @@
           <option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option>
         </select>
       </div>
+      <div class="wide">
+        <label for="genre">文體（選填）</label>
+        <select id="genre">
+          <option value="">不指定</option>
+          <option value="explanation">說明文</option>
+          <option value="story">故事</option>
+          <option value="news">新聞風格</option>
+        </select>
+      </div>
+      <div class="wide checks">
+        <label><input type="checkbox" id="vocab" checked> 附單字表</label>
+        <label><input type="checkbox" id="questions" checked> 附理解題</label>
+        <label><input type="checkbox" id="discussion" checked> 附討論題</label>
+      </div>
     </div>
-
-    <label for="genre">文體（選填）</label>
-    <select id="genre">
-      <option value="">不指定</option>
-      <option value="explanation">說明文</option>
-      <option value="story">故事</option>
-      <option value="news">新聞風格</option>
-    </select>
-
-    <div class="checks">
-      <label><input type="checkbox" id="vocab" checked> 附單字表</label>
-      <label><input type="checkbox" id="questions" checked> 附理解題</label>
-      <label><input type="checkbox" id="discussion" checked> 附討論題</label>
-    </div>
-
     <div class="actions"><button type="submit" id="go">產生文章</button></div>
     <div id="status" class="msg" role="status"></div>
   </form>
 
-  <section id="preview" class="card hidden">
-    <article id="article"></article>
-    <div class="actions">
-      <button type="button" id="regen" class="secondary">重新產生</button>
-      <button type="button" id="mkLink">產生分享連結</button>
-      <button type="button" id="copy" class="secondary hidden">複製連結</button>
-      <button type="button" id="print" class="secondary">列印</button>
-    </div>
-    <input type="text" id="link" class="share hidden" readonly>
-    <div id="linkMsg" class="msg"></div>
-  </section>
-</main>
+  <div>
+    <div id="empty" class="card"><div class="big">📖</div>設定好條件後按「產生文章」，預覽會顯示在這裡。</div>
+    <section id="preview" class="card hidden">
+      <div id="doc" class="doc"></div>
+      <div class="actions">
+        <button type="button" id="regen" class="secondary">重新產生</button>
+        <button type="button" id="mkLink">產生分享連結</button>
+        <button type="button" id="copy" class="secondary hidden">複製連結</button>
+        <button type="button" id="print" class="secondary">列印</button>
+      </div>
+      <input type="text" id="link" class="share hidden" readonly>
+      <div id="linkMsg" class="msg meta"></div>
+    </section>
+  </div>
+</div>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -126,14 +171,18 @@ async function generate(payload, onProgress) {
 
 function render(a) {
   const mins = Math.max(1, Math.round(a.wordCount / 200));
-  const list = (title, arr, ordered) => arr.length ? `<h3>${title}</h3><${ordered ? 'ol' : 'ul'}>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>` : '';
-  $('article').innerHTML =
-    `<h2>${esc(a.title)}</h2>` +
+  const ol = (title, arr) => arr.length ? `<section><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
+  const vocab = a.vocabulary.length ? `<section><h3>單字表</h3><ul>${a.vocabulary.map((v) => `<li><b>${esc(v.word)}</b> — ${esc(v.definition)}（${esc(v.zh)}）</li>`).join('')}</ul></section>` : '';
+  const extras = vocab + ol('理解題', a.questions) + ol('討論題', a.discussion);
+  const doc = $('doc');
+  doc.classList.toggle('has-extras', !!extras);
+  doc.innerHTML =
+    `<div class="text"><h2>${esc(a.title)}</h2>` +
     `<div class="meta">程度 ${a.level} ・ 實際字數 ${a.wordCount}（目標 ${a.targetWords}）・ 預估閱讀 ${mins} 分鐘</div>` +
     (a.withinTolerance ? '' : `<div class="msg warn">⚠ 實際字數與目標相差超過 10%，可按「重新產生」再試一次。</div>`) +
-    a.body.split(/\n\s*\n/).map((p) => `<p>${esc(p)}</p>`).join('') +
-    (a.vocabulary.length ? `<h3>單字表</h3><ul>${a.vocabulary.map((v) => `<li><b>${esc(v.word)}</b> — ${esc(v.definition)}（${esc(v.zh)}）</li>`).join('')}</ul>` : '') +
-    list('理解題', a.questions, true) + list('討論題', a.discussion, true);
+    `<div style="margin-top:1em">${a.body.split(/\n\s*\n/).map((p) => `<p>${esc(p)}</p>`).join('')}</div></div>` +
+    (extras ? `<aside class="extras">${extras}</aside>` : '');
+  $('empty').classList.add('hidden');
   $('preview').classList.remove('hidden');
   $('link').classList.add('hidden'); $('copy').classList.add('hidden'); $('linkMsg').textContent = '';
 }
@@ -149,7 +198,7 @@ async function run() {
     current = await generate(payload, (n) => { $('status').textContent = `⏳ AI 產生中…（已收到 ${n} 字元）`; });
     $('status').textContent = '';
     render(current);
-    $('preview').scrollIntoView({ behavior: 'smooth' });
+    if (matchMedia('(max-width:1023px)').matches) $('preview').scrollIntoView({ behavior: 'smooth' }); // 手機/平板才需要捲動
   } catch (e) {
     $('status').className = 'msg err'; $('status').textContent = '❌ ' + e.message;
   } finally { $('go').disabled = $('regen').disabled = false; }
