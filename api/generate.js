@@ -156,8 +156,10 @@ module.exports = async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: '只接受 POST' });
   }
-  if (!process.env.GROQ_API_KEY || !process.env.AI_MODEL || !process.env.HOST_CODE) {
-    return res.status(500).json({ error: '伺服器尚未設定環境變數（GROQ_API_KEY / AI_MODEL / HOST_CODE）' });
+  // 只回報缺少的變數「名稱」，不洩漏值
+  const missing = ['GROQ_API_KEY', 'AI_MODEL', 'HOST_CODE'].filter((k) => !(process.env[k] || '').trim());
+  if (missing.length) {
+    return res.status(500).json({ error: `伺服器缺少環境變數：${missing.join('、')}（設定後需 Redeploy 才會生效）` });
   }
   const body = typeof req.body === 'string' ? safeJson(req.body) : req.body || {};
   if (!safeEqual(body.code ?? '', process.env.HOST_CODE)) return res.status(401).json({ error: '存取碼錯誤' });
