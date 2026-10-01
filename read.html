@@ -7,7 +7,7 @@
 <style>
   :root { color-scheme:dark; --bg:#14171c; --ink:#e3e5e8; --muted:#9aa4b2; --accent:#4fb89a; --line:#333b47; --card:#1d222a; --fs:20px; }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC",sans-serif; }
+  body { touch-action:manipulation; margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC",sans-serif; }
   button { font-family:inherit; }
 
   /* 版面：手機/平板 = 上方工具列 + 文章 + 下方單字題目；電腦 = 左工具欄 / 中文章 / 右單字題目 */
@@ -30,6 +30,10 @@
   .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
   .spk { padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; cursor:pointer; }
   .spk:hover { border-color:var(--accent); }
+  .hint { font-size:.7rem; font-weight:400; color:var(--muted); margin-left:6px; }
+  .del { float:right; border:0; background:none; color:var(--muted); cursor:pointer; font-size:1.1rem; line-height:1; padding:0 4px; }
+  .del:hover { color:#ff8a80; }
+  .user b::after { content:' ＋'; color:var(--accent); font-weight:400; font-size:.8em; }
   #vocabList li { cursor:pointer; } #vocabList li.on { background:#27424a; border-radius:4px; }
 
   #pop { position:fixed; left:12px; right:12px; bottom:12px; max-width:560px; margin:0 auto; background:var(--card); border:1px solid var(--accent); border-radius:12px; padding:12px 16px; box-shadow:0 4px 16px rgba(0,0,0,.5); display:none; z-index:3; }
@@ -118,8 +122,65 @@ function lookup(raw) {
   return null;
 }
 
+let items = []; // 單字表項目：文章附帶的 + 使用者雙擊加入的（user:true）
+const hashKey = 'rc-user-' + [...location.hash].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7); // 以連結內容區分文章
+
+function renderVocab() {
+  const ul = $('vocabList'); if (!ul) return;
+  ul.innerHTML = items.length ? items.map((v) =>
+    `<li data-w="${esc(v.word.toLowerCase())}" class="${v.user ? 'user' : ''}">` +
+    (v.user ? `<button type="button" class="del" data-del="${esc(v.word.toLowerCase())}" aria-label="移除 ${esc(v.word)}" title="移除">×</button>` : '') +
+    `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)} — ${v.loading ? '查詢中…' : `${esc(v.definition || '（查無解釋）')}${v.zh ? `（${esc(v.zh)}）` : ''}`}</li>`
+  ).join('') : '<li style="list-style:none;color:var(--muted)">（尚無單字）</li>';
+}
+function refreshHits() { document.querySelectorAll('.w').forEach((el) => el.classList.toggle('hit', !!lookup(el.textContent))); }
+function persistUser() {
+  try { localStorage.setItem(hashKey, JSON.stringify(items.filter((v) => v.user).map(({ word, definition, zh, kk }) => ({ word, definition, zh, kk })))); } catch {}
+}
+
+// 向免費字典／翻譯服務查詢（失敗就留空，不影響使用）
+async function fetchJson(url) { const r = await fetch(url, { signal: AbortSignal.timeout(8000) }); if (!r.ok) throw new Error(r.status); return r.json(); }
+async function fillWord(v) {
+  const [d, t] = await Promise.allSettled([
+    fetchJson('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(v.word)),
+    fetchJson('https://api.mymemory.translated.net/get?langpair=en|zh-TW&q=' + encodeURIComponent(v.word)),
+  ]);
+  if (d.status === 'fulfilled' && Array.isArray(d.value) && d.value[0]) {
+    const e = d.value[0], m = e.meanings?.[0];
+    v.kk = e.phonetic || e.phonetics?.find((x) => x.text)?.text || '';
+    if (m?.definitions?.[0]) v.definition = (m.partOfSpeech ? `(${m.partOfSpeech}) ` : '') + m.definitions[0].definition;
+  }
+  if (t.status === 'fulfilled') {
+    const z = t.value?.responseData?.translatedText;
+    if (z && z.toLowerCase() !== v.word.toLowerCase()) v.zh = z;
+  }
+  v.loading = false;
+  renderVocab(); persistUser();
+  if ($('pop').classList.contains('show') && $('pop').dataset.w === v.word.toLowerCase()) popup(v, v.word);
+}
+
+// 雙擊單字 → 加入右側單字表
+function addWord(raw) {
+  const w = raw.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, '');
+  if (w.length < 2) return null;
+  let v = lookup(w);
+  if (v) return v; // 已在單字表
+  v = { word: w, definition: '', zh: '', kk: '', user: true, loading: true };
+  vocab.set(w, v); items.push(v);
+  renderVocab(); refreshHits(); fillWord(v);
+  return v;
+}
+
 function show(a) {
-  a.vo.forEach(([word, definition, zh, kk]) => vocab.set(word.toLowerCase(), { word, definition, zh, kk: kk || '' }));
+  a.vo.forEach(([word, definition, zh, kk]) => { const v = { word, definition, zh, kk: kk || '' }; vocab.set(word.toLowerCase(), v); items.push(v); });
+  // 還原這篇文章先前自己加入的單字
+  try {
+    JSON.parse(localStorage.getItem(hashKey) || '[]').forEach((u) => {
+      if (!u?.word || vocab.has(u.word.toLowerCase())) return;
+      const v = { ...u, user: true, loading: false }; vocab.set(v.word.toLowerCase(), v); items.push(v);
+      if (!v.definition && !v.zh) { v.loading = true; fillWord(v); }
+    });
+  } catch {}
   const words = a.b.trim().split(/\s+/).length;
   const mins = Math.max(1, Math.round(words / 200));
   // 每個單字包成 span 供點擊；單字表內的字加底線提示
@@ -130,8 +191,9 @@ function show(a) {
     `<h1>${esc(a.t)}</h1><div class="meta">程度 ${esc(a.l)} ・ ${words} 字 ・ 預估閱讀 ${mins} 分鐘</div>` +
     `<div id="body">${a.b.split(/\n\s*\n/).map(para).join('')}</div>`;
   $('side').innerHTML =
-    (a.vo.length ? `<section><h3>單字表</h3><ul id="vocabList">${a.vo.map(([w, d, z, k]) => `<li data-w="${esc(w.toLowerCase())}"><b>${esc(w)}</b>${k ? `<span class="kk">${esc(k)}</span>` : ''}${spkBtn(w)} — ${esc(d)}（${esc(z)}）</li>`).join('')}</ul></section>` : '') +
+    `<section><h3>單字表<span class="hint">雙擊文章中的單字可加入</span></h3><ul id="vocabList"></ul></section>` +
     list('qs', '理解題', a.q) + list('ds', '討論題', a.d);
+  renderVocab();
   $('info').textContent = `程度 ${a.l} ・ ${words} 字 ・ 約 ${mins} 分鐘`;
   $('bar').hidden = false;
   if (!a.q.length) $('tq').hidden = true;
@@ -160,8 +222,9 @@ toggle($('tq'), 'qs', '理解題'); toggle($('td'), 'ds', '討論題');
 function popup(v, raw) {
   const pop = $('pop');
   pop.innerHTML = v
-    ? `<button class="x" aria-label="關閉">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}<div>${esc(v.definition)}</div><div>${esc(v.zh)}</div>`
+    ? `<button class="x" aria-label="關閉">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}<div>${v.loading ? '查詢中…' : esc(v.definition || '（查無解釋）')}</div><div>${esc(v.zh)}</div>`
     : `<button class="x" aria-label="關閉">×</button>單字表中沒有「${esc(raw.replace(/^[^\w]+|[^\w]+$/g, ''))}」`;
+  pop.dataset.w = v ? v.word.toLowerCase() : '';
   pop.classList.add('show');
 }
 document.addEventListener('click', (e) => {
@@ -173,8 +236,20 @@ document.addEventListener('click', (e) => {
     document.querySelectorAll('#vocabList li').forEach((li) => li.classList.toggle('on', !!v && li.dataset.w === v.word.toLowerCase()));
     return popup(v, e.target.textContent);
   }
-  const li = e.target.closest('#vocabList li');
+  const del = e.target.closest('.del');
+  if (del) { // 移除自己加入的單字
+    const k = del.dataset.del; vocab.delete(k); items = items.filter((v) => v.word.toLowerCase() !== k);
+    renderVocab(); refreshHits(); persistUser(); return;
+  }
+  const li = e.target.closest('#vocabList li[data-w]');
   if (li) popup(vocab.get(li.dataset.w), li.dataset.w);
+});
+
+document.addEventListener('dblclick', (e) => {
+  const t = e.target.closest('.w'); if (!t) return;
+  getSelection()?.removeAllRanges();
+  const v = addWord(t.textContent);
+  if (v) popup(v, t.textContent);
 });
 
 (async () => {

@@ -46,6 +46,16 @@
   .spk { min-height:0; padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; vertical-align:baseline; }
   .spk:hover { border-color:var(--accent); }
   .extras section { background:var(--field); border:1px solid var(--line); border-radius:10px; padding:4px 16px 12px; margin-bottom:12px; }
+  #library { padding:12px 16px; }
+  #library h3 { margin:0; font-size:1rem; color:var(--accent); }
+  #library .head { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  #library .head .btns { display:flex; gap:8px; flex-wrap:wrap; }
+  #library button { min-height:34px; padding:4px 12px; font-size:.85rem; }
+  .libList { list-style:none; margin:0; padding:0; display:grid; gap:8px; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); }
+  .libList li { background:var(--field); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .libList .t { font-weight:600; } .libList .m { color:var(--muted); font-size:.8rem; margin:2px 0 8px; }
+  .libList .b { display:flex; gap:6px; flex-wrap:wrap; }
+  .danger { color:var(--err) !important; border-color:var(--err) !important; }
   .share { width:100%; margin-top:8px; font-size:.8rem; }
   #preview .actions { border-top:1px solid var(--line); padding-top:16px; }
 
@@ -71,7 +81,7 @@
   }
 
   @media print {
-    #form, #empty, .actions, .share, #status, #linkMsg { display:none !important; }
+    #form, #library, #empty, .actions, .share, #status, #linkMsg { display:none !important; }
     body { background:#fff; color:#000; } .layout { display:block; padding:0; }
     .card, .extras section { border:0; background:#fff; color:#000; } .meta { color:#444; } .doc { display:block; } .doc h3 { color:#000; }
   }
@@ -93,8 +103,21 @@
       <label><input type="checkbox" id="discussion" checked>討論題</label>
     </div>
     <button type="submit" id="go">產生文章</button>
+    <button type="button" id="libBtn" class="secondary" style="height:34px;min-height:0;padding:0 12px">📚 文章庫 (0)</button>
     <div id="status" class="msg" role="status"></div>
   </form>
+
+  <section id="library" class="card hidden">
+    <div class="head">
+      <h3>📚 文章庫（保存在這個瀏覽器）</h3>
+      <div class="btns">
+        <button type="button" id="libExport" class="secondary">匯出備份</button>
+        <button type="button" id="libImport" class="secondary">匯入備份</button>
+        <input type="file" id="libFile" accept="application/json,.json" class="hidden">
+      </div>
+    </div>
+    <ul id="libList" class="libList"></ul>
+  </section>
 
   <div>
     <div id="empty" class="card"><div class="big">📖</div>設定好條件後按「產生文章」，預覽會顯示在這裡。</div>
@@ -102,6 +125,7 @@
       <div id="doc" class="doc"></div>
       <div class="actions">
         <button type="button" id="regen" class="secondary">重新產生</button>
+        <button type="button" id="save" class="secondary">💾 保存文章</button>
         <button type="button" id="mkLink">產生分享連結</button>
         <button type="button" id="copy" class="secondary hidden">複製連結</button>
         <button type="button" id="print" class="secondary">列印</button>
@@ -226,14 +250,87 @@ $('form').addEventListener('submit', (e) => { e.preventDefault(); run(); });
 $('regen').addEventListener('click', run);
 $('print').addEventListener('click', () => window.print());
 
+// 把文章壓成分享連結（整篇文章都在網址裡，連結本身即可永久開啟）
+async function buildLink(a) {
+  const data = await encodeShare({ v: 1, t: a.title, l: a.level, w: a.wordCount, b: a.body, vo: a.vocabulary.map((x) => [x.word, x.definition, x.zh, x.kk || '']), q: a.questions, d: a.discussion });
+  return new URL('read.html', location.href).href + '#' + data;
+}
 $('mkLink').addEventListener('click', async () => {
   if (!current) return;
-  const a = current; // 只放閱讀頁需要的欄位
-  const data = await encodeShare({ v: 1, t: a.title, l: a.level, w: a.wordCount, b: a.body, vo: a.vocabulary.map((x) => [x.word, x.definition, x.zh, x.kk || '']), q: a.questions, d: a.discussion });
-  const url = new URL('read.html', location.href).href + '#' + data;
+  const url = await buildLink(current);
   $('link').value = url; $('link').classList.remove('hidden'); $('copy').classList.remove('hidden');
-  $('linkMsg').textContent = `連結長度 ${url.length} 字元` + (url.length > 8000 ? '（較長，部分通訊軟體可能截斷，請先自行測試）' : '');
+  $('linkMsg').textContent = `連結長度 ${url.length} 字元` + (url.length > 8000 ? '（較長，部分通訊軟體可能截斷，請先自行測試）' : '') + '。連結內含整篇文章，保存好連結就能永久開啟。';
 });
+
+// ---- 文章庫：保存在本機瀏覽器（localStorage），可匯出/匯入備份 ----
+const LIB_KEY = 'rc-library';
+const libLoad = () => { try { const l = JSON.parse(localStorage.getItem(LIB_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch { return []; } };
+const libStore = (l) => { try { localStorage.setItem(LIB_KEY, JSON.stringify(l)); return true; } catch { return false; } };
+const validArticle = (a) => a && typeof a.title === 'string' && typeof a.body === 'string';
+
+function renderLib() {
+  const l = libLoad();
+  $('libBtn').textContent = `📚 文章庫 (${l.length})`;
+  $('libList').innerHTML = l.length ? l.map((it) => {
+    const a = it.article;
+    return `<li data-id="${esc(it.id)}"><div class="t">${esc(a.title)}</div>` +
+      `<div class="m">程度 ${esc(a.level || '')} ・ ${a.wordCount || ''} 字 ・ 保存於 ${new Date(it.savedAt).toLocaleDateString()}</div>` +
+      `<div class="b"><button type="button" data-act="open">開啟</button><button type="button" class="secondary" data-act="copy">複製連結</button><button type="button" class="secondary danger" data-act="del">刪除</button></div></li>`;
+  }).join('') : '<li style="grid-column:1/-1;color:var(--muted)">尚無保存的文章。產生文章後按「💾 保存文章」。</li>';
+}
+$('libBtn').addEventListener('click', () => $('library').classList.toggle('hidden'));
+
+$('save').addEventListener('click', () => {
+  if (!current) return;
+  const l = libLoad();
+  const dup = l.find((it) => it.article.body === current.body && it.article.title === current.title);
+  if (dup) { $('linkMsg').textContent = '這篇文章已在文章庫中'; return; }
+  l.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), savedAt: Date.now(), article: current });
+  $('linkMsg').textContent = libStore(l) ? '✅ 已保存到文章庫（只存在這個瀏覽器，建議定期「匯出備份」）' : '❌ 保存失敗：瀏覽器儲存空間不足或被封鎖，請改用「產生分享連結」保存';
+  renderLib();
+});
+
+$('libList').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-act]'); if (!btn) return;
+  const id = btn.closest('li').dataset.id;
+  const l = libLoad(); const it = l.find((x) => x.id === id); if (!it) return;
+  if (btn.dataset.act === 'open') {
+    current = it.article; render(current);
+    $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else if (btn.dataset.act === 'copy') {
+    const url = await buildLink(it.article);
+    try { await navigator.clipboard.writeText(url); btn.textContent = '已複製 ✓'; } catch { prompt('請手動複製連結', url); }
+    setTimeout(() => { btn.textContent = '複製連結'; }, 1500);
+  } else if (btn.dataset.act === 'del') {
+    if (!confirm(`刪除「${it.article.title}」？已分享出去的連結不受影響。`)) return;
+    libStore(l.filter((x) => x.id !== id)); renderLib();
+  }
+});
+
+$('libExport').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({ app: 'reading-club', version: 1, items: libLoad() }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `reading-club-library-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+$('libImport').addEventListener('click', () => $('libFile').click());
+$('libFile').addEventListener('change', async () => {
+  const f = $('libFile').files[0]; $('libFile').value = ''; if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    const incoming = (Array.isArray(j) ? j : j.items || []).filter((it) => validArticle(it?.article));
+    const l = libLoad(); let n = 0;
+    incoming.forEach((it) => {
+      if (l.some((x) => x.id === it.id || (x.article.body === it.article.body && x.article.title === it.article.title))) return;
+      l.push({ id: String(it.id || Date.now() + Math.random()), savedAt: Number(it.savedAt) || Date.now(), article: it.article }); n++;
+    });
+    l.sort((a, b) => b.savedAt - a.savedAt);
+    alert(libStore(l) ? `已匯入 ${n} 篇文章` : '匯入失敗：瀏覽器儲存空間不足');
+  } catch { alert('匯入失敗：不是有效的備份檔'); }
+  renderLib();
+});
+renderLib();
+
 $('copy').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText($('link').value); $('linkMsg').textContent = '✅ 已複製連結'; }
   catch { $('link').select(); $('linkMsg').textContent = '請手動複製上方連結'; }
