@@ -8,15 +8,23 @@
   :root { color-scheme:dark; --bg:#14171c; --card:#1d222a; --ink:#e6e8eb; --muted:#9aa4b2; --accent:#4fb89a; --line:#333b47; --err:#ff8a80; --field:#12151a; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif; line-height:1.6; }
-  /* 版面：手機單欄 → 平板設定區兩欄 → 電腦左設定／右預覽 */
-  .layout { max-width:1760px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-columns:1fr; align-items:start; }
+  /* 版面：頂端一列精簡設定列，下方為全寬預覽 */
+  .layout { max-width:1760px; margin:0 auto; padding:12px; display:grid; gap:12px; grid-template-columns:1fr; align-items:start; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
-  label { display:block; font-weight:600; margin:12px 0 4px; font-size:.95rem; }
-  input[type=text], input[type=password], input[type=number], select { width:100%; padding:10px; font-size:1rem; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
-  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .checks label { display:inline-flex; align-items:center; gap:6px; font-weight:400; margin:10px 16px 0 0; }
-  .checks input { width:18px; height:18px; }
-  button { font-size:1rem; padding:10px 16px; min-height:44px; border:0; border-radius:8px; background:var(--accent); color:#0b1a15; font-weight:600; cursor:pointer; }
+  /* 設定列：欄位小標籤 + 緊湊輸入框，空間不足時自動換行 */
+  #form { padding:10px 12px; display:flex; flex-wrap:wrap; gap:8px 10px; align-items:flex-end; }
+  .f { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .f label { font-size:.7rem; color:var(--muted); margin:0; line-height:1.2; font-weight:500; white-space:nowrap; }
+  .f.grow { flex:1 1 220px; }
+  input[type=text], input[type=password], input[type=number], select { width:100%; padding:6px 8px; height:34px; font-size:.9rem; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
+  #code { width:104px; } #words { width:80px; } #level { width:68px; } #genre { width:108px; }
+  .checks { display:flex; gap:10px; align-items:center; height:34px; }
+  .checks label { display:inline-flex; align-items:center; gap:4px; font-size:.85rem; white-space:nowrap; cursor:pointer; }
+  .checks input { width:16px; height:16px; margin:0; }
+  #go { height:34px; min-height:0; padding:0 18px; }
+  #status { flex-basis:100%; margin:0; font-size:.9rem; }
+  #status:empty { display:none; }
+  button { font-size:.95rem; padding:8px 16px; min-height:40px; border:0; border-radius:8px; background:var(--accent); color:#0b1a15; font-weight:600; cursor:pointer; }
   button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
   button:disabled { opacity:.5; cursor:wait; }
   .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
@@ -38,30 +46,26 @@
   .share { width:100%; margin-top:8px; font-size:.8rem; }
   #preview .actions { border-top:1px solid var(--line); padding-top:16px; }
 
-  /* 平板：設定欄位橫向排開 */
-  @media (min-width:640px) {
-    .layout { padding:24px; }
-    .fields { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
-    .fields .wide { grid-column:1 / -1; }
-  }
-  /* 電腦：左側固定設定欄、右側預覽 */
-  @media (min-width:1024px) {
-    .layout { grid-template-columns:380px minmax(0,1fr); }
-    #form { position:sticky; top:16px; max-height:calc(100vh - 32px); overflow:auto; }
-    .fields { display:block; }
-    #preview { padding:24px; }
-  }
+  /* 電腦／平板 */
+  @media (min-width:640px) { .layout { padding:16px; } #preview { padding:20px; } }
   /* 寬螢幕：文章與單字/題目並排 */
-  @media (min-width:1360px) {
-    .doc.has-extras { grid-template-columns:minmax(0,1fr) 380px; }
-    .extras { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; }
+  @media (min-width:1100px) {
+    .doc.has-extras { grid-template-columns:minmax(0,1fr) 400px; }
+    .extras { position:sticky; top:12px; align-self:start; max-height:calc(100vh - 24px); overflow:auto; }
   }
   /* 平板（中等寬度）：單字與題目分欄排在文章下方 */
-  @media (min-width:640px) and (max-width:1359px) {
-    .extras { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; align-items:start; }
+  @media (min-width:640px) and (max-width:1099px) {
+    .extras { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; align-items:start; }
     .extras section { margin:0; }
   }
-  @media (max-width:420px) { .row { grid-template-columns:1fr; } .actions button { flex:1 1 40%; } }
+  /* 手機：欄位兩兩並排、按鈕滿版 */
+  @media (max-width:639px) {
+    .f { flex:1 1 40%; } .f.grow { flex-basis:100%; }
+    #code, #words, #level, #genre { width:100%; }
+    .checks { flex:1 1 100%; justify-content:space-between; }
+    #go { flex:1 1 100%; height:40px; }
+    .actions button { flex:1 1 40%; }
+  }
 
   @media print {
     #form, #empty, .actions, .share, #status, #linkMsg { display:none !important; }
@@ -73,41 +77,19 @@
 <body>
 <div class="layout">
   <form id="form" class="card">
-    <div class="fields">
-      <div class="wide">
-        <label for="code" style="margin-top:0">存取碼</label>
-        <input type="password" id="code" autocomplete="off" required>
-      </div>
-      <div class="wide">
-        <label for="topic">主題（最多 100 字）</label>
-        <input type="text" id="topic" maxlength="100" placeholder="例如：the history of coffee" required>
-      </div>
-      <div>
-        <label for="words">字數（100–2000）</label>
-        <input type="number" id="words" min="100" max="2000" value="300" required>
-      </div>
-      <div>
-        <label for="level">CEFR 程度</label>
-        <select id="level">
-          <option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option>
-        </select>
-      </div>
-      <div class="wide">
-        <label for="genre">文體（選填）</label>
-        <select id="genre">
-          <option value="">不指定</option>
-          <option value="explanation">說明文</option>
-          <option value="story">故事</option>
-          <option value="news">新聞風格</option>
-        </select>
-      </div>
-      <div class="wide checks">
-        <label><input type="checkbox" id="vocab" checked> 附單字表</label>
-        <label><input type="checkbox" id="questions" checked> 附理解題</label>
-        <label><input type="checkbox" id="discussion" checked> 附討論題</label>
-      </div>
+    <div class="f"><label for="code">存取碼</label><input type="password" id="code" autocomplete="off" required></div>
+    <div class="f grow"><label for="topic">主題（最多 100 字）</label><input type="text" id="topic" maxlength="100" placeholder="例如：the history of coffee" required></div>
+    <div class="f"><label for="words">字數 100–2000</label><input type="number" id="words" min="100" max="2000" value="300" required></div>
+    <div class="f"><label for="level">CEFR</label>
+      <select id="level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option></select></div>
+    <div class="f"><label for="genre">文體（選填）</label>
+      <select id="genre"><option value="">不指定</option><option value="explanation">說明文</option><option value="story">故事</option><option value="news">新聞風格</option></select></div>
+    <div class="checks">
+      <label><input type="checkbox" id="vocab" checked>單字表</label>
+      <label><input type="checkbox" id="questions" checked>理解題</label>
+      <label><input type="checkbox" id="discussion" checked>討論題</label>
     </div>
-    <div class="actions"><button type="submit" id="go">產生文章</button></div>
+    <button type="submit" id="go">產生文章</button>
     <div id="status" class="msg" role="status"></div>
   </form>
 
@@ -198,7 +180,7 @@ async function run() {
     current = await generate(payload, (n) => { $('status').textContent = `⏳ AI 產生中…（已收到 ${n} 字元）`; });
     $('status').textContent = '';
     render(current);
-    if (matchMedia('(max-width:1023px)').matches) $('preview').scrollIntoView({ behavior: 'smooth' }); // 手機/平板才需要捲動
+    if (matchMedia('(max-width:1099px)').matches) $('preview').scrollIntoView({ behavior: 'smooth' }); // 窄螢幕才需要捲動
   } catch (e) {
     $('status').className = 'msg err'; $('status').textContent = '❌ ' + e.message;
   } finally { $('go').disabled = $('regen').disabled = false; }
