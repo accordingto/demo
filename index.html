@@ -27,6 +27,8 @@
   button { font-size:.95rem; padding:8px 16px; min-height:40px; border:0; border-radius:8px; background:var(--accent); color:#0b1a15; font-weight:600; cursor:pointer; }
   button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
   button:disabled { opacity:.5; cursor:wait; }
+  a.btn { display:inline-flex; align-items:center; font-size:.95rem; padding:8px 16px; min-height:40px; border-radius:8px; text-decoration:none; font-weight:600; }
+  a.btn.secondary { color:var(--accent); border:1px solid var(--accent); }
   .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
   .msg { margin-top:12px; font-size:.95rem; }
   .err { color:var(--err); } .warn { color:#f0c36d; }
@@ -91,7 +93,7 @@
   }
 
   @media print {
-    #form, #library, #empty, #vocabPanel .addrow, #vmsg, .del, .actions, .share, #status, #linkMsg { display:none !important; }
+    #form, #library, #empty, #openReader, #vocabPanel .addrow, #vmsg, .del, .actions, .share, #status, #linkMsg { display:none !important; }
     body { background:#fff; color:#000; } .layout { display:block; padding:0; }
     .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }
   }
@@ -138,6 +140,7 @@
         <button type="button" id="save" class="secondary">💾 Save article</button>
         <button type="button" id="mkLink">Create share link</button>
         <button type="button" id="copy" class="secondary hidden">Copy link</button>
+        <a id="openReader" class="btn secondary hidden" href="#" target="_blank" rel="noopener">Open reader view ↗</a>
         <button type="button" id="print" class="secondary">Print</button>
       </div>
       <input type="text" id="link" class="share hidden" readonly>
@@ -298,7 +301,7 @@ function render(a, vocab = []) {
   $('qa').innerHTML = ol('Comprehension questions', a.questions) + ol('Discussion questions', a.discussion); // 在按鈕下方
   $('empty').classList.add('hidden');
   $('preview').classList.remove('hidden');
-  $('link').classList.add('hidden'); $('copy').classList.add('hidden'); $('linkMsg').textContent = '';
+  $('link').classList.add('hidden'); $('copy').classList.add('hidden'); $('openReader').classList.add('hidden'); $('linkMsg').textContent = '';
 }
 
 async function run() {
@@ -333,6 +336,7 @@ $('mkLink').addEventListener('click', async () => {
   if (!current) return;
   const url = await buildLink(current, items);
   $('link').value = url; $('link').classList.remove('hidden'); $('copy').classList.remove('hidden');
+  $('openReader').href = url; $('openReader').classList.remove('hidden');
   $('linkMsg').textContent = `Link length: ${url.length} characters` + (url.length > 8000 ? ' (long — some messaging apps may truncate it, so test it first)' : '') + '. The link contains the whole article, so keep it and it will open forever.';
 });
 
