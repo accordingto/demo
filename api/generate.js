@@ -187,6 +187,7 @@ async function callGroq(messages, onDelta, signal, maxTokens) {
   const dec = new TextDecoder();
   let buf = '';
   let full = '';
+  let finish = '';
   for await (const chunk of r.body) {
     buf += dec.decode(chunk, { stream: true });
     let i;
@@ -197,12 +198,14 @@ async function callGroq(messages, onDelta, signal, maxTokens) {
       const payload = line.slice(5).trim();
       if (payload === '[DONE]') continue;
       try {
-        const delta = JSON.parse(payload).choices?.[0]?.delta?.content;
+        const choice = JSON.parse(payload).choices?.[0];
+        if (choice?.finish_reason) finish = choice.finish_reason; // 'stop' = 正常結束，'length' = 被 token 上限截斷
+        const delta = choice?.delta?.content;
         if (delta) { full += delta; onDelta(full.length); }
       } catch { /* 忽略不完整的行 */ }
     }
   }
-  return full;
+  return { text: full, finish };
 }
 
 // 解析 AI 回傳的分段文字（=== TITLE === / BODY / QUESTIONS / DISCUSSION ===）。
@@ -215,12 +218,24 @@ function parseSections(text) {
 }
 const toList = (t) => (t || '').split('\n').filter((l) => !/^\s*```/.test(l)).map((l) => l.replace(/^\s*(?:\d+[.)]|[-*•])\s*/, '').trim()).filter(Boolean);
 
-function parseArticle(text, o) {
+function parseArticle(text, o, finish) {
   const sec = parseSections(text);
+  const known = new Set(['TITLE', 'QUESTIONS', 'DISCUSSION', 'BODY']);
+  // 容錯：AI 把標記寫成別的名稱（STORY / ARTICLE / TEXT…）時，取最長的那一段當文章
+  if (!sec.BODY) {
+    const other = Object.entries(sec).filter(([k]) => !known.has(k)).sort((a, b) => b[1].length - a[1].length)[0];
+    if (other && other[1].length > 150) sec.BODY = other[1];
+  }
   // AI 完全沒用標記時，把整段文字當成文章（總比失敗好）
   if (!sec.BODY && !Object.keys(sec).length && text.trim().length > 200) sec.BODY = text;
   const body = (sec.BODY || '').replace(/^```\w*\n?|\n?```\s*$/g, '').trim();
-  if (!body) throw new Error('The AI response was incomplete (no article text). Please regenerate.');
+  if (!body) {
+    // 把原因直接告訴使用者：被截斷、空白，或 AI 回了別的內容
+    const why = finish === 'length' ? ' The output hit the token limit before the article was written (a reasoning model can spend its tokens on thinking). Try fewer words or a non-reasoning model.'
+      : !text.trim() ? ' The AI returned an empty response.'
+      : ` The AI replied: “${text.trim().replace(/\s+/g, ' ').slice(0, 160)}”`;
+    throw new Error('The AI response was incomplete (no article text).' + why);
+  }
   const title = (sec.TITLE || '').split('\n')[0].replace(/^["'“”#*\s]+|["'“”*\s]+$/g, '') || 'Untitled';
   return {
     title,
@@ -255,8 +270,8 @@ module.exports = async function handler(req, res) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
-    const text = await callGroq(buildMessages(o), (n) => send(res, 'progress', { chars: n }), ctrl.signal, Math.min(8000, Math.ceil(o.words * 2) + 1200));
-    const article = parseArticle(text, o);
+    const { text, finish } = await callGroq(buildMessages(o), (n) => send(res, 'progress', { chars: n }), ctrl.signal, Math.min(12000, Math.ceil(o.words * 2.5) + 2500));
+    const article = parseArticle(text, o, finish);
     const actual = countWords(article.body);
     // 串流時不自動重試（重試需再次完整生成，可能超過函式時限）；超出 ±10% 時附上實際字數供前端提示
     const withinTolerance = Math.abs(actual - o.words) <= o.words * TOLERANCE;
