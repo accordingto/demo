@@ -110,7 +110,8 @@
 const $ = (id) => document.getElementById(id);
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null; // 目前預覽的文章
-Vocab.init({ getBody: () => current?.body }); // 單字表／雙擊加字／標示／字體大小（共用 vocab.js）
+let currentLibId = null; // 目前文章在文章庫中的 id（已保存或從文章庫開啟時才有）→ 單字表有變動就自動同步
+Vocab.init({ getBody: () => current?.body, onChange: syncLib }); // 單字表／雙擊加字／標示／字體大小（共用 vocab.js）
 
 // ---- 記住設定：存在這台裝置的瀏覽器（localStorage），下次開啟自動帶入 ----
 const SAVED = ['code', 'topic', 'words', 'level', 'genre', 'questions', 'discussion'];
@@ -169,6 +170,7 @@ async function generate(payload, onProgress) {
 }
 
 function render(a, vocab = []) {
+  currentLibId = null;
   Vocab.setItems(vocab);
   const mins = Math.max(1, Math.round(a.wordCount / 200));
   const ol = (title, arr) => arr.length ? `<section><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
@@ -232,20 +234,40 @@ function renderLib() {
   $('libList').innerHTML = l.length ? l.map((it) => {
     const a = it.article;
     return `<li data-id="${esc(it.id)}"><div class="t">${esc(a.title)}</div>` +
-      `<div class="m">Level ${esc(a.level || '')} ・ ${a.wordCount || ''} words ・ saved ${new Date(it.savedAt).toLocaleDateString()}</div>` +
+      `<div class="m">Level ${esc(a.level || '')} ・ ${a.wordCount || ''} words ・ 📖 ${(it.vocab || []).length} vocabulary ・ saved ${new Date(it.savedAt).toLocaleDateString()}</div>` +
       `<div class="b"><button type="button" data-act="open">Open</button><button type="button" class="secondary" data-act="copy">Copy link</button><button type="button" class="secondary danger" data-act="del">Delete</button></div></li>`;
   }).join('') : '<li style="grid-column:1/-1;color:var(--muted)">No saved articles yet. Generate one and press “💾 Save article”.</li>';
 }
 $('libBtn').addEventListener('click', () => $('library').classList.toggle('hidden'));
 
+// 目前單字表（只存查詢完成的字）
+const settledVocab = () => Vocab.getItems().filter((v) => !v.loading && !v.failed).map(({ word, pos, definition, zh, kk, lemma }) => ({ word, pos, definition, zh, kk, lemma }));
+
+// 文章已在文章庫時，單字表一有變動就自動同步（等查詢完成、稍微延遲後存）
+let syncTimer = null;
+function syncLib() {
+  if (!currentLibId) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    if (!currentLibId || Vocab.getItems().some((v) => v.loading)) return; // 還在查詢中，查完會再觸發一次
+    const l = libLoad(); const it = l.find((x) => x.id === currentLibId); if (!it) return;
+    it.vocab = settledVocab();
+    if (libStore(l)) { renderLib(); $('vmsg').textContent = `Vocabulary saved to library (${it.vocab.length}).`; }
+  }, 400);
+}
+
 $('save').addEventListener('click', () => {
   if (!current) return;
   const l = libLoad();
   const dup = l.find((it) => it.article.body === current.body && it.article.title === current.title);
-  const vocab = Vocab.getItems().filter((v) => !v.loading && !v.failed).map(({ word, pos, definition, zh, kk, lemma }) => ({ word, pos, definition, zh, kk, lemma }));
-  if (dup) { dup.vocab = vocab; $('linkMsg').textContent = libStore(l) ? '✅ Library entry updated (including your vocabulary)' : '❌ Could not save'; renderLib(); return; }
-  l.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), savedAt: Date.now(), article: current, vocab });
-  $('linkMsg').textContent = libStore(l) ? '✅ Saved to your library (stored in this browser only — export a backup now and then)' : '❌ Could not save: browser storage is full or blocked. Use “Create share link” instead.';
+  const vocab = settledVocab();
+  if (dup) {
+    dup.vocab = vocab; currentLibId = dup.id;
+    $('linkMsg').textContent = libStore(l) ? `✅ Library entry updated (${vocab.length} vocabulary words)` : '❌ Could not save'; renderLib(); return;
+  }
+  const entry = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), savedAt: Date.now(), article: current, vocab };
+  l.unshift(entry); currentLibId = entry.id;
+  $('linkMsg').textContent = libStore(l) ? `✅ Saved to your library with ${vocab.length} vocabulary words. New words you add now are saved automatically (stored in this browser only — export a backup now and then)` : '❌ Could not save: browser storage is full or blocked. Use “Create share link” instead.';
   renderLib();
 });
 
@@ -254,7 +276,7 @@ $('libList').addEventListener('click', async (e) => {
   const id = btn.closest('li').dataset.id;
   const l = libLoad(); const it = l.find((x) => x.id === id); if (!it) return;
   if (btn.dataset.act === 'open') {
-    current = it.article; render(current, it.vocab || []);
+    current = it.article; render(current, it.vocab || []); currentLibId = it.id; // 開啟後，單字表的變動會自動同步回文章庫
     $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (btn.dataset.act === 'copy') {
     const url = await buildLink(it.article, it.vocab || []);
