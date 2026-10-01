@@ -51,6 +51,10 @@
   #pasteTitle { margin-bottom:8px; height:36px; font-size:1rem; }
   #pasteBody { width:100%; min-height:220px; resize:vertical; padding:10px 12px; font-family:inherit; font-size:1.05rem; line-height:1.7; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
   #pasteMsg { margin-top:8px; font-size:.9rem; }
+  #pastePanel .qrow { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+  #pastePanel .qrow label { display:block; font-size:.8rem; color:var(--ink); margin-bottom:3px; }
+  .pta { width:100%; resize:vertical; padding:8px 10px; font-family:inherit; font-size:.95rem; line-height:1.5; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
+  @media (max-width:639px) { #pastePanel .qrow { grid-template-columns:1fr; } }
   /* 手機：欄位兩兩並排、按鈕滿版 */
   @media (max-width:639px) {
     .f { flex:1 1 40%; } .f.grow { flex-basis:100%; }
@@ -87,11 +91,15 @@
 
   <section id="pastePanel" class="card hidden">
     <div class="head">
-      <h3>✍ Paste your own text</h3>
+      <h3 id="pasteHead">✍ Paste your own text</h3>
       <span class="meta" id="pasteInfo">0 words</span>
     </div>
     <input type="text" id="pasteTitle" maxlength="120" placeholder="Title (optional)" autocomplete="off">
     <textarea id="pasteBody" placeholder="Paste or type an English article here…" spellcheck="false"></textarea>
+    <div class="qrow">
+      <div><label for="pasteQ">Comprehension questions <span class="meta">(optional, one per line, max 5)</span></label><textarea id="pasteQ" class="pta" rows="3" spellcheck="false"></textarea></div>
+      <div><label for="pasteD">Discussion questions <span class="meta">(optional, one per line, max 5)</span></label><textarea id="pasteD" class="pta" rows="3" spellcheck="false"></textarea></div>
+    </div>
     <div class="actions">
       <button type="button" id="pasteUse">Use this text</button>
       <button type="button" id="pasteClear" class="secondary">Clear</button>
@@ -123,7 +131,7 @@
       <div id="doc" class="doc"></div>
       <div class="actions">
         <button type="button" id="regen" class="secondary">Regenerate</button>
-        <button type="button" id="editText" class="secondary hidden">✍ Edit text</button>
+        <button type="button" id="editText" class="secondary">✍ Edit</button>
         <button type="button" id="save" class="secondary">💾 Save article</button>
         <button type="button" id="mkLink">Create share link</button>
         <button type="button" id="copy" class="secondary hidden">Copy link</button>
@@ -222,7 +230,6 @@ function render(a, vocab = []) {
   Vocab.repaint();
   $('qa').innerHTML = ol('Comprehension questions', a.questions) + ol('Discussion questions', a.discussion); // 在按鈕下方
   $('regen').classList.toggle('hidden', a.source === 'pasted');   // 貼上的文章沒有「重新產生」，改用「Edit text」
-  $('editText').classList.toggle('hidden', a.source !== 'pasted');
   $('empty').classList.add('hidden');
   $('preview').classList.remove('hidden');
   $('link').classList.add('hidden'); $('copy').classList.add('hidden'); $('openReader').classList.add('hidden'); $('linkMsg').textContent = '';
@@ -282,37 +289,63 @@ function normalizePasted(raw) {
   return t;
 }
 const PASTE_KEY = 'rc-paste-draft';
-function savePasteDraft() { try { localStorage.setItem(PASTE_KEY, JSON.stringify({ t: $('pasteTitle').value, b: $('pasteBody').value })); } catch {} }
-function updatePasteInfo() { const n = countWordsIn($('pasteBody').value); $('pasteInfo').textContent = `${n} words`; }
-try { const d = JSON.parse(localStorage.getItem(PASTE_KEY) || 'null'); if (d) { $('pasteTitle').value = d.t || ''; $('pasteBody').value = d.b || ''; updatePasteInfo(); } } catch {}
-let editingPasted = false;
-function openPaste(prefill) {
-  if (prefill) { $('pasteTitle').value = prefill.title; $('pasteBody').value = prefill.body; updatePasteInfo(); }
-  editingPasted = !!prefill;
+const PF = { t: 'pasteTitle', b: 'pasteBody', q: 'pasteQ', d: 'pasteD' };
+let editing = false; // true = 正在編輯目前這篇文章；false = 貼上新文章
+const PASTE_NOTE = 'No access code needed — pasted text is not sent to the AI. You can look up words, save it to your library and share it just like a generated article. URLs in the text become clickable links.';
+function savePasteDraft() { if (editing) return; try { localStorage.setItem(PASTE_KEY, JSON.stringify(Object.fromEntries(Object.entries(PF).map(([k, id]) => [k, $(id).value])))); } catch {} } // 編輯既有文章時不動「貼上草稿」
+function updatePasteInfo() { $('pasteInfo').textContent = `${countWordsIn($('pasteBody').value)} words`; }
+function fillPaste(o) { Object.entries(PF).forEach(([k, id]) => { $(id).value = o[k] || ''; }); updatePasteInfo(); }
+function loadDraft() { let d = {}; try { d = JSON.parse(localStorage.getItem(PASTE_KEY) || '{}') || {}; } catch {} fillPaste(d); }
+loadDraft();
+const toLines = (v) => v.split('\n').map((l) => l.replace(/^\s*(?:\d+[.)]|[-*•])\s*/, '').trim()).filter(Boolean).slice(0, 5);
+function setPasteMsg(t, err) { $('pasteMsg').className = err ? 'msg err' : 'meta'; $('pasteMsg').textContent = t; }
+function openPaste(article) { // article 有值 = 編輯這篇文章；沒有 = 貼上新文章
+  editing = !!article;
+  if (article) fillPaste({ t: article.title, b: article.body, q: (article.questions || []).join('\n'), d: (article.discussion || []).join('\n') }); else loadDraft();
+  $('pasteHead').textContent = editing ? '✍ Edit article' : '✍ Paste your own text';
+  $('pasteUse').textContent = editing ? 'Save changes' : 'Use this text';
+  setPasteMsg(editing ? (currentLibId ? 'Changes are saved back to your library' + (cloud ? ' and the share link shows the updated article.' : '.') : 'Changes apply to the article on screen. Press “Save article” afterwards to keep it in your library.') : PASTE_NOTE);
   $('pastePanel').classList.remove('hidden'); $('library').classList.add('hidden');
   $('pasteBody').focus(); $('pastePanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
-$('pasteBtn').addEventListener('click', () => $('pastePanel').classList.contains('hidden') ? openPaste() : $('pastePanel').classList.add('hidden'));
-$('pasteCancel').addEventListener('click', () => $('pastePanel').classList.add('hidden'));
-$('pasteClear').addEventListener('click', () => { $('pasteTitle').value = ''; $('pasteBody').value = ''; updatePasteInfo(); savePasteDraft(); $('pasteBody').focus(); });
-$('pasteBody').addEventListener('input', () => { updatePasteInfo(); savePasteDraft(); });
-$('pasteTitle').addEventListener('input', savePasteDraft);
-$('editText').addEventListener('click', () => { if (current?.source === 'pasted') openPaste({ title: current.title, body: current.body }); });
-$('pasteUse').addEventListener('click', () => {
+function closePaste() { $('pastePanel').classList.add('hidden'); editing = false; }
+$('pasteBtn').addEventListener('click', () => ($('pastePanel').classList.contains('hidden') || editing) ? openPaste() : closePaste());
+$('pasteCancel').addEventListener('click', closePaste);
+$('pasteClear').addEventListener('click', () => { fillPaste({}); savePasteDraft(); $('pasteBody').focus(); });
+Object.values(PF).forEach((id) => $(id).addEventListener('input', () => { if (id === 'pasteBody') updatePasteInfo(); savePasteDraft(); }));
+$('editText').addEventListener('click', () => { if (current) openPaste(current); });
+
+// 編輯後：文章已在文章庫 → 存回文章庫（雲端：同一個 id，短連結內容跟著更新）
+async function persistEdit() {
+  try {
+    if (cloud) { const id = await cloudSave(); showLink(shortLink(id)); $('linkMsg').textContent = '✅ Changes saved to the cloud library. The share link now shows the updated article.'; await refreshCloud(); }
+    else {
+      const l = libLoad(); const it = l.find((x) => x.id === currentLibId);
+      if (it) { it.article = current; it.vocab = settledVocab(); $('linkMsg').textContent = libStore(l) ? '✅ Changes saved to your library. (Links you already shared keep the old version — create a new link to share this one.)' : '❌ Could not save'; renderLib(); }
+    }
+  } catch (e) { $('linkMsg').textContent = '❌ ' + e.message; }
+}
+$('pasteUse').addEventListener('click', async () => {
   const body = normalizePasted($('pasteBody').value);
   const n = countWordsIn(body);
-  const msg = (t, err) => { $('pasteMsg').className = err ? 'msg err' : 'meta'; $('pasteMsg').textContent = t; };
-  if (n < 20) return msg('Please paste at least 20 words.', true);
-  if (n > 8000) return msg(`That is ${n} words — please keep it under 8000 words (very long texts make the share link too long).`, true);
-  if (!/[A-Za-z]{3}/.test(body)) return msg('This does not look like English text.', true);
+  if (n < 20) return setPasteMsg('Please use at least 20 words.', true);
+  if (n > 8000) return setPasteMsg(`That is ${n} words — please keep it under 8000 words (very long texts make the share link too long).`, true);
+  if (!/[A-Za-z]{3}/.test(body)) return setPasteMsg('This does not look like English text.', true);
   const title = $('pasteTitle').value.replace(/\s+/g, ' ').trim() || body.split(/\s+/).slice(0, 6).join(' ').replace(/[.,;:!?"“”]+$/, '') + '…';
-  const keep = editingPasted ? settledVocab() : []; // 編輯文字時保留已挑的單字
-  current = { source: 'pasted', title, body, level: '', targetWords: n, wordCount: n, withinTolerance: true, questions: [], discussion: [] };
-  render(current, keep);
-  editingPasted = false;
-  $('pastePanel').classList.add('hidden');
-  msg(n > 3000 ? `Using ${n} words. Long texts make a long share link — test it before sending.` : 'No access code needed — pasted text is not sent to the AI. You can look up words, save it to your library and share it just like a generated article.');
+  const questions = toLines($('pasteQ').value), discussion = toLines($('pasteD').value);
+  if (editing && current) { // 編輯目前這篇：保留單字、程度、文章庫連結
+    const libId = currentLibId, keep = settledVocab();
+    current = { ...current, title, body, wordCount: n, targetWords: n, withinTolerance: true, questions, discussion };
+    render(current, keep); currentLibId = libId;
+    closePaste();
+    if (libId) await persistEdit(); else $('linkMsg').textContent = 'Changes applied. Press “Save article” to keep them in your library.';
+    return;
+  }
+  current = { source: 'pasted', title, body, level: '', targetWords: n, wordCount: n, withinTolerance: true, questions, discussion };
+  render(current, []);
+  closePaste();
   $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setPasteMsg(n > 3000 ? `Using ${n} words. Long texts make a long share link — test it before sending.` : PASTE_NOTE);
 });
 
 // ---- 文章庫 ----
@@ -362,7 +395,7 @@ function renderLib() {
   $('libList').innerHTML = l.length ? l.map((it) =>
     `<li data-id="${esc(it.id)}"><div class="t">${esc(it.title)}</div>` +
     `<div class="m">${it.level ? 'Level ' + esc(it.level) : '✍ Pasted text'} ・ ${it.words || ''} words ・ 📖 ${it.vocab} vocabulary ・ ${cloud ? 'updated' : 'saved'} ${new Date(it.ts).toLocaleDateString()}</div>` +
-    `<div class="b"><button type="button" data-act="open">Open</button><button type="button" class="secondary" data-act="copy">Copy link</button><button type="button" class="secondary danger" data-act="del">Delete</button></div></li>`
+    `<div class="b"><button type="button" data-act="open">Open</button><button type="button" class="secondary" data-act="edit">✍ Edit</button><button type="button" class="secondary" data-act="copy">Copy link</button><button type="button" class="secondary danger" data-act="del">Delete</button></div></li>`
   ).join('') : `<li style="grid-column:1/-1;color:var(--muted)">No saved articles yet. Generate or paste one and press “💾 Save article”.</li>`;
 }
 $('libBtn').addEventListener('click', () => { $('library').classList.toggle('hidden'); if (cloud && !$('library').classList.contains('hidden')) refreshCloud(); });
@@ -426,11 +459,11 @@ $('libList').addEventListener('click', async (e) => {
   const id = btn.closest('li').dataset.id, act = btn.dataset.act;
   if (cloud) {
     try {
-      if (act === 'open') {
+      if (act === 'open' || act === 'edit') {
         const r = await cloudCall({ action: 'get', id });
         current = { ...r.article, withinTolerance: true }; render(current, r.vocab || []); currentLibId = id;
         showLink(shortLink(id)); $('linkMsg').textContent = 'Opened from the cloud library. Its share link is ready below.';
-        $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (act === 'edit') openPaste(current); else $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else if (act === 'copy') {
         const url = shortLink(id);
         try { await navigator.clipboard.writeText(url); btn.textContent = 'Copied ✓'; } catch { prompt('Copy the link manually', url); }
@@ -446,9 +479,9 @@ $('libList').addEventListener('click', async (e) => {
     return;
   }
   const l = libLoad(); const it = l.find((x) => x.id === id); if (!it) return;
-  if (act === 'open') {
+  if (act === 'open' || act === 'edit') {
     current = it.article; render(current, it.vocab || []); currentLibId = it.id; // 開啟後，單字表的變動會自動同步回文章庫
-    $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (act === 'edit') openPaste(current); else $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (act === 'copy') {
     const url = await buildLink(it.article, it.vocab || []);
     try { await navigator.clipboard.writeText(url); btn.textContent = 'Copied ✓'; } catch { prompt('Copy the link manually', url); }

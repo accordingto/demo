@@ -34,14 +34,32 @@
     const el = $('bodyText'); if (!el) return;
     const keys = new Set();
     items.forEach((v) => { keys.add(v.word.toLowerCase()); if (v.lemma) keys.add(v.lemma.toLowerCase()); });
-    const wrap = (t) => {
-      if (!/^[A-Za-z]/.test(t)) return esc(t);
+
+    // 網址（http/https/www.）→ 可點擊的連結（新分頁開啟）。先把網址換成佔位符，避免被拆成單字或被句號切句
+    const URL_RE = /\b(?:https?:\/\/|www\.)[^\s<>"“”]+/gi;
+    const trimUrl = (u) => { // 去掉結尾的標點；結尾的「)」只有在沒有對應的「(」時才去掉
+      for (;;) {
+        if (/[.,;:!?'’\]}]$/.test(u)) u = u.slice(0, -1);
+        else if (u.endsWith(')') && (u.match(/\)/g) || []).length > (u.match(/\(/g) || []).length) u = u.slice(0, -1);
+        else return u;
+      }
+    };
+    const linkHtml = (u) => {
+      const href = /^www\./i.test(u) ? 'https://' + u : u;
+      try { if (!/^https?:$/.test(new URL(href).protocol)) return esc(u); } catch { return esc(u); } // 只允許 http/https
+      return `<a class="ulink" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>`;
+    };
+    const wrap = (t, urls) => {
+      if (!/^[A-Za-z]/.test(t)) return esc(t).replace(/\uE000(\d+)\uE001/g, (_, i) => linkHtml(urls[+i]));
       return stems(clean(t)).some((k) => keys.has(k)) ? `<mark class="vh w">${esc(t)}</mark>` : `<span class="w">${esc(t)}</span>`;
     };
     // 每個句子包成 span.s（點單字表時可整句標示）；句子內每個字包成 span.w / mark.vh
     const sentences = (p) => (p.match(/[^.!?]+(?:[.!?]+["'”’)]*)?\s*/g) || [p]).filter((x) => x.length);
-    el.innerHTML = String(cfg.getBody() || '').split(/\n\s*\n/).filter((p) => p.trim())
-      .map((p) => `<p>${sentences(p).map((st) => `<span class="s">${st.split(/([A-Za-z][A-Za-z’'-]*)/).map(wrap).join('')}</span>`).join('')}</p>`).join('');
+    el.innerHTML = String(cfg.getBody() || '').split(/\n\s*\n/).filter((p) => p.trim()).map((p) => {
+      const urls = [];
+      const masked = p.replace(URL_RE, (m) => { const core = trimUrl(m); urls.push(core); return `\uE000${urls.length - 1}\uE001${m.slice(core.length)}`; });
+      return `<p>${sentences(masked).map((st) => `<span class="s">${st.split(/([A-Za-z][A-Za-z’'-]*)/).map((t) => wrap(t, urls)).join('')}</span>`).join('')}</p>`;
+    }).join('');
   }
 
   // ---- 點單字表的某個字 → 文章中這個字的每一處（含整句）特別標示，並可逐一跳到每一處 ----

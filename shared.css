@@ -40,6 +40,10 @@ button:disabled { opacity:.5; cursor:wait; }
 mark.vh { background:rgba(124,199,255,.30); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; box-shadow:0 0 0 1px rgba(124,199,255,.35) inset; cursor:pointer; }  /* 已加入單字庫的字：底色標示 */
 mark.vh:hover { background:rgba(124,199,255,.5); }
 
+/* 文章中的網址：可點擊的連結（新分頁開啟） */
+a.ulink { color:#7cc7ff; text-decoration:underline; text-underline-offset:2px; word-break:break-all; }
+a.ulink:hover { color:#a8dcff; }
+
 /* 點單字表的字 → 文章中這個字的每一處（橘色）與所在的整句（淡橘底）；目前這一處更醒目 */
 .s.hit { background:rgba(255,184,64,.12); border-radius:4px; }
 mark.vh.cur { background:rgba(255,184,64,.50); box-shadow:0 0 0 1px rgba(255,184,64,.95) inset; }
@@ -78,6 +82,7 @@ mark.vh.now { background:#ffb840; color:#1b1f24; box-shadow:0 0 0 2px #fff0c2; a
 .del:hover { color:var(--err); }
 
 @media print {
+  a.ulink { color:inherit; }
   mark.vh, mark.vh.cur, mark.vh.now { background:none; box-shadow:none; color:inherit; animation:none; }
   .s.hit { background:none; } #hlbar { display:none !important; }
   .fsbar, #vocabPanel .addrow, #vmsg, .del { display:none !important; }
