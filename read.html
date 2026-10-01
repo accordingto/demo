@@ -20,12 +20,13 @@
   h1 { font-family:Georgia,serif; font-size:1.7rem; line-height:1.25; margin:16px 0 4px; }
   .meta { color:var(--muted); font-size:.9rem; margin-bottom:16px; }
   #body p { font-family:Georgia,"Times New Roman",serif; font-size:var(--fs); line-height:1.75; margin:0 0 1em; }
-  .w { cursor:pointer; border-radius:3px; } .w.hit { border-bottom:2px dotted var(--accent); } .w:hover { background:#27424a; }
+  .w { cursor:pointer; border-radius:3px; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; } .w.hit { border-bottom:2px dotted var(--accent); } .w:hover { background:#27424a; }
 
-  aside.side { padding:0 16px 96px; display:grid; gap:12px; align-content:start; }
-  aside.side section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:4px 16px 12px; }
-  aside.side h3 { margin:.9em 0 .4em; font-size:1.05rem; color:var(--accent); }
-  aside.side ul, aside.side ol { margin:0; padding-left:1.3em; }
+  aside.side { padding:0 16px 16px; }
+  aside.side section, section.bottom section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:4px 16px 12px; }
+  aside.side h3, section.bottom h3 { margin:.9em 0 .4em; font-size:1.05rem; color:var(--accent); }
+  aside.side ul, section.bottom ol { margin:0; padding-left:1.3em; }
+  section.bottom { padding:0 16px 96px; display:grid; gap:12px; align-content:start; }
   li { margin-bottom:.5em; line-height:1.6; }
   .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
   .spk { padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; cursor:pointer; }
@@ -34,32 +35,36 @@
   .del { float:right; border:0; background:none; color:var(--muted); cursor:pointer; font-size:1.1rem; line-height:1; padding:0 4px; }
   .del:hover { color:#ff8a80; }
   .user b::after { content:' ＋'; color:var(--accent); font-weight:400; font-size:.8em; }
+  #vocabList li.empty { list-style:none; margin-left:-1.3em; color:var(--muted); cursor:default; }
+  #vocabList li.fail { color:#f0c36d; }
+  .note { color:var(--accent); font-size:.85rem; margin-top:4px; }
   #vocabList li { cursor:pointer; } #vocabList li.on { background:#27424a; border-radius:4px; }
 
   #pop { position:fixed; left:12px; right:12px; bottom:12px; max-width:560px; margin:0 auto; background:var(--card); border:1px solid var(--accent); border-radius:12px; padding:12px 16px; box-shadow:0 4px 16px rgba(0,0,0,.5); display:none; z-index:3; }
   #pop.show { display:block; } #pop b { font-size:1.1rem; } #pop .x { float:right; border:0; background:none; color:var(--ink); font-size:1.3rem; cursor:pointer; padding:0 4px; }
   .err { padding:32px 16px; text-align:center; color:#ff8a80; }
 
-  /* 平板：單字表與題目並排 */
+  /* 平板 */
   @media (min-width:700px) {
     main { padding:24px 32px; }
-    aside.side { padding:0 32px 96px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); max-width:1100px; margin:0 auto; }
+    aside.side { padding:0 32px 16px; max-width:1100px; margin:0 auto; }
+    section.bottom { padding:0 32px 96px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); max-width:1100px; margin:0 auto; }
   }
-  /* 電腦：三欄 */
+  /* 電腦：左工具欄 / 中文章 / 右單字表，理解題與討論題在最下方 */
   @media (min-width:1100px) {
-    .layout { display:grid; grid-template-columns:240px minmax(0,1fr) 380px; gap:32px; align-items:start; padding:0 24px; }
-    .bar { position:sticky; top:0; align-self:start; flex-direction:column; align-items:stretch; border:0; padding:24px 0; height:100vh; overflow:auto; }
+    .layout { display:grid; grid-template-columns:240px minmax(0,1fr) 380px; gap:0 32px; align-items:start; padding:0 24px; }
+    .bar { grid-column:1; grid-row:1 / span 2; position:sticky; top:0; align-self:start; flex-direction:column; align-items:stretch; border:0; padding:24px 0; height:100vh; overflow:auto; }
     .bar button { text-align:left; }
     .bar .group { flex-direction:column; }
     .bar .info { margin:16px 0 0; }
-    main { padding:24px 0; max-width:none; width:100%; }
+    main { grid-column:2; grid-row:1; padding:24px 0; max-width:none; width:100%; }
     #body, main > h1, main > .meta { max-width:780px; margin-left:auto; margin-right:auto; }
-    aside.side { display:block; padding:24px 0; position:sticky; top:0; max-height:100vh; overflow:auto; max-width:none; margin:0; }
-    aside.side section { margin-bottom:12px; }
+    aside.side { grid-column:3; grid-row:1 / span 2; position:sticky; top:0; max-height:100vh; overflow:auto; padding:24px 0; max-width:none; margin:0; }
+    section.bottom { grid-column:2; grid-row:2; width:100%; max-width:780px; margin:0 auto; padding:0 0 96px; grid-template-columns:1fr; }
   }
   @media print {
     .bar, #pop { display:none !important; } body { background:#fff; color:#000; } .layout { display:block; }
-    aside.side section { background:#fff; border:0; } aside.side h3 { color:#000; } .meta { color:#444; }
+    aside.side section, section.bottom section { background:#fff; border:0; } aside.side h3, section.bottom h3 { color:#000; } .meta { color:#444; }
   }
 </style>
 </head>
@@ -78,6 +83,7 @@
   </div>
   <main id="main"></main>
   <aside class="side" id="side"></aside>
+  <section class="bottom" id="bottom"></section>
 </div>
 <div id="pop" role="dialog"></div>
 
@@ -97,8 +103,6 @@ async function decodeShare(hash) {
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 
-let vocab = new Map(); // 小寫單字 → { word, definition, zh, kk }
-
 // ---- 發音：瀏覽器內建語音合成（免費、不需 API） ----
 const canSpeak = 'speechSynthesis' in window;
 const spkBtn = (w) => canSpeak ? `<button type="button" class="spk" data-say="${esc(w)}" aria-label="播放 ${esc(w)} 發音" title="播放發音">🔊</button>` : '';
@@ -112,87 +116,110 @@ function speak(text) {
   speechSynthesis.speak(u);
 }
 
-// 找單字：完全相同，或去掉常見字尾後相同（例如 markets → market）
-function lookup(raw) {
-  const w = raw.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, '');
-  if (vocab.has(w)) return vocab.get(w);
-  for (const suf of ['s', 'es', 'ed', 'd', 'ing', 'ly']) {
-    if (w.endsWith(suf) && vocab.has(w.slice(0, -suf.length))) return vocab.get(w.slice(0, -suf.length));
-  }
-  return null;
-}
-
-let items = []; // 單字表項目：文章附帶的 + 使用者雙擊加入的（user:true）
+// ---- 單字資料 ----
+const known = new Map(); // 文章附帶（AI 產生）的單字資料：雙擊時優先使用，不會一開始就顯示
+const vocab = new Map(); // 使用者雙擊加入的單字（顯示在右側單字表，一開始是空的）
+let items = [];
 const hashKey = 'rc-user-' + [...location.hash].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7); // 以連結內容區分文章
+
+const clean = (raw) => raw.toLowerCase().replace(/[’‘]/g, "'").replace(/^[^a-z]+|[^a-z]+$/g, '');
+// 可能的原形（markets → market、studies → study、running → run…）
+function stems(w) {
+  const out = [w];
+  for (const [suf, add] of [['ies', 'y'], ['es', ''], ['s', ''], ['ed', ''], ['ed', 'e'], ['ing', ''], ['ing', 'e'], ['ly', '']]) {
+    if (w.length > suf.length + 2 && w.endsWith(suf)) out.push(w.slice(0, -suf.length) + add);
+  }
+  return out;
+}
+const findIn = (map, w) => { for (const c of stems(w)) if (map.has(c)) return map.get(c); return null; };
+const lookup = (raw) => findIn(vocab, clean(raw)); // 文章上的字是否已加入單字表（用於底線標示）
 
 function renderVocab() {
   const ul = $('vocabList'); if (!ul) return;
-  ul.innerHTML = items.length ? items.map((v) =>
-    `<li data-w="${esc(v.word.toLowerCase())}" class="${v.user ? 'user' : ''}">` +
-    (v.user ? `<button type="button" class="del" data-del="${esc(v.word.toLowerCase())}" aria-label="移除 ${esc(v.word)}" title="移除">×</button>` : '') +
-    `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)} — ${v.loading ? '查詢中…' : `${esc(v.definition || '（查無解釋）')}${v.zh ? `（${esc(v.zh)}）` : ''}`}</li>`
-  ).join('') : '<li style="list-style:none;color:var(--muted)">（尚無單字）</li>';
+  ul.innerHTML = items.length ? items.map((v) => {
+    const k = esc(v.word.toLowerCase());
+    const body = v.loading ? '查詢中…' : v.failed ? '（查詢失敗，點一下重試）' : `${esc(v.definition || '（查無解釋）')}${v.zh ? `（${esc(v.zh)}）` : ''}`;
+    return `<li data-w="${k}" class="user${v.failed ? ' fail' : ''}"><button type="button" class="del" data-del="${k}" aria-label="移除 ${esc(v.word)}" title="移除">×</button>` +
+      `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)} — ${body}</li>`;
+  }).join('') : '<li class="empty">雙擊文章中的單字，就會加入這裡。</li>';
 }
 function refreshHits() { document.querySelectorAll('.w').forEach((el) => el.classList.toggle('hit', !!lookup(el.textContent))); }
 function persistUser() {
-  try { localStorage.setItem(hashKey, JSON.stringify(items.filter((v) => v.user).map(({ word, definition, zh, kk }) => ({ word, definition, zh, kk })))); } catch {}
+  try { localStorage.setItem(hashKey, JSON.stringify(items.map(({ word, definition, zh, kk }) => ({ word, definition, zh, kk })))); } catch {}
 }
 
-// 向免費字典／翻譯服務查詢（失敗就留空，不影響使用）
-async function fetchJson(url) { const r = await fetch(url, { signal: AbortSignal.timeout(8000) }); if (!r.ok) throw new Error(r.status); return r.json(); }
+// ---- 向免費字典／翻譯服務查詢（失敗就標記，可點一下重試） ----
+async function fetchJson(url, ms = 8000) {
+  const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); // 不用 AbortSignal.timeout，相容舊版 Safari
+  try { const r = await fetch(url, { signal: c.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+async function dictEntry(w) { // 查不到時依序嘗試原形
+  for (const c of stems(w)) {
+    try { const j = await fetchJson('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(c)); if (Array.isArray(j) && j[0]) return j[0]; } catch {}
+  }
+  return null;
+}
 async function fillWord(v) {
-  const [d, t] = await Promise.allSettled([
-    fetchJson('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(v.word)),
-    fetchJson('https://api.mymemory.translated.net/get?langpair=en|zh-TW&q=' + encodeURIComponent(v.word)),
-  ]);
-  if (d.status === 'fulfilled' && Array.isArray(d.value) && d.value[0]) {
-    const e = d.value[0], m = e.meanings?.[0];
+  v.loading = true; v.failed = false;
+  const [d, t] = await Promise.allSettled([dictEntry(v.word), fetchJson('https://api.mymemory.translated.net/get?langpair=en|zh-TW&q=' + encodeURIComponent(v.word))]);
+  if (d.status === 'fulfilled' && d.value) {
+    const e = d.value, m = e.meanings?.[0];
     v.kk = e.phonetic || e.phonetics?.find((x) => x.text)?.text || '';
     if (m?.definitions?.[0]) v.definition = (m.partOfSpeech ? `(${m.partOfSpeech}) ` : '') + m.definitions[0].definition;
   }
   if (t.status === 'fulfilled') {
-    const z = t.value?.responseData?.translatedText;
-    if (z && z.toLowerCase() !== v.word.toLowerCase()) v.zh = z;
+    const r = t.value, z = r?.responseData?.translatedText;
+    // 額度用完時 MyMemory 會把警告文字放進 translatedText，要濾掉
+    if (z && Number(r.responseStatus) === 200 && !/MYMEMORY|INVALID|QUERY LENGTH/i.test(z) && z.toLowerCase() !== v.word.toLowerCase()) v.zh = z;
   }
   v.loading = false;
+  v.failed = !v.definition && !v.zh;
   renderVocab(); persistUser();
-  if ($('pop').classList.contains('show') && $('pop').dataset.w === v.word.toLowerCase()) popup(v, v.word);
+  if ($('pop').classList.contains('show') && $('pop').dataset.w === v.word.toLowerCase()) popup(v, null, $('pop').dataset.note);
 }
 
-// 雙擊單字 → 加入右側單字表
+// 雙擊單字 → 加入右側單字表。回傳 { v, dup }
 function addWord(raw) {
-  const w = raw.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, '');
-  if (w.length < 2) return null;
-  let v = lookup(w);
-  if (v) return v; // 已在單字表
-  v = { word: w, definition: '', zh: '', kk: '', user: true, loading: true };
-  vocab.set(w, v); items.push(v);
-  renderVocab(); refreshHits(); fillWord(v);
-  return v;
+  const w = clean(raw);
+  if (w.length < 2) return {};
+  const exist = findIn(vocab, w);
+  if (exist) return { v: exist, dup: true };
+  const k = findIn(known, w); // 文章附帶的資料（含 KK 音標）優先
+  const v = k ? { word: k.word, definition: k.definition, zh: k.zh, kk: k.kk || '' } : { word: w, definition: '', zh: '', kk: '' };
+  vocab.set(v.word.toLowerCase(), v); items.push(v);
+  renderVocab(); refreshHits(); persistUser();
+  if (!k) fillWord(v);
+  return { v };
+}
+function flash(v) { // 讓單字表中對應的項目短暫反白，並捲到可見位置
+  const li = [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === v.word.toLowerCase());
+  if (!li) return;
+  li.classList.add('on'); li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  setTimeout(() => li.classList.remove('on'), 1800);
 }
 
 function show(a) {
-  a.vo.forEach(([word, definition, zh, kk]) => { const v = { word, definition, zh, kk: kk || '' }; vocab.set(word.toLowerCase(), v); items.push(v); });
+  a.vo.forEach(([word, definition, zh, kk]) => known.set(word.toLowerCase(), { word, definition, zh, kk: kk || '' }));
   // 還原這篇文章先前自己加入的單字
   try {
     JSON.parse(localStorage.getItem(hashKey) || '[]').forEach((u) => {
       if (!u?.word || vocab.has(u.word.toLowerCase())) return;
-      const v = { ...u, user: true, loading: false }; vocab.set(v.word.toLowerCase(), v); items.push(v);
-      if (!v.definition && !v.zh) { v.loading = true; fillWord(v); }
+      const v = { word: u.word, definition: u.definition || '', zh: u.zh || '', kk: u.kk || '' };
+      vocab.set(v.word.toLowerCase(), v); items.push(v);
+      if (!v.definition && !v.zh) fillWord(v);
     });
   } catch {}
   const words = a.b.trim().split(/\s+/).length;
   const mins = Math.max(1, Math.round(words / 200));
-  // 每個單字包成 span 供點擊；單字表內的字加底線提示
   const para = (p) => `<p>${p.split(/(\s+)/).map((t) => /\S/.test(t) ? `<span class="w${lookup(t) ? ' hit' : ''}">${esc(t)}</span>` : t).join('')}</p>`;
   const list = (id, title, arr) => arr.length ? `<section id="${id}"><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
   document.title = a.t;
   $('main').innerHTML =
     `<h1>${esc(a.t)}</h1><div class="meta">程度 ${esc(a.l)} ・ ${words} 字 ・ 預估閱讀 ${mins} 分鐘</div>` +
     `<div id="body">${a.b.split(/\n\s*\n/).map(para).join('')}</div>`;
-  $('side').innerHTML =
-    `<section><h3>單字表<span class="hint">雙擊文章中的單字可加入</span></h3><ul id="vocabList"></ul></section>` +
-    list('qs', '理解題', a.q) + list('ds', '討論題', a.d);
+  $('side').innerHTML = `<section><h3>單字表<span class="hint">雙擊文章單字加入</span></h3><ul id="vocabList"></ul></section>`;
+  $('bottom').innerHTML = list('qs', '理解題', a.q) + list('ds', '討論題', a.d);
   renderVocab();
   $('info').textContent = `程度 ${a.l} ・ ${words} 字 ・ 約 ${mins} 分鐘`;
   $('bar').hidden = false;
@@ -218,38 +245,52 @@ function toggle(btn, secId, label) {
 }
 toggle($('tq'), 'qs', '理解題'); toggle($('td'), 'ds', '討論題');
 
-// 點擊單字顯示解釋；點單字表項目也可以顯示
-function popup(v, raw) {
+// 彈出視窗：顯示單字解釋（note = 附註，例如「已加入單字表」）
+function popup(v, raw, note) {
   const pop = $('pop');
   pop.innerHTML = v
-    ? `<button class="x" aria-label="關閉">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}<div>${v.loading ? '查詢中…' : esc(v.definition || '（查無解釋）')}</div><div>${esc(v.zh)}</div>`
-    : `<button class="x" aria-label="關閉">×</button>單字表中沒有「${esc(raw.replace(/^[^\w]+|[^\w]+$/g, ''))}」`;
+    ? `<button class="x" aria-label="關閉">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}<div>${v.loading ? '查詢中…' : esc(v.definition || '（查無解釋）')}</div><div>${esc(v.zh)}</div>${note ? `<div class="note">${note}</div>` : ''}`
+    : '';
   pop.dataset.w = v ? v.word.toLowerCase() : '';
-  pop.classList.add('show');
+  pop.dataset.note = note || '';
+  pop.classList.toggle('show', !!v);
 }
+
+// 單擊：已加入的單字才顯示解釋。延遲一下，若緊接著是第二下（雙擊）就取消，避免彈出視窗擋住第二下
+let clickTimer = null;
 document.addEventListener('click', (e) => {
   const sp = e.target.closest('.spk');
-  if (sp) return speak(sp.dataset.say); // 播放發音，不觸發單字表點擊
+  if (sp) return speak(sp.dataset.say); // 播放發音
   if (e.target.classList.contains('x')) return $('pop').classList.remove('show');
+  if (!e.target.closest('#pop, .w, #vocabList')) $('pop').classList.remove('show'); // 點其他地方就關閉
+  clearTimeout(clickTimer);
   if (e.target.classList.contains('w')) {
-    const v = lookup(e.target.textContent);
-    document.querySelectorAll('#vocabList li').forEach((li) => li.classList.toggle('on', !!v && li.dataset.w === v.word.toLowerCase()));
-    return popup(v, e.target.textContent);
+    const el = e.target;
+    clickTimer = setTimeout(() => { const v = lookup(el.textContent); if (v) { popup(v); flash(v); } else $('pop').classList.remove('show'); }, 280);
+    return;
   }
   const del = e.target.closest('.del');
-  if (del) { // 移除自己加入的單字
+  if (del) { // 移除單字
     const k = del.dataset.del; vocab.delete(k); items = items.filter((v) => v.word.toLowerCase() !== k);
-    renderVocab(); refreshHits(); persistUser(); return;
+    renderVocab(); refreshHits(); persistUser(); $('pop').classList.remove('show'); return;
   }
   const li = e.target.closest('#vocabList li[data-w]');
-  if (li) popup(vocab.get(li.dataset.w), li.dataset.w);
+  if (li) {
+    const v = vocab.get(li.dataset.w); if (!v) return;
+    if (v.failed) { fillWord(v); renderVocab(); return; } // 查詢失敗 → 點一下重試
+    popup(v);
+  }
 });
 
+// 雙擊：加入單字表
 document.addEventListener('dblclick', (e) => {
   const t = e.target.closest('.w'); if (!t) return;
+  clearTimeout(clickTimer);
   getSelection()?.removeAllRanges();
-  const v = addWord(t.textContent);
-  if (v) popup(v, t.textContent);
+  const { v, dup } = addWord(t.textContent);
+  if (!v) return;
+  popup(v, null, dup ? '已在單字表中' : '✓ 已加入單字表');
+  flash(v);
 });
 
 (async () => {
