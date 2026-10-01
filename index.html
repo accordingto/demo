@@ -69,6 +69,8 @@
   #vocabList li.empty { background:none; border-style:dashed; color:var(--muted); }
   #vocabList li.on { border-color:var(--accent); } #vocabList li.fail { color:#f0c36d; cursor:pointer; }
   .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
+  .lem { color:var(--muted); font-size:.85em; margin-left:.3em; }
+  .def { margin-top:2px; } .zhl { color:#f0c36d; }
   .spk { min-height:0; padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; }
   .del { float:right; min-height:0; padding:0 4px; background:none; border:0; color:var(--muted); font-size:1.1rem; line-height:1; }
   .del:hover { color:var(--err); }
@@ -183,31 +185,27 @@ const findItem = (w) => items.find((v) => stems(w).includes(v.word.toLowerCase()
 function renderVocab() {
   $('vocabList').innerHTML = items.length ? items.map((v) => {
     const k = esc(v.word.toLowerCase());
-    const body = v.loading ? 'Looking up…' : v.failed ? '(Lookup failed — click to retry)' : `${esc(v.definition || '(no definition found)')}${v.zh ? `（${esc(v.zh)}）` : ''}`;
-    return `<li data-w="${k}" class="${v.failed ? 'fail' : ''}"><button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)} — ${body}</li>`;
+    const detail = v.loading ? '<div class="def">Looking up…</div>'
+      : v.failed ? `<div class="def">${esc(v.err || 'Lookup failed')} — click to retry</div>`
+      : `<div class="def">${v.pos ? `<i>${esc(v.pos)}</i> ` : ''}${esc(v.definition || '(no definition)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : ''}`;
+    return `<li data-w="${k}" class="${v.failed ? 'fail' : ''}"><button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>` +
+      `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}${detail}</li>`;
   }).join('') : '<li class="empty">No words yet. Double-click a word in the article, or type one above.</li>';
 }
-async function fetchJson(url, ms = 8000) {
-  const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); // 不用 AbortSignal.timeout，相容舊版 Safari
-  try { const r = await fetch(url, { signal: c.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); } finally { clearTimeout(t); }
+// 找出文章中含該字的句子，當作查詢的上下文（讓 AI 依語境給出正確意思）
+function sentenceOf(text, word) {
+  const re = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+  return ((text || '').match(/[^.!?\n]+[.!?]*/g) || []).find((x) => re.test(x))?.trim().slice(0, 300) || '';
 }
-async function dictEntry(w) {
-  for (const c of stems(w)) { try { const j = await fetchJson('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(c)); if (Array.isArray(j) && j[0]) return j[0]; } catch {} }
-  return null;
-}
-async function fillWord(v) { // 向免費字典／翻譯服務查詢
+async function fillWord(v) { // 呼叫後端 /api/define（Groq）：詞性、KK 音標、英文解釋、中文翻譯
   v.loading = true; v.failed = false; renderVocab();
-  const [d, t] = await Promise.allSettled([dictEntry(v.word), fetchJson('https://api.mymemory.translated.net/get?langpair=en|zh-TW&q=' + encodeURIComponent(v.word))]);
-  if (d.status === 'fulfilled' && d.value) {
-    const e = d.value, m = e.meanings?.[0];
-    v.kk = e.phonetic || e.phonetics?.find((x) => x.text)?.text || '';
-    if (m?.definitions?.[0]) v.definition = (m.partOfSpeech ? `(${m.partOfSpeech}) ` : '') + m.definitions[0].definition;
-  }
-  if (t.status === 'fulfilled') {
-    const r = t.value, z = r?.responseData?.translatedText;
-    if (z && Number(r.responseStatus) === 200 && !/MYMEMORY|INVALID|QUERY LENGTH/i.test(z) && z.toLowerCase() !== v.word.toLowerCase()) v.zh = z; // 額度用完時的警告文字要濾掉
-  }
-  v.loading = false; v.failed = !v.definition && !v.zh;
+  try {
+    const r = await fetch('/api/define', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ word: v.word, context: v.ctx || '' }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Lookup failed (${r.status})`);
+    Object.assign(v, { pos: j.pos || '', kk: j.kk || '', definition: j.definition || '', zh: j.zh || '', lemma: j.lemma && j.lemma.toLowerCase() !== v.word.toLowerCase() ? j.lemma : '', err: '' });
+  } catch (e) { v.failed = true; v.err = e.message; }
+  v.loading = false;
   renderVocab();
 }
 function addWord(raw) {
@@ -215,7 +213,7 @@ function addWord(raw) {
   if (w.length < 2 || w.length > 40) { $('vmsg').textContent = 'Please select a single word.'; return; }
   const exist = findItem(w);
   if (exist) { $('vmsg').textContent = `“${exist.word}” is already in the list.`; flash(exist); return; }
-  const v = { word: w, definition: '', zh: '', kk: '' };
+  const v = { word: w, pos: '', definition: '', zh: '', kk: '', lemma: '', ctx: sentenceOf(current?.body, w) };
   items.push(v); $('vmsg').textContent = `Added “${w}”.`;
   renderVocab(); flash(v); fillWord(v);
 }
@@ -328,7 +326,7 @@ $('print').addEventListener('click', () => window.print());
 
 // 把文章壓成分享連結（整篇文章都在網址裡，連結本身即可永久開啟）
 async function buildLink(a, vocab = []) {
-  const hv = vocab.filter((x) => !x.loading).map((x) => [x.word, x.definition, x.zh, x.kk || '']); // 主持人挑的單字
+  const hv = vocab.filter((x) => !x.loading && !x.failed).map((x) => [x.word, x.definition, x.zh, x.kk || '', x.pos || '', x.lemma || '']); // 主持人挑的單字
   const data = await encodeShare({ v: 1, t: a.title, l: a.level, w: a.wordCount, b: a.body, q: a.questions, d: a.discussion, ...(hv.length ? { hv } : {}) });
   return new URL('read.html', location.href).href + '#' + data;
 }
@@ -362,7 +360,7 @@ $('save').addEventListener('click', () => {
   if (!current) return;
   const l = libLoad();
   const dup = l.find((it) => it.article.body === current.body && it.article.title === current.title);
-  const vocab = items.filter((v) => !v.loading).map(({ word, definition, zh, kk }) => ({ word, definition, zh, kk }));
+  const vocab = items.filter((v) => !v.loading && !v.failed).map(({ word, pos, definition, zh, kk, lemma }) => ({ word, pos, definition, zh, kk, lemma }));
   if (dup) { dup.vocab = vocab; $('linkMsg').textContent = libStore(l) ? '✅ Library entry updated (including your vocabulary)' : '❌ Could not save'; renderLib(); return; }
   l.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), savedAt: Date.now(), article: current, vocab });
   $('linkMsg').textContent = libStore(l) ? '✅ Saved to your library (stored in this browser only — export a backup now and then)' : '❌ Could not save: browser storage is full or blocked. Use “Create share link” instead.';

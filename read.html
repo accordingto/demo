@@ -29,6 +29,8 @@
   section.bottom { padding:0 16px 96px; display:grid; gap:12px; align-content:start; }
   li { margin-bottom:.5em; line-height:1.6; }
   .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
+  .lem { color:var(--muted); font-size:.85em; margin-left:.3em; }
+  .def { margin-top:2px; } .zhl { color:#f0c36d; }
   .spk { padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; cursor:pointer; }
   .spk:hover { border-color:var(--accent); }
   .addrow { display:flex; gap:6px; margin:4px 0 8px; }
@@ -141,43 +143,34 @@ function renderVocab() {
   const ul = $('vocabList'); if (!ul) return;
   ul.innerHTML = items.length ? items.map((v) => {
     const k = esc(v.word.toLowerCase());
-    const body = v.loading ? 'Looking up…' : v.failed ? '(Lookup failed — tap to retry)' : `${esc(v.definition || '(no definition found)')}${v.zh ? `（${esc(v.zh)}）` : ''}`;
+    const detail = v.loading ? '<div class="def">Looking up…</div>'
+      : v.failed ? `<div class="def">${esc(v.err || 'Lookup failed')} — tap to retry</div>`
+      : `<div class="def">${v.pos ? `<i>${esc(v.pos)}</i> ` : ''}${esc(v.definition || '(no definition)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : ''}`;
     return `<li data-w="${k}" class="user${v.failed ? ' fail' : ''}">${v.host ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
-      `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)} — ${body}</li>`;
+      `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}${detail}</li>`;
   }).join('') : '<li class="empty">Double-click a word in the article to add it here.</li>';
+}
+// 找出文章中含該字的句子，當作查詢的上下文（讓 AI 依語境給出正確意思）
+let ARTICLE = '';
+function sentenceOf(text, word) {
+  const re = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+  return ((text || '').match(/[^.!?\n]+[.!?]*/g) || []).find((x) => re.test(x))?.trim().slice(0, 300) || '';
 }
 function refreshHits() { document.querySelectorAll('.w').forEach((el) => el.classList.toggle('hit', !!lookup(el.textContent))); }
 function persistUser() {
-  try { localStorage.setItem(hashKey, JSON.stringify(items.filter((v) => !v.host).map(({ word, definition, zh, kk }) => ({ word, definition, zh, kk })))); } catch {}
+  try { localStorage.setItem(hashKey, JSON.stringify(items.filter((v) => !v.host && !v.loading && !v.failed).map(({ word, pos, definition, zh, kk, lemma }) => ({ word, pos, definition, zh, kk, lemma })))); } catch {}
 }
 
-// ---- 向免費字典／翻譯服務查詢（失敗就標記，可點一下重試） ----
-async function fetchJson(url, ms = 8000) {
-  const c = new AbortController(); const t = setTimeout(() => c.abort(), ms); // 不用 AbortSignal.timeout，相容舊版 Safari
-  try { const r = await fetch(url, { signal: c.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); }
-  finally { clearTimeout(t); }
-}
-async function dictEntry(w) { // 查不到時依序嘗試原形
-  for (const c of stems(w)) {
-    try { const j = await fetchJson('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(c)); if (Array.isArray(j) && j[0]) return j[0]; } catch {}
-  }
-  return null;
-}
+// ---- 呼叫後端 /api/define（Groq）：詞性、KK 音標、英文解釋、中文翻譯（失敗可點一下重試）----
 async function fillWord(v) {
-  v.loading = true; v.failed = false;
-  const [d, t] = await Promise.allSettled([dictEntry(v.word), fetchJson('https://api.mymemory.translated.net/get?langpair=en|zh-TW&q=' + encodeURIComponent(v.word))]);
-  if (d.status === 'fulfilled' && d.value) {
-    const e = d.value, m = e.meanings?.[0];
-    v.kk = e.phonetic || e.phonetics?.find((x) => x.text)?.text || '';
-    if (m?.definitions?.[0]) v.definition = (m.partOfSpeech ? `(${m.partOfSpeech}) ` : '') + m.definitions[0].definition;
-  }
-  if (t.status === 'fulfilled') {
-    const r = t.value, z = r?.responseData?.translatedText;
-    // 額度用完時 MyMemory 會把警告文字放進 translatedText，要濾掉
-    if (z && Number(r.responseStatus) === 200 && !/MYMEMORY|INVALID|QUERY LENGTH/i.test(z) && z.toLowerCase() !== v.word.toLowerCase()) v.zh = z;
-  }
+  v.loading = true; v.failed = false; renderVocab();
+  try {
+    const r = await fetch('/api/define', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ word: v.word, context: v.ctx || '' }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Lookup failed (${r.status})`);
+    Object.assign(v, { pos: j.pos || '', kk: j.kk || '', definition: j.definition || '', zh: j.zh || '', lemma: j.lemma && j.lemma.toLowerCase() !== v.word.toLowerCase() ? j.lemma : '', err: '' });
+  } catch (e) { v.failed = true; v.err = e.message; }
   v.loading = false;
-  v.failed = !v.definition && !v.zh;
   renderVocab(); persistUser();
   if ($('pop').classList.contains('show') && $('pop').dataset.w === v.word.toLowerCase()) popup(v, null, $('pop').dataset.note);
 }
@@ -189,7 +182,7 @@ function addWord(raw) {
   const exist = findIn(vocab, w);
   if (exist) return { v: exist, dup: true };
   const k = findIn(known, w); // 文章附帶的資料（含 KK 音標）優先
-  const v = k ? { word: k.word, definition: k.definition, zh: k.zh, kk: k.kk || '' } : { word: w, definition: '', zh: '', kk: '' };
+  const v = k ? { word: k.word, definition: k.definition, zh: k.zh, kk: k.kk || '' } : { word: w, pos: '', definition: '', zh: '', kk: '', lemma: '', ctx: sentenceOf(ARTICLE, w) };
   vocab.set(v.word.toLowerCase(), v); items.push(v);
   renderVocab(); refreshHits(); persistUser();
   if (!k) fillWord(v);
@@ -203,14 +196,15 @@ function flash(v) { // 讓單字表中對應的項目短暫反白，並捲到可
 }
 
 function show(a) {
+  ARTICLE = a.b;
   a.vo.forEach(([word, definition, zh, kk]) => known.set(word.toLowerCase(), { word, definition, zh, kk: kk || '' }));
   // 主持人挑選的單字（隨連結帶入）
-  a.hv.forEach(([word, definition, zh, kk]) => { const v = { word, definition, zh, kk: kk || '', host: true }; vocab.set(word.toLowerCase(), v); items.push(v); });
+  a.hv.forEach(([word, definition, zh, kk, pos, lemma]) => { const v = { word, definition, zh, kk: kk || '', pos: pos || '', lemma: lemma || '', host: true }; vocab.set(word.toLowerCase(), v); items.push(v); });
   // 還原這篇文章先前自己加入的單字
   try {
     JSON.parse(localStorage.getItem(hashKey) || '[]').forEach((u) => {
       if (!u?.word || vocab.has(u.word.toLowerCase())) return;
-      const v = { word: u.word, definition: u.definition || '', zh: u.zh || '', kk: u.kk || '' };
+      const v = { word: u.word, pos: u.pos || '', definition: u.definition || '', zh: u.zh || '', kk: u.kk || '', lemma: u.lemma || '', ctx: sentenceOf(a.b, u.word) };
       vocab.set(v.word.toLowerCase(), v); items.push(v);
       if (!v.definition && !v.zh) fillWord(v);
     });
@@ -254,7 +248,9 @@ toggle($('tq'), 'qs', 'Questions'); toggle($('td'), 'ds', 'Discussion');
 function popup(v, raw, note) {
   const pop = $('pop');
   pop.innerHTML = v
-    ? `<button class="x" aria-label="Close">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}<div>${v.loading ? 'Looking up…' : esc(v.definition || '(no definition found)')}</div><div>${esc(v.zh)}</div>${note ? `<div class="note">${note}</div>` : ''}`
+    ? `<button class="x" aria-label="Close">×</button><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}` +
+      (v.loading ? '<div>Looking up…</div>' : v.failed ? `<div>${esc(v.err || 'Lookup failed')}</div>` : `<div>${v.pos ? `<i>${esc(v.pos)}</i> ` : ''}${esc(v.definition || '(no definition)')}</div><div class="zhl">${esc(v.zh)}</div>`) +
+      (note ? `<div class="note">${note}</div>` : '')
     : '';
   pop.dataset.w = v ? v.word.toLowerCase() : '';
   pop.dataset.note = note || '';
