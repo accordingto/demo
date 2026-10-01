@@ -3,20 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="format-detection" content="telephone=no">
 <title>Reading Club Article Generator</title>
 <link rel="stylesheet" href="shared.css">
 <style>
   /* 主持人頁專用：頂端精簡設定列、動作按鈕、文章庫 */
-  #form { padding:10px 12px; display:flex; flex-wrap:wrap; gap:8px 10px; align-items:flex-end; }
+  #form { padding:10px 12px; }
+  /* 設定列：寬螢幕固定一行（主題欄位吃剩下的空間）；窄螢幕才自動換行 */
+  .bar { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:flex-end; }
+  .bar > * { flex:none; }
+  .bar > .f.grow { flex:1 1 150px; min-width:100px; }
+  .tb { height:34px; min-height:0; padding:0 12px; white-space:nowrap; }
+  .lbl { display:none; }
+  @media (min-width:1040px) { .bar { flex-wrap:nowrap; } }
+  @media (min-width:1280px) { .lbl { display:inline; } }
   .f { display:flex; flex-direction:column; gap:2px; min-width:0; }
   .f label { font-size:.7rem; color:var(--muted); margin:0; line-height:1.2; font-weight:500; white-space:nowrap; }
   .f.grow { flex:1 1 220px; }
-  #code { width:104px; } #words { width:80px; } #level { width:68px; } #genre { width:108px; }
+  #code { width:96px; } #words { width:70px; } #level { width:64px; } #genre { width:104px; }
   .checks { display:flex; gap:10px; align-items:center; height:34px; }
-  .checks label { display:inline-flex; align-items:center; gap:4px; font-size:.85rem; white-space:nowrap; cursor:pointer; }
+  .checks label { display:inline-flex; align-items:center; gap:4px; font-size:.82rem; white-space:nowrap; cursor:pointer; }
   .checks input { width:16px; height:16px; margin:0; }
   #go { height:34px; min-height:0; padding:0 18px; }
-  #status { flex-basis:100%; margin:0; font-size:.9rem; }
+  #status { margin:8px 0 0; font-size:.9rem; }
   #status:empty { display:none; }
   a.btn { display:inline-flex; align-items:center; font-size:.95rem; padding:8px 16px; min-height:40px; border-radius:8px; text-decoration:none; font-weight:600; }
   a.btn.secondary { color:var(--accent); border:1px solid var(--accent); }
@@ -47,6 +56,7 @@
     .f { flex:1 1 40%; } .f.grow { flex-basis:100%; }
     #code, #words, #level, #genre { width:100%; }
     .checks { flex:1 1 100%; justify-content:space-between; }
+    .tb { flex:1 1 40%; height:40px; } .lbl { display:inline; }
     #go { flex:1 1 100%; height:40px; }
     .actions button { flex:1 1 40%; }
   }
@@ -56,20 +66,22 @@
 <body>
 <div class="layout">
   <form id="form" class="card">
-    <div class="f"><label for="code">Access code</label><input type="password" id="code" autocomplete="off" required></div>
-    <div class="f grow"><label for="topic">Topic (max 100 chars)</label><input type="text" id="topic" maxlength="100" placeholder="e.g. the history of coffee" required></div>
-    <div class="f"><label for="words">Words 100–2000</label><input type="number" id="words" min="100" max="2000" value="300" required></div>
-    <div class="f"><label for="level">CEFR</label>
-      <select id="level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div>
-    <div class="f"><label for="genre">Genre (optional)</label>
-      <select id="genre"><option value="">Any</option><option value="explanation">Explanation</option><option value="story">Story</option><option value="news">News style</option></select></div>
-    <div class="checks">
-      <label><input type="checkbox" id="questions" checked>Comprehension</label>
-      <label><input type="checkbox" id="discussion" checked>Discussion</label>
+    <div class="bar">
+      <div class="f"><label for="code">Access code</label><input type="password" id="code" autocomplete="off" required></div>
+      <div class="f grow"><label for="topic">Topic</label><input type="text" id="topic" maxlength="100" placeholder="e.g. the history of coffee" title="Topic (max 100 characters)" required></div>
+      <div class="f"><label for="words">Words</label><input type="number" id="words" min="100" max="2000" value="300" title="100 – 2000 words" required></div>
+      <div class="f"><label for="level">CEFR</label>
+        <select id="level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div>
+      <div class="f"><label for="genre">Genre</label>
+        <select id="genre"><option value="">Any</option><option value="explanation">Explanation</option><option value="story">Story</option><option value="news">News style</option></select></div>
+      <div class="checks">
+        <label><input type="checkbox" id="questions" checked>Comprehension</label>
+        <label><input type="checkbox" id="discussion" checked>Discussion</label>
+      </div>
+      <button type="submit" id="go">Generate</button>
+      <button type="button" id="pasteBtn" class="secondary tb" title="Paste your own text">✍ Paste<span class="lbl"> text</span></button>
+      <button type="button" id="libBtn" class="secondary tb" title="Saved articles">📚 Library</button>
     </div>
-    <button type="submit" id="go">Generate</button>
-    <button type="button" id="pasteBtn" class="secondary" style="height:34px;min-height:0;padding:0 12px">✍ Paste text</button>
-    <button type="button" id="libBtn" class="secondary" style="height:34px;min-height:0;padding:0 12px">📚 Library (0)</button>
     <div id="status" class="msg" role="status"></div>
   </form>
 
@@ -299,7 +311,7 @@ const validArticle = (a) => a && typeof a.title === 'string' && typeof a.body ==
 
 function renderLib() {
   const l = libLoad();
-  $('libBtn').textContent = `📚 Library (${l.length})`;
+  $('libBtn').innerHTML = `📚 <span class="lbl">Library </span>(${l.length})`;
   $('libList').innerHTML = l.length ? l.map((it) => {
     const a = it.article;
     return `<li data-id="${esc(it.id)}"><div class="t">${esc(a.title)}</div>` +
