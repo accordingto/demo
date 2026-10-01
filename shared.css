@@ -36,8 +36,8 @@ button:disabled { opacity:.5; cursor:wait; }
 /* 文章中的每個單字（供雙擊）；觸控裝置關閉系統的選字選單 */
 .w { border-radius:3px; }
 @media (pointer:coarse) { .w { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; } }
-mark.vh { background:rgba(255,232,140,.22); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; cursor:pointer; }  /* 已加入單字庫的字：柔和的半透明淡黃色底色，文字維持原色 */
-mark.vh:hover { background:rgba(255,232,140,.36); }
+mark.vh { background:rgba(124,199,255,.30); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; box-shadow:0 0 0 1px rgba(124,199,255,.35) inset; cursor:pointer; }  /* 已加入單字庫的字：底色標示 */
+mark.vh:hover { background:rgba(124,199,255,.5); }
 
 /* 題目區：上下排列，跟著文字大小設定 */
 .qa { display:grid; gap:12px; grid-template-columns:1fr; margin-top:16px; }
@@ -66,7 +66,7 @@ mark.vh:hover { background:rgba(255,232,140,.36); }
 .del:hover { color:var(--err); }
 
 @media print {
-  mark.vh { background:none; color:inherit; }
+  mark.vh { background:none; box-shadow:none; }
   .fsbar, #vocabPanel .addrow, #vmsg, .del { display:none !important; }
   body { background:#fff; color:#000; } .layout { display:block; padding:0; }
   .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }
