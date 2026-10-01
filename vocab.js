@@ -50,7 +50,7 @@
         : `<div class="def">${v.pos ? `<span class="pos">${esc(posLabel(v.pos))}</span> ` : ''}${esc(v.definition || '(no definition)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : ''}`;
       return `<li data-w="${k}" class="${v.failed ? 'fail' : ''}">${v.locked ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
         `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}${detail}</li>`;
-    }).join('') : '<li class="empty">No words yet. Double-click a word in the article, or type one above.</li>';
+    }).join('') : '<li class="empty">No words yet. Double-click (or double-tap) a word in the article, or type one above.</li>';
     cfg.onChange(items);
   }
 
@@ -98,22 +98,26 @@
     $('fsInc').onclick = () => setFs(fs + 2);
     $('fsDec').onclick = () => setFs(fs - 2);
     setFs(fs);
-    // 雙擊文章中的單字（點兩下 / 觸控雙擊）→ 加入；也可手動輸入/貼上
-    $('doc').addEventListener('dblclick', (e) => {
-      if (!e.target.closest('#bodyText')) return;
-      const w = e.target.closest('.w');
-      const t = w ? w.textContent : getSelection().toString();
-      getSelection()?.removeAllRanges();
-      if (t && t.trim()) addWord(t);
-    });
-    // 點文章中的任何單字 → 發音（文章上出現的原樣，例如 called）；若是已標示的字，也讓單字庫中對應的項目反白、捲到可見位置
+    // 點文章中的單字：
+    //  • 點一下 → 發音（文章上出現的原樣，例如 called）；若是已標示的字，單字庫中對應的項目也會反白並捲到可見位置
+    //  • 短時間內連點兩下同一個字（滑鼠雙擊／iPad 雙點）→ 加入單字表
+    // 這裡自己計時判斷，不依賴 dblclick 事件（iPad 的 Safari 對 dblclick 不可靠）。
+    let last = { text: '', t: 0 };
     $('doc').addEventListener('click', (e) => {
       if (!e.target.closest('#bodyText')) return;
       const w = e.target.closest('.w'); if (!w) return;
-      speak(w.textContent.replace(/^[^A-Za-z]+|[^A-Za-z]+$/g, ''));
+      const word = w.textContent.replace(/^[^A-Za-z]+|[^A-Za-z]+$/g, '');
+      const key = clean(word), now = Date.now();
+      if (key && last.text === key && now - last.t < 500) {   // 第二下 → 加入單字表
+        last = { text: '', t: 0 };
+        getSelection()?.removeAllRanges();
+        addWord(word);
+        return;
+      }
+      last = { text: key, t: now };
+      speak(word);
       if (!w.matches('mark.vh')) return;
-      const c = clean(w.textContent);
-      const v = findItem(c) || items.find((x) => x.lemma && stems(c).includes(x.lemma.toLowerCase()));
+      const v = findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()));
       if (v) flash(v);
     });
     $('addForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('addInput'); if (i.value.trim()) addWord(i.value); i.value = ''; });
