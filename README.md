@@ -34,6 +34,8 @@
 
 設定步驟（免費）：
 1. Vercel → 專案 → **Storage** → **Create Database** → 選 **Upstash**（Redis）→ 選免費方案 → 連結到此專案（Environments 全部勾選）。
+   - 注意是 **Upstash**，不是清單裡另一項「Redis（Official Redis for Vercel）」：後者只有付費方案，而且連線方式（`REDIS_URL`）也和本專案不相容。
+   - 方案選 **Free**；若有 High Availability 選項，選 None。
 2. Vercel 會自動加入 `KV_REST_API_URL`、`KV_REST_API_TOKEN`（也支援 `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`）。
 3. **Redeploy**。重新整理主持人頁後，文章庫標題會變成 ☁ Library；舊的本機文章可按「Upload … from this browser」搬到雲端。
 
