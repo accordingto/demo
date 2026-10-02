@@ -218,6 +218,13 @@
     try { localStorage.setItem('rc-fs-host', fs); } catch {}
   }
 
+  // 點到的單字：短暫的光圈與底色（約 1 秒），讓人知道點了哪個字
+  function tapEffect(el) {
+    el.classList.remove('tap'); void el.offsetWidth;   // 連點時重新播放動畫
+    el.classList.add('tap');
+    setTimeout(() => el.classList.remove('tap'), 1100);
+  }
+
   // ---- 事件 ----
   function bind() {
     $('fsInc').onclick = () => setFs(fs + 2);
@@ -241,6 +248,7 @@
       }
       last = { text: key, t: now };
       speak(word);
+      tapEffect(w);
       if (!w.matches('mark.vh')) return;
       const v = findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()));
       if (v) { if (floatingMode()) showPop(v); else { collapseOthers(v); reveal(v); renderVocab(); flash(v); } pick(v, marksOf(v).indexOf(w), false, true); } // 同時選取這個單字，標示文章中所有出現的位置
