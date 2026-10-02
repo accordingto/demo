@@ -64,7 +64,7 @@
 ## 前端
 
 ### 載入順序（classic script，共用全域作用域）
-- 主持人頁：`util.js` → `vocab.js` → `host.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-main.js`
+- 主持人頁：`util.js` → `vocab.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-main.js`
 - 閱讀頁：`util.js` → `vocab.js` → `reader.js`
 
 各 host 模組之間的函式只在**執行時**互相呼叫；但 `Vocab.init` 一執行就會呼叫 `onChange(syncLib)`，所以放在最後載入的 `host-main.js`。
@@ -104,7 +104,7 @@
 | `pointer:coarse` 或 < 640px | 16px 輸入框、44px 可點區域（避免 iOS 自動放大） |
 
 ## 測試
-- `npm test`：後端單元測試與端點測試（假的 `fetch`，不需金鑰）。
+- `npm test`：後端單元測試與端點測試（假的 `fetch`，不需金鑰），以及 `js/paste-text.js` 的貼上分段測試。
 - 前端目前以手動 / 瀏覽器自動化（Playwright）驗證：產生、雙擊加字、單字卡收合、編輯、文章庫、分享連結、窄螢幕浮動單字卡。
 
 ## 常見修改位置

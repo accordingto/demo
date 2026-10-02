@@ -40,6 +40,9 @@ a.btn.secondary { color:var(--accent); border:1px solid var(--accent); }
 #pastePanel h3 { margin:0; font-size:1rem; color:var(--accent); }
 #pasteTitle { margin-bottom:8px; height:36px; font-size:1rem; }
 #pasteBody { width:100%; min-height:220px; resize:vertical; padding:10px 12px; font-family:inherit; font-size:1.05rem; line-height:1.7; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
+#pastePanel .pmode { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+#pastePanel .pmode label { font-size:.8rem; color:var(--muted); }
+#pastePanel .pmode select { width:auto; max-width:100%; }
 #pasteMsg { margin-top:8px; font-size:.9rem; }
 /* 就地編輯（所見即所得） */
 #editBar { position:sticky; top:8px; z-index:5; display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:var(--card); border:1px solid var(--accent); border-radius:10px; padding:8px 12px; margin:0 0 14px; box-shadow:0 4px 14px rgba(0,0,0,.45); }

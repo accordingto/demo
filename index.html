@@ -36,6 +36,12 @@
       <span class="meta" id="pasteInfo">0 words</span>
     </div>
     <input type="text" id="pasteTitle" maxlength="120" placeholder="Title (optional)" autocomplete="off">
+    <div class="pmode"><label for="pasteMode">Paragraphs</label>
+      <select id="pasteMode" title="How to split the pasted text into paragraphs">
+        <option value="auto">Auto-detect</option>
+        <option value="lines">Every line break starts a paragraph</option>
+        <option value="blank">Only blank lines start a paragraph</option>
+      </select></div>
     <textarea id="pasteBody" placeholder="Paste or type an English article here…" spellcheck="false"></textarea>
     <div class="qrow">
       <div><label for="pasteQ">Comprehension questions <span class="meta">(optional, one per line, max 5)</span></label><textarea id="pasteQ" class="pta" rows="3" spellcheck="false"></textarea></div>
@@ -103,6 +109,7 @@
 <script src="js/util.js"></script>
 <script src="js/vocab.js"></script>
 <script src="js/host.js"></script>
+<script src="js/paste-text.js"></script>
 <script src="js/host-paste.js"></script>
 <script src="js/host-edit.js"></script>
 <script src="js/host-library.js"></script>

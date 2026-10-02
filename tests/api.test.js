@@ -139,3 +139,34 @@ test('define: validates the word, returns normalised fields', () => withEnv(asyn
   await def({ method: 'POST', headers: { 'x-forwarded-for': '8.8.8.8' }, body: { word: 'called', context: 'She called me.' } }, r);
   assert.equal(r.code, 200); assert.equal(r.payload.lemma, 'call'); assert.equal(r.payload.zh, '打電話');
 }));
+
+// ---- 前端的貼上文字整理（js/paste-text.js，純函式）----
+const { normalizePasted } = require('../js/paste-text');
+const paraN = (t, mode) => { const r = normalizePasted(t, mode); return [r.text ? r.text.split('\n\n').length : 0, r.how]; };
+const wrapped = 'The quick brown fox jumps over the lazy dog and keeps running\nthrough the forest until it reaches a small river where it stops\nto drink some water and rest for a while before going on again.';
+
+test('paste: blank-line paragraphs stay as they are; single newlines inside a block are joined', () => {
+  assert.deepEqual(paraN('One is here.\n\nTwo is here.\n\nThree is here.'), [3, 'blank']);
+  assert.equal(normalizePasted('A line\nwraps here.\n\nSecond.').text, 'A line wraps here.\n\nSecond.');
+});
+test('paste: single newlines, one paragraph per line (even with 2 lines, a title, or no end punctuation)', () => {
+  assert.deepEqual(paraN('One is here.\nTwo is here.'), [2, 'lines']);
+  assert.deepEqual(paraN('My Title\nOne is here.\nTwo is here.\nThree is here.'), [4, 'lines']);
+  assert.deepEqual(paraN('One is here\nTwo is here.\nThree is here\nFour is here.'), [4, 'lines']);
+});
+test('paste: hard-wrapped text (PDF / email) is joined into one paragraph', () => {
+  assert.deepEqual(paraN(wrapped), [1, 'joined']);
+  assert.ok(!normalizePasted(wrapped).text.includes('\n'));
+});
+test('paste: Unicode line/paragraph separators and blank lines with odd spaces', () => {
+  assert.deepEqual(paraN('One is here.\u2029Two is here.\u2029Three is here.'), [3, 'lines']);
+  assert.deepEqual(paraN('One is here.\u2028\u2028Two is here.'), [2, 'blank']);
+  assert.deepEqual(paraN('One is here.\n\u3000\nTwo is here.\n\u00a0\nThree.'), [3, 'blank']);
+  assert.deepEqual(paraN('One is here.\r\n\r\nTwo is here.'), [2, 'blank']);
+});
+test('paste: manual modes override auto-detect', () => {
+  assert.deepEqual(paraN(wrapped, 'lines'), [3, 'lines']);
+  assert.deepEqual(paraN('One is here.\nTwo is here.\nThree is here.', 'blank'), [1, 'blank']);
+  assert.deepEqual(paraN('One.\n\nTwo\nlines.', 'lines'), [3, 'lines']);
+});
+test('paste: empty input', () => { assert.deepEqual(paraN('  \n '), [0, 'blank']); });
