@@ -102,7 +102,7 @@ vercel dev               # 開啟 http://localhost:3000
 ```bash
 npm test                 # = node --test tests/*.test.js
 ```
-涵蓋輸入驗證、提示詞組裝、AI 回傳解析與容錯、段落整理、限流、存取碼比對，以及 `/api/generate`、`/api/define` 端點（以假的 `fetch` 取代 Groq）。
+涵蓋 CSS 括號平衡檢查、輸入驗證、提示詞組裝、AI 回傳解析與容錯、段落整理、限流、存取碼比對，以及 `/api/generate`、`/api/define` 端點（以假的 `fetch` 取代 Groq）。
 
 ### 手動測試 API
 ```bash

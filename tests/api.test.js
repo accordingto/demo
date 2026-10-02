@@ -170,3 +170,12 @@ test('paste: manual modes override auto-detect', () => {
   assert.deepEqual(paraN('One.\n\nTwo\nlines.', 'lines'), [3, 'lines']);
 });
 test('paste: empty input', () => { assert.deepEqual(paraN('  \n '), [0, 'blank']); });
+
+// ---- CSS：括號不平衡會讓後面所有規則失效（曾經讓浮動單字卡失去樣式）----
+test('css files have balanced braces', () => {
+  const fs = require('node:fs');
+  for (const f of ['css/shared.css', 'css/host.css']) {
+    const t = fs.readFileSync(require('node:path').join(__dirname, '..', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.equal(t.split('{').length, t.split('}').length, `${f}: { and } counts differ`);
+  }
+});

@@ -82,7 +82,8 @@
     $('hlText').textContent = `“${v.word}” ${active.idx + 1} / ${ms.length}`;
   }
   function scrollToNow() { document.querySelector('#bodyText mark.now')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-  // auto = 由「點文章中已標示的字」觸發的暫時標示：5 秒後（窄螢幕＝浮動單字卡消失時）自動恢復原狀
+  // auto = 由「點文章中已標示的字」觸發的暫時標示：點字光圈結束（約 1 秒）時，右側單字卡收起、文章中的標示恢復；
+  // 窄螢幕則是浮動單字卡消失時（5 秒後）才恢復
   let autoTimer = 0;
   function clearActive() { clearTimeout(autoTimer); autoTimer = 0; active = null; applyActive(); }
   function pick(v, idx, scroll = true, auto = false) { // idx 未指定：同一個字再點就跳到下一處；換字則從第一處開始
@@ -90,12 +91,17 @@
     clearTimeout(autoTimer); autoTimer = 0;
     active = { key: v.word.toLowerCase(), idx, auto };
     applyActive(); if (scroll) scrollToNow();
-    if (auto && !floatingMode()) autoTimer = setTimeout(clearActive, AUTO_COLLAPSE_MS);
+    if (auto && !floatingMode()) autoTimer = setTimeout(() => {
+      const c = activeItem();
+      if (c && !c.pinned && !c.loading && !c.failed) { collapse(c); renderVocab(); }   // 使用者自己展開（固定）的卡片不收
+      clearActive();
+    }, TAP_MS);
   }
   function step(d) { if (active) { active.idx += d; active.auto = false; clearTimeout(autoTimer); applyActive(); scrollToNow(); } }
 
   // ---- 單字卡：剛加入時展開，查完 5 秒後自動收成第一行（單字、音標、發音）；點卡片再展開 ----
   const AUTO_COLLAPSE_MS = 5000;
+  const TAP_MS = 1100;   // 點字光圈的長度（要和 shared.css 的 wordTap 動畫一致）
   const complete = (v) => !!(v.definition && v.zh);   // 英文解釋與中文解釋都有，才算「取得完整資訊」
   const missingText = (v) => [!v.definition && 'English meaning', !v.zh && 'Chinese meaning'].filter(Boolean).join(' and ');
   function reveal(v, pin) { // 展開；pin = 使用者主動展開，不會自動收起，並收起其他卡片
@@ -219,10 +225,12 @@
   }
 
   // 點到的單字：短暫的光圈與底色（約 1 秒），讓人知道點了哪個字
-  function tapEffect(el) {
+  // 點擊處理中可能會重畫文章（展開單字卡等），舊的元素會被換掉，所以用「第幾個字」在重畫之後再找出來
+  function tapEffect(idx) {
+    const el = $('bodyText')?.querySelectorAll('.w')[idx]; if (!el) return;
     el.classList.remove('tap'); void el.offsetWidth;   // 連點時重新播放動畫
     el.classList.add('tap');
-    setTimeout(() => el.classList.remove('tap'), 1100);
+    setTimeout(() => el.classList.remove('tap'), TAP_MS);
   }
 
   // ---- 事件 ----
@@ -248,7 +256,8 @@
       }
       last = { text: key, t: now };
       speak(word);
-      tapEffect(w);
+      const wordIdx = [...$('bodyText').querySelectorAll('.w')].indexOf(w);
+      setTimeout(() => tapEffect(wordIdx), 0);   // 等這次點擊的處理（可能重畫文章）完成後再播放
       if (!w.matches('mark.vh')) return;
       const v = findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()));
       if (v) { if (floatingMode()) showPop(v); else { collapseOthers(v); reveal(v); renderVocab(); flash(v); } pick(v, marksOf(v).indexOf(w), false, true); } // 同時選取這個單字，標示文章中所有出現的位置
