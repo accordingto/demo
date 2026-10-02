@@ -85,10 +85,10 @@
     if (bar) $('hlText').textContent = `“${v.word}” ${active.idx + 1} / ${ms.length}`;
   }
   function scrollToNow() { document.querySelector('#bodyText mark.now')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-  function pick(v, idx) { // idx 未指定：同一個字再點就跳到下一處；換字則從第一處開始
+  function pick(v, idx, scroll = true) { // idx 未指定：同一個字再點就跳到下一處；換字則從第一處開始
     if (idx === undefined) idx = active && active.key === v.word.toLowerCase() ? active.idx + 1 : 0;
     active = { key: v.word.toLowerCase(), idx };
-    applyActive(); scrollToNow();
+    applyActive(); if (scroll) scrollToNow();
   }
   function step(d) { if (active) { active.idx += d; applyActive(); scrollToNow(); } }
 
@@ -103,21 +103,70 @@
   }
   function collapse(v) { clearTimeout(v._t); v.open = false; v.pinned = false; }
 
+  // 單字卡的詳細內容（詞性、英文、中文、狀態提示）；清單卡片與浮動卡片共用
+  function detailOf(v) {
+    const partial = !v.loading && !v.failed && !complete(v);
+    return v.loading ? '<div class="def">Looking up…</div>'
+      : v.failed ? `<div class="def">${esc(v.err || 'Lookup failed')} — click to retry</div>`
+      : `<div class="def">${v.pos ? `<span class="pos">${esc(posLabel(v.pos))}</span> ` : ''}${esc(v.definition || '(no English meaning)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : '<div class="zhl">(no Chinese meaning)</div>'}${partial ? `<div class="def" style="color:#f0c36d">⚠ Missing ${esc(missingText(v))} — click to retry</div>` : ''}`;
+  }
+
+  // ---- 手機／平板直放（單字表排在文章下面，看不到）：加入或點選單字時，從畫面下方浮出單字卡 ----
+  const floatingMode = () => !!(window.matchMedia && matchMedia('(max-width:1099px)').matches);
+  let popState = null; // { key, pinned, t }
+  let popEl = null;
+  function ensurePop() {
+    if (popEl) return popEl;
+    popEl = document.createElement('div');
+    popEl.id = 'wordPop'; popEl.className = 'hidden'; popEl.setAttribute('role', 'dialog'); popEl.setAttribute('aria-live', 'polite');
+    document.body.appendChild(popEl);
+    popEl.addEventListener('click', (e) => {
+      const v = popState && items.find((x) => x.word.toLowerCase() === popState.key); if (!v) return;
+      if (e.target.closest('.pclose')) return hidePop();
+      if (popState) { popState.pinned = true; clearTimeout(popState.t); popState.t = 0; } // 點卡片 → 固定住，不再自動消失
+      const sp = e.target.closest('.spk'); if (sp) return speak(sp.dataset.say);
+      if (e.target.closest('.pfind')) { pick(v); return; }
+      if (v.failed || !complete(v)) fillWord(v);
+    });
+    return popEl;
+  }
+  function hidePop() { if (popState) clearTimeout(popState.t); popState = null; if (popEl) popEl.classList.add('hidden'); }
+  function updatePop() {
+    if (!popState) return;
+    const v = items.find((x) => x.word.toLowerCase() === popState.key);
+    if (!v || !floatingMode()) return hidePop();
+    const el = ensurePop();
+    el.innerHTML = `<button type="button" class="pclose" aria-label="Close" title="Close">×</button>` +
+      `<div class="v1"><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
+      `<div class="vdet">${detailOf(v)}</div>` +
+      `<div class="pact"><button type="button" class="secondary pfind">Find in text ›</button></div>`;
+    el.classList.remove('hidden');
+    // 英文與中文都拿到之後才開始 5 秒倒數（點過卡片就固定住）
+    if (!popState.pinned && !popState.t && !v.loading && !v.failed && complete(v)) popState.t = setTimeout(hidePop, AUTO_COLLAPSE_MS);
+  }
+  function showPop(v) { // 只在窄螢幕、且是從文章上操作時使用
+    if (!floatingMode()) return;
+    if (popState) clearTimeout(popState.t);
+    popState = { key: v.word.toLowerCase(), pinned: false, t: 0 };
+    updatePop();
+  }
+  if (window.matchMedia) matchMedia('(max-width:1099px)').addEventListener?.('change', (e) => { if (!e.matches) hidePop(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && popState) hidePop(); });
+
   function renderVocab() {
     paintBody();
     $('vocabList').innerHTML = items.length ? items.map((v) => {
       const k = esc(v.word.toLowerCase());
       const partial = !v.loading && !v.failed && !complete(v) && !!(v.open);   // 查完了但缺英文或中文
       const open = !!(v.open || v.loading || v.failed); // 查詢中與失敗時一定展開，才看得到狀態
-      const detail = v.loading ? '<div class="def">Looking up…</div>'
-        : v.failed ? `<div class="def">${esc(v.err || 'Lookup failed')} — click to retry</div>`
-        : `<div class="def">${v.pos ? `<span class="pos">${esc(posLabel(v.pos))}</span> ` : ''}${esc(v.definition || '(no English meaning)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : '<div class="zhl">(no Chinese meaning)</div>'}${partial ? `<div class="def" style="color:#f0c36d">⚠ Missing ${esc(missingText(v))} — click to retry</div>` : ''}`;
+      const detail = detailOf(v);
       return `<li data-w="${k}" class="${v.failed ? 'fail' : ''} ${partial ? 'partial' : ''} ${open ? 'open' : 'closed'}">${v.locked ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
         `<div class="v1"><button type="button" class="tg" aria-expanded="${open}" aria-label="${open ? 'Collapse' : 'Expand'} ${esc(v.word)}" title="${open ? 'Collapse' : 'Expand'}">${open ? '▾' : '▸'}</button>` +
         `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${open && v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
         `${open ? `<div class="vdet">${detail}</div>` : ''}</li>`;
     }).join('') : '<li class="empty">No words yet. Double-click (or double-tap) a word in the article, or type one above.</li>';
     applyActive();
+    updatePop();
     cfg.onChange(items);
   }
 
@@ -143,14 +192,15 @@
     const li = [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === v.word.toLowerCase()); if (!li) return;
     li.classList.add('on'); li.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); setTimeout(() => li.classList.remove('on'), 1800);
   }
-  function addWord(raw) {
+  function addWord(raw, fromText) {
     const w = clean(raw);
     if (w.length < 2 || w.length > 40) { $('vmsg').textContent = 'Please select a single word.'; return; }
     const exist = findItem(w);
-    if (exist) { $('vmsg').textContent = `“${exist.word}” is already in the list.`; reveal(exist); renderVocab(); flash(exist); return; }
-    const v = { word: w, pos: '', definition: '', zh: '', kk: '', lemma: '', ctx: sentenceOf(cfg.getBody(), w), open: true };
+    if (exist) { $('vmsg').textContent = `“${exist.word}” is already in the list.`; if (fromText && floatingMode()) { renderVocab(); showPop(exist); return; } reveal(exist); renderVocab(); flash(exist); return; }
+    const v = { word: w, pos: '', definition: '', zh: '', kk: '', lemma: '', ctx: sentenceOf(cfg.getBody(), w), open: !(fromText && floatingMode()) };
     items.push(v); $('vmsg').textContent = `Added “${w}”.`;
-    renderVocab(); flash(v); fillWord(v);
+    renderVocab(); if (fromText && floatingMode()) showPop(v); else flash(v);
+    fillWord(v);
   }
 
   // ---- 文章字體大小（即時生效，記在這個瀏覽器）----
@@ -180,14 +230,14 @@
       if (key && last.text === key && now - last.t < 500) {   // 第二下 → 加入單字表
         last = { text: '', t: 0 };
         getSelection()?.removeAllRanges();
-        addWord(word);
+        addWord(word, true);   // 從文章上加入 → 窄螢幕會浮出單字卡
         return;
       }
       last = { text: key, t: now };
       speak(word);
       if (!w.matches('mark.vh')) return;
       const v = findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()));
-      if (v) { reveal(v); renderVocab(); flash(v); pick(v, marksOf(v).indexOf(w)); } // 同時選取這個單字，標示文章中所有出現的位置
+      if (v) { if (floatingMode()) showPop(v); else { reveal(v); renderVocab(); flash(v); } pick(v, marksOf(v).indexOf(w), false); } // 同時選取這個單字，標示文章中所有出現的位置
     });
     $('addForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('addInput'); if (i.value.trim()) addWord(i.value); i.value = ''; });
     $('vocabList').addEventListener('click', (e) => {

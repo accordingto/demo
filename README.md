@@ -11,7 +11,7 @@
 | `api/library.js` | 雲端文章庫（需存取碼）：list / get / save / delete；儲存在 Upstash Redis |
 | `api/article.js` | 公開讀取單篇文章（短連結用，不需存取碼） |
 | `api/_store.js`、`api/_util.js` | 儲存層與共用工具（底線開頭，不會變成 API 路由） |
-| `shared.css`、`vocab.js` | 主持人頁與閱讀頁共用的版面樣式、單字表、雙擊加字、文章標示、字體大小（兩頁行為一致） |
+| `shared.css`、`vocab.js` | 主持人頁與閱讀頁共用的版面樣式、單字表、雙擊加字、文章標示、字體大小、窄螢幕（<1100px）的浮動單字卡（兩頁行為一致） |
 | `api/generate.js` | 產生文章的 API（驗證、限流、呼叫 Groq、串流回應） |
 | `api/define.js` | 查單字的 API（Groq）：詞性、KK 音標、英文解釋、中文翻譯；公開端點，每 IP 每分鐘 30 次 |
 | `vercel.json` | 函式逾時上限設為 60 秒 |
