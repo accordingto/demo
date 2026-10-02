@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>English Reading</title>
-<link rel="stylesheet" href="shared.css">
+<link rel="stylesheet" href="css/shared.css">
 </head>
 <body>
-<!-- 版面與功能和主持人頁相同（共用 shared.css / vocab.js）：左＝文章（含題目），右＝單字表 -->
+<!-- 版面與功能和主持人頁相同（共用 css/shared.css、js/util.js、js/vocab.js）：左＝文章（含題目），右＝單字表 -->
 <div class="layout">
   <div class="work">
     <div>
@@ -27,88 +27,8 @@
   </div>
 </div>
 
-<script src="vocab.js"></script>
-<script>
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-// ---- 解碼：base64url →（inflate-raw 解壓）→ UTF-8 → JSON ----
-async function decodeShare(hash) {
-  const [kind, b64] = [hash.slice(0, 2), hash.slice(2)];
-  const bin = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
-  let bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
-  if (kind === 'z.') {
-    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-    bytes = new Uint8Array(await new Response(stream).arrayBuffer());
-  } else if (kind !== 'b.') throw new Error('bad');
-  return JSON.parse(new TextDecoder().decode(bytes));
-}
-
-let current = null; // 目前顯示的文章 { title, body, ... }
-let ready = false;  // 還原完成前不要寫入本機儲存
-const articleId = new URLSearchParams(location.search).get('a');   // 短連結：?a=代碼（文章存在雲端）；否則是舊式長連結（文章在 # 後面）
-const hashKey = articleId ? 'rc-user-a-' + articleId : 'rc-user-' + [...location.hash].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7); // 以連結區分文章
-
-// 成員自己加入的單字，存在自己的瀏覽器（主持人挑的字隨連結帶入，不存）
-function persist(items) {
-  if (!ready) return;
-  try {
-    localStorage.setItem(hashKey, JSON.stringify(items.filter((v) => !v.locked && !v.loading && !v.failed)
-      .map(({ word, pos, definition, zh, kk, lemma }) => ({ word, pos, definition, zh, kk, lemma }))));
-  } catch { /* 無痕模式或被封鎖時略過 */ }
-}
-Vocab.init({ getBody: () => current?.body, onChange: persist });
-
-function show(a) {
-  current = { title: a.t, body: a.b, level: a.l, questions: a.q, discussion: a.d };
-  document.title = a.t;
-  const words = a.b.trim().split(/\s+/).length;
-  const mins = Math.max(1, Math.round(words / 200));
-  const ol = (title, arr) => arr.length ? `<section><h3>${title}</h3><ol>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>` : '';
-  $('doc').innerHTML =
-    `<div class="text"><h2>${esc(a.t)}</h2>` +
-    `<div class="meta">${a.l ? `Level ${esc(a.l)}` : 'Shared text'} ・ ${words} words ・ ~${mins} min read</div>` +
-    `<div id="bodyText" style="margin-top:1em"></div></div>`;
-  $('qa').innerHTML = ol('Comprehension questions', a.q) + ol('Discussion questions', a.d);
-
-  // 單字表：主持人挑的字（不可移除）+ 這位讀者先前自己加入的字
-  const list = a.hv.map(([word, definition, zh, kk, pos, lemma]) => ({ word, definition, zh, kk: kk || '', pos: pos || '', lemma: lemma || '', locked: true }));
-  try {
-    JSON.parse(localStorage.getItem(hashKey) || '[]').forEach((u) => {
-      if (u?.word && !list.some((x) => x.word.toLowerCase() === u.word.toLowerCase())) list.push({ word: u.word, pos: u.pos || '', definition: u.definition || '', zh: u.zh || '', kk: u.kk || '', lemma: u.lemma || '' });
-    });
-  } catch { /* 忽略 */ }
-  Vocab.setItems(list);
-  ready = true;
-  Vocab.getItems().filter((v) => !v.locked && !v.definition && !v.zh).forEach((v) => Vocab.fillWord(v)); // 先前沒查完的字重新查
-}
-
-const showError = (html) => {
-  $('doc').innerHTML = `<div class="err" style="padding:32px 0;text-align:center">${html}</div>`;
-  $('preview').querySelector('.fsbar').classList.add('hidden');
-};
-
-// 從雲端讀取短連結的文章（總是最新版）
-async function loadCloud(id) {
-  $('doc').innerHTML = '<div class="meta" style="padding:32px 0;text-align:center">Loading…</div>';
-  const r = await fetch('/api/article?id=' + encodeURIComponent(id));
-  const j = await r.json().catch(() => ({}));
-  if (r.status === 404) throw new Error('This article was removed, or the link is incorrect.<br>Please ask the host for a new link.');
-  if (!r.ok) throw new Error(esc(j.error || `Could not load the article (${r.status}).`));
-  const A = j.article || {};
-  return { t: A.title, b: A.body, l: A.level || '', q: A.questions || [], d: A.discussion || [], hv: (j.vocab || []).map((v) => [v.word, v.definition, v.zh, v.kk || '', v.pos || '', v.lemma || '']) };
-}
-
-(async () => {
-  try {
-    const a = articleId ? await loadCloud(articleId) : await decodeShare(location.hash.slice(1));
-    if (typeof a.b !== 'string' || typeof a.t !== 'string') throw new Error('bad');
-    a.q = Array.isArray(a.q) ? a.q : []; a.d = Array.isArray(a.d) ? a.d : []; a.hv = Array.isArray(a.hv) ? a.hv : [];
-    show(a);
-  } catch (e) {
-    showError(e.message && e.message !== 'bad' && articleId ? e.message : 'Article not found. The link may be incomplete or damaged.<br>Please ask the host for a new link.');
-  }
-})();
-</script>
+<script src="js/util.js"></script>
+<script src="js/vocab.js"></script>
+<script src="js/reader.js"></script>
 </body>
 </html>

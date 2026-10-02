@@ -2,13 +2,11 @@
 // action: status | list | get | save | delete
 const crypto = require('crypto');
 const store = require('./_store');
-const { safeEqual, clientIp, makeLimiter, readBody } = require('./_util');
+const { safeEqual, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
 
 const limited = makeLimiter(60);
 const MAX_ITEMS = 500;
-const ID_RE = /^[A-Za-z0-9_-]{6,32}$/;
 
-const str = (x, n) => String(x ?? '').slice(0, n);
 const list = (a, max, n) => (Array.isArray(a) ? a.filter((x) => typeof x === 'string').slice(0, max).map((x) => x.slice(0, n)) : []);
 
 function cleanArticle(a) {

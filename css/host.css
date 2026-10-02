@@ -1,0 +1,69 @@
+/* 主持人頁（index.html）專用：頂端精簡設定列、動作按鈕、文章庫、貼上文字、就地編輯 */
+#form { padding:10px 12px; }
+/* 設定列：寬螢幕固定一行（主題欄位吃剩下的空間）；窄螢幕才自動換行 */
+.bar { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:flex-end; }
+.bar > * { flex:none; }
+.bar > .f.grow { flex:1 1 150px; min-width:100px; }
+.tb { height:34px; min-height:0; padding:0 12px; white-space:nowrap; }
+.lbl { display:none; }
+@media (min-width:1040px) { .bar { flex-wrap:nowrap; } }
+@media (min-width:1280px) { .lbl { display:inline; } }
+.f { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.f label { font-size:.7rem; color:var(--muted); margin:0; line-height:1.2; font-weight:500; white-space:nowrap; }
+#code { width:96px; } #words { width:70px; } #level { width:64px; } #genre { width:104px; }
+.checks { display:flex; gap:10px; align-items:center; height:34px; }
+.checks label { display:inline-flex; align-items:center; gap:4px; font-size:.82rem; white-space:nowrap; cursor:pointer; }
+.checks input { width:16px; height:16px; margin:0; }
+#go { height:34px; min-height:0; padding:0 18px; }
+#status { margin:8px 0 0; font-size:.9rem; }
+#status:empty { display:none; }
+a.btn { display:inline-flex; align-items:center; font-size:.95rem; padding:8px 16px; min-height:40px; border-radius:8px; text-decoration:none; font-weight:600; }
+a.btn.secondary { color:var(--accent); border:1px solid var(--accent); }
+.actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+#preview .actions { border-top:1px solid var(--line); padding-top:16px; }
+.share { width:100%; margin-top:8px; font-size:.8rem; }
+#empty { text-align:center; color:var(--muted); padding:48px 16px; border-style:dashed; }
+#empty .big { font-size:2.2rem; }
+#library { padding:12px 16px; }
+#library h3 { margin:0; font-size:1rem; color:var(--accent); }
+#library .head { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-bottom:8px; }
+#library .head .btns { display:flex; gap:8px; flex-wrap:wrap; }
+#library button { min-height:34px; padding:4px 12px; font-size:.85rem; }
+.libList { list-style:none; margin:0; padding:0; display:grid; gap:8px; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); }
+.libList li { background:var(--field); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+.libList .t { font-weight:600; } .libList .m { color:var(--muted); font-size:.8rem; margin:2px 0 8px; }
+.libList .b { display:flex; gap:6px; flex-wrap:wrap; }
+.danger { color:var(--err) !important; border-color:var(--err) !important; }
+/* 貼上自己的文章 */
+#pastePanel { padding:14px 16px; }
+#pastePanel .head { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-bottom:8px; }
+#pastePanel h3 { margin:0; font-size:1rem; color:var(--accent); }
+#pasteTitle { margin-bottom:8px; height:36px; font-size:1rem; }
+#pasteBody { width:100%; min-height:220px; resize:vertical; padding:10px 12px; font-family:inherit; font-size:1.05rem; line-height:1.7; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
+#pasteMsg { margin-top:8px; font-size:.9rem; }
+/* 就地編輯（所見即所得） */
+#editBar { position:sticky; top:8px; z-index:5; display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:var(--card); border:1px solid var(--accent); border-radius:10px; padding:8px 12px; margin:0 0 14px; box-shadow:0 4px 14px rgba(0,0,0,.45); }
+#editBar .grow { flex:1 1 260px; font-size:.88rem; }
+#editBar button { min-height:34px; padding:0 14px; }
+.editing #doc h2[contenteditable], .editing #bodyText[contenteditable], .qtext { outline:1px dashed rgba(79,184,154,.65); outline-offset:3px; border-radius:6px; caret-color:#ffb840; }
+.editing #bodyText[contenteditable] { white-space:pre-wrap; background:rgba(79,184,154,.06); padding:8px 10px; min-height:8em; }
+.editing #doc h2[contenteditable]:focus, .editing #bodyText:focus, .qtext:focus { outline:2px solid var(--accent); }
+.qtext { display:inline-block; min-width:55%; padding:1px 6px; }
+.qdel { min-height:0; padding:0 6px; margin-left:6px; background:none; border:0; color:var(--muted); font-size:1.1rem; line-height:1; }
+.qdel:hover { color:var(--err); }
+.addq { min-height:30px; padding:0 12px; font-size:.85rem; margin:2px 0 8px; }
+.editing #hlbar, .editing #link, .editing #linkMsg, .editing #copy, .editing #openReader { display:none !important; }
+#pastePanel .qrow { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+#pastePanel .qrow label { display:block; font-size:.8rem; color:var(--ink); margin-bottom:3px; }
+.pta { width:100%; resize:vertical; padding:8px 10px; font-family:inherit; font-size:.95rem; line-height:1.5; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
+@media (max-width:639px) { #pastePanel .qrow { grid-template-columns:1fr; } }
+/* 手機：欄位兩兩並排、按鈕滿版 */
+@media (max-width:639px) {
+  .bar > .f { flex:1 1 calc(50% - 5px); } .bar > .f.grow { flex:1 1 100%; } .bar > .f:first-child { flex-basis:100%; }
+  #code, #words, #level, #genre { width:100%; }
+  .checks { flex:1 1 100%; justify-content:space-between; height:44px; } .checks label { font-size:.95rem; gap:8px; }
+  .tb { flex:1 1 40%; height:46px; } .lbl { display:inline; }
+  #go { flex:1 1 100%; height:48px; font-size:1rem; }
+  .actions button { flex:1 1 40%; }
+}
+@media print { #editBar, #form, #library, #pastePanel, #empty, #openReader, .actions, .share, #status, #linkMsg { display:none !important; } }

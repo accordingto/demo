@@ -1,10 +1,9 @@
 // GET /api/article?id=XXXX — 公開讀取文章（成員閱讀頁用，不需存取碼）。
 // 只回傳文章與主持人挑的單字；文章庫清單與寫入一律要存取碼（見 library.js）。
 const store = require('./_store');
-const { clientIp, makeLimiter } = require('./_util');
+const { clientIp, makeLimiter, ID_RE } = require('./_util');
 
 const limited = makeLimiter(120);
-const ID_RE = /^[A-Za-z0-9_-]{6,32}$/;
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store'); // 主持人更新後，成員重新整理就能看到新版

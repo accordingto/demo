@@ -5,6 +5,7 @@
   "description": "線上英文讀書會文章產生器",
   "engines": { "node": ">=18" },
   "scripts": {
-    "dev": "vercel dev"
+    "dev": "vercel dev",
+    "test": "node --test tests/*.test.js"
   }
 }

@@ -1,8 +1,6 @@
 // 主持人頁與閱讀頁共用：單字表、雙擊加字、文章標示、字體大小
-// 頁面需提供：#doc #bodyText #vocabList #addForm #addInput #vmsg #fsInc #fsDec #fsVal
+// 需先載入 util.js；頁面需提供：#doc #bodyText #vocabList #addForm #addInput #vmsg #hlbar #hlText #hlPrev #hlNext #hlClear #fsInc #fsDec #fsVal
 (function () {
-  const $ = (id) => document.getElementById(id);
-  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   let items = [];                 // 單字表項目；locked:true = 主持人挑的字（不可移除）
   let cfg = { getBody: () => '', onChange: () => {} };
 
@@ -27,6 +25,7 @@
     for (const [suf, add] of [['ies', 'y'], ['es', ''], ['s', ''], ['ed', ''], ['ed', 'e'], ['ing', ''], ['ing', 'e'], ['ly', '']]) if (w.length > suf.length + 2 && w.endsWith(suf)) out.push(w.slice(0, -suf.length) + add);
     return out;
   }
+  const byKey = (k) => items.find((x) => x.word.toLowerCase() === k);   // 以小寫單字找項目
   const findItem = (w) => items.find((v) => stems(w).includes(v.word.toLowerCase()));
 
   // ---- 在主文章上標示：每個字包成 span.w（供雙擊），已加入的字用底色標示（含變化形）----
@@ -67,22 +66,20 @@
   let active = null; // { key: 單字（小寫）, idx: 目前是第幾處 }
   const keysOf = (v) => new Set([v.word.toLowerCase(), v.lemma ? v.lemma.toLowerCase() : ''].filter(Boolean));
   const marksOf = (v) => { const ks = keysOf(v); return [...document.querySelectorAll('#bodyText mark.vh')].filter((m) => stems(clean(m.textContent)).some((k) => ks.has(k))); };
-  const activeItem = () => (active ? items.find((x) => x.word.toLowerCase() === active.key) : null);
+  const activeItem = () => (active ? byKey(active.key) : null);
   function applyActive() {
     document.querySelectorAll('#bodyText .cur, #bodyText .now, #bodyText .s.hit').forEach((e) => e.classList.remove('cur', 'now', 'hit'));
     document.querySelectorAll('#vocabList li.active').forEach((e) => e.classList.remove('active'));
     const bar = $('hlbar'), v = activeItem();
-    if (!v) { active = null; if (bar) bar.classList.add('hidden'); return; }
+    if (!v) { active = null; bar.classList.add('hidden'); return; }
     const ms = marksOf(v);
     const li = [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === active.key); if (li) li.classList.add('active');
-    if (bar) {
-      bar.classList.remove('hidden');
-      if (!ms.length) { $('hlText').textContent = `“${v.word}” does not appear in the text.`; $('hlPrev').classList.add('hidden'); $('hlNext').classList.add('hidden'); return; }
-      $('hlPrev').classList.toggle('hidden', ms.length < 2); $('hlNext').classList.toggle('hidden', ms.length < 2);
-    }
+    bar.classList.remove('hidden');
+    if (!ms.length) { $('hlText').textContent = `“${v.word}” does not appear in the text.`; $('hlPrev').classList.add('hidden'); $('hlNext').classList.add('hidden'); return; }
+    $('hlPrev').classList.toggle('hidden', ms.length < 2); $('hlNext').classList.toggle('hidden', ms.length < 2);
     active.idx = ((active.idx % ms.length) + ms.length) % ms.length;
     ms.forEach((m, i) => { m.classList.add('cur'); m.closest('.s')?.classList.add('hit'); if (i === active.idx) m.classList.add('now'); });
-    if (bar) $('hlText').textContent = `“${v.word}” ${active.idx + 1} / ${ms.length}`;
+    $('hlText').textContent = `“${v.word}” ${active.idx + 1} / ${ms.length}`;
   }
   function scrollToNow() { document.querySelector('#bodyText mark.now')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
   function pick(v, idx, scroll = true) { // idx 未指定：同一個字再點就跳到下一處；換字則從第一處開始
@@ -112,7 +109,7 @@
   }
 
   // ---- 手機／平板直放（單字表排在文章下面，看不到）：加入或點選單字時，從畫面下方浮出單字卡 ----
-  const floatingMode = () => !!(window.matchMedia && matchMedia('(max-width:1099px)').matches);
+  const floatingMode = () => narrowQuery.matches;
   let popState = null; // { key, pinned, t }
   let popEl = null;
   function ensurePop() {
@@ -121,7 +118,7 @@
     popEl.id = 'wordPop'; popEl.className = 'hidden'; popEl.setAttribute('role', 'dialog'); popEl.setAttribute('aria-live', 'polite');
     document.body.appendChild(popEl);
     popEl.addEventListener('click', (e) => {
-      const v = popState && items.find((x) => x.word.toLowerCase() === popState.key); if (!v) return;
+      const v = popState && byKey(popState.key); if (!v) return;
       if (e.target.closest('.pclose')) return hidePop();
       if (popState) { popState.pinned = true; clearTimeout(popState.t); popState.t = 0; } // 點卡片 → 固定住，不再自動消失
       const sp = e.target.closest('.spk'); if (sp) return speak(sp.dataset.say);
@@ -133,7 +130,7 @@
   function hidePop() { if (popState) clearTimeout(popState.t); popState = null; if (popEl) popEl.classList.add('hidden'); }
   function updatePop() {
     if (!popState) return;
-    const v = items.find((x) => x.word.toLowerCase() === popState.key);
+    const v = byKey(popState.key);
     if (!v || !floatingMode()) return hidePop();
     const el = ensurePop();
     el.innerHTML = `<button type="button" class="pclose" aria-label="Close" title="Close">×</button>` +
@@ -150,7 +147,7 @@
     popState = { key: v.word.toLowerCase(), pinned: false, t: 0 };
     updatePop();
   }
-  if (window.matchMedia) matchMedia('(max-width:1099px)').addEventListener?.('change', (e) => { if (!e.matches) hidePop(); });
+  narrowQuery.addEventListener?.('change', (e) => { if (!e.matches) hidePop(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && popState) hidePop(); });
 
   function renderVocab() {
@@ -178,9 +175,7 @@
   async function fillWord(v, attempt = 1) { // 呼叫後端 /api/define（Groq）：詞性、KK 音標、英文解釋、中文翻譯
     v.loading = true; v.failed = false; renderVocab();
     try {
-      const r = await fetch('/api/define', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ word: v.word, context: v.ctx || sentenceOf(cfg.getBody(), v.word) }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || `Lookup failed (${r.status})`);
+      const j = await postJson('/api/define', { word: v.word, context: v.ctx || sentenceOf(cfg.getBody(), v.word) }, 'Lookup failed');
       Object.assign(v, { pos: j.pos || '', kk: j.kk || '', definition: j.definition || '', zh: j.zh || '', lemma: j.lemma && j.lemma.toLowerCase() !== v.word.toLowerCase() ? j.lemma : '', err: '' });
     } catch (e) { v.failed = true; v.err = e.message; }
     if (!v.failed && !complete(v) && attempt < 2) return fillWord(v, attempt + 1); // 缺英文或中文 → 自動重查一次
@@ -249,15 +244,15 @@
         if (v) { if (v.open) collapse(v); else reveal(v, true); renderVocab(); }
         return;
       }
-      const failed = e.target.closest('li.fail, li.partial.open'); if (failed) { const v = items.find((x) => x.word.toLowerCase() === failed.dataset.w); if (v) fillWord(v); return; }
+      const failed = e.target.closest('li.fail, li.partial.open'); if (failed) { const v = byKey(failed.dataset.w); if (v) fillWord(v); return; }
       const li = e.target.closest('li[data-w]');
       if (li) {
-        const v = items.find((x) => x.word.toLowerCase() === li.dataset.w); if (!v) return;
+        const v = byKey(li.dataset.w); if (!v) return;
         if (!v.open) { reveal(v, true); renderVocab(); pick(v, 0); } // 收起的卡片 → 展開，並標示文章中的位置
         else { reveal(v, true); pick(v); }                           // 已展開 → 跳到文章中的下一處
       }
     });
-    if ($('hlPrev')) { $('hlPrev').onclick = () => step(-1); $('hlNext').onclick = () => step(1); $('hlClear').onclick = () => { active = null; applyActive(); }; }
+    $('hlPrev').onclick = () => step(-1); $('hlNext').onclick = () => step(1); $('hlClear').onclick = () => { active = null; applyActive(); };
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && active) { active = null; applyActive(); } });
   }
 
@@ -267,6 +262,6 @@
     setItems(list) { items.forEach((x) => clearTimeout(x._t)); items = (list || []).map(({ word, pos, definition, zh, kk, lemma, locked, ctx }) => ({ word, pos, definition, zh, kk, lemma, locked, ctx })); active = null; $('vmsg').textContent = ''; renderVocab(); },
     repaint: renderVocab,
     freeze(on) { frozen = !!on; },
-    sentenceOf, fillWord,
+    fillWord,
   };
 })();

@@ -23,6 +23,16 @@ function makeLimiter(limit) {
   };
 }
 
-const readBody = (req) => (typeof req.body === 'string' ? (() => { try { return JSON.parse(req.body); } catch { return {}; } })() : req.body || {});
+const safeJson = (s) => { try { return JSON.parse(s); } catch { return {}; } };
+const readBody = (req) => (typeof req.body === 'string' ? safeJson(req.body) : req.body || {});
 
-module.exports = { safeEqual, clientIp, makeLimiter, readBody };
+// 轉成字串、去頭尾空白並限制長度
+const clip = (x, n) => String(x ?? '').trim().slice(0, n);
+
+// 文章 id：URL-safe，6～32 字元
+const ID_RE = /^[A-Za-z0-9_-]{6,32}$/;
+
+// 只回報缺少的環境變數「名稱」，不洩漏值
+const missingEnv = (names) => names.filter((k) => !(process.env[k] || '').trim());
+
+module.exports = { safeEqual, clientIp, makeLimiter, readBody, clip, ID_RE, missingEnv };
