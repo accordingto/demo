@@ -264,7 +264,11 @@
     });
     // 點單字表的卡片：發音、展開這張並收起其他張，文章中這個字換成橘色（不移動畫面、不標整句）
     $('vocabList').addEventListener('click', (e) => {
-      const del = e.target.closest('.del'); if (del) { items = items.filter((v) => v.word.toLowerCase() !== del.dataset.del); renderVocab(); return; }
+      const del = e.target.closest('.del');
+      if (del) {
+        if (!confirm(`Remove “${byKey(del.dataset.del)?.word || del.dataset.del}” from the vocabulary list?`)) return;   // 確認後才刪除
+        items = items.filter((v) => v.word.toLowerCase() !== del.dataset.del); renderVocab(); return;
+      }
       const li = e.target.closest('li[data-w]'); const v = li && byKey(li.dataset.w); if (!v) return;
       const retry = li.matches('li.fail, li.partial.open');   // 查詢失敗或缺資訊 → 點一下重查
       speak(v.word);
