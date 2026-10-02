@@ -10,7 +10,6 @@
 
   // ---- 發音：瀏覽器內建語音合成（免費、不需 API）----
   const canSpeak = !!window.speechSynthesis && typeof window.SpeechSynthesisUtterance === 'function';
-  const spkBtn = (w) => canSpeak ? `<button type="button" class="spk" data-say="${esc(w)}" aria-label="Play pronunciation of ${esc(w)}" title="Play pronunciation">🔊</button>` : '';
   function speak(text) {
     if (!canSpeak) return;
     speechSynthesis.cancel();
@@ -125,7 +124,7 @@
       const v = popState && byKey(popState.key); if (!v) return;
       if (e.target.closest('.pclose')) return hidePop();
       if (popState) { popState.pinned = true; clearTimeout(popState.t); popState.t = 0; } // 點卡片 → 固定住，不再自動消失
-      const sp = e.target.closest('.spk'); if (sp) return speak(sp.dataset.say);
+      speak(v.word);   // 點浮動單字卡 = 發音
       if (v.failed || !complete(v)) fillWord(v);
     });
     return popEl;
@@ -141,7 +140,7 @@
     if (!v || !floatingMode()) return hidePop();
     const el = ensurePop();
     el.innerHTML = `<button type="button" class="pclose" aria-label="Close" title="Close">×</button>` +
-      `<div class="v1"><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
+      `<div class="v1"><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
       `<div class="vdet">${detailOf(v)}</div>`;
     el.classList.remove('hidden');
     // 英文與中文都拿到之後才開始 5 秒倒數（點過卡片就固定住）
@@ -164,7 +163,7 @@
       const open = !!(v.open || v.loading || v.failed); // 查詢中與失敗時一定展開，才看得到狀態
       const detail = detailOf(v);
       return `<li data-w="${k}" class="${v.failed ? 'fail' : ''} ${partial ? 'partial' : ''} ${open ? 'open' : 'closed'}">${v.locked ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
-        `<div class="v1"><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${open && v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
+        `<div class="v1"><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${open && v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
         `${open ? `<div class="vdet">${detail}</div>` : ''}</li>`;
     }).join('') : '<li class="empty">No words yet. Double-click (or double-tap) a word in the article, or type one above.</li>';
     applyActive();
@@ -266,7 +265,6 @@
     $('addForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('addInput'); if (i.value.trim()) addWord(i.value); i.value = ''; });
     // 點單字表的卡片：發音、展開這張並收起其他張，文章中這個字換成橘色（不移動畫面、不標整句）
     $('vocabList').addEventListener('click', (e) => {
-      const sp = e.target.closest('.spk'); if (sp) return speak(sp.dataset.say);
       const del = e.target.closest('.del'); if (del) { items = items.filter((v) => v.word.toLowerCase() !== del.dataset.del); renderVocab(); return; }
       const li = e.target.closest('li[data-w]'); const v = li && byKey(li.dataset.w); if (!v) return;
       const retry = li.matches('li.fail, li.partial.open');   // 查詢失敗或缺資訊 → 點一下重查
