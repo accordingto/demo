@@ -75,7 +75,7 @@
     [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === active.key)?.classList.add('active');
   }
   function clearActive() { clearTimeout(autoTimer); autoTimer = 0; active = null; applyActive(); }
-  // auto = 點文章中的字所觸發的暫時標示：點字光圈結束（約 1 秒）時，剛展開的單字卡收起、強調色恢復；
+  // auto = 點文章中的字所觸發的暫時標示：3 秒後，剛展開的單字卡收起、強調色恢復；
   // 窄螢幕則是浮動單字卡消失時（5 秒後）才恢復。點單字卡觸發的（auto=false）會一直保留到下一次點擊
   function highlight(v, auto = false) {
     clearTimeout(autoTimer); autoTimer = 0;
@@ -85,12 +85,13 @@
       const c = activeItem();
       if (c && !c.pinned && !c.loading && !c.failed) { collapse(c); renderVocab(); }   // 使用者自己展開（固定）的卡片不收
       clearActive();
-    }, TAP_MS);
+    }, TAP_CARD_MS);
   }
 
   // ---- 單字卡：剛加入時展開，查完 5 秒後自動收成第一行（單字、音標、發音）；點卡片再展開 ----
   const AUTO_COLLAPSE_MS = 5000;
-  const TAP_MS = 1100;   // 點字光圈的長度（要和 shared.css 的 wordTap 動畫一致）
+  const TAP_MS = 1100;        // 點字光圈的長度（要和 shared.css 的 wordTap 動畫一致）
+  const TAP_CARD_MS = 3000;   // 點文章中已加入的字後，單字卡與橘色維持多久才恢復（桌面版）
   const complete = (v) => !!(v.definition && v.zh);   // 英文解釋與中文解釋都有，才算「取得完整資訊」
   const missingText = (v) => [!v.definition && 'English meaning', !v.zh && 'Chinese meaning'].filter(Boolean).join(' and ');
   function reveal(v, pin) { // 展開；pin = 使用者主動展開，不會自動收起，並收起其他卡片
