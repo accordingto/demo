@@ -98,10 +98,13 @@
   const AUTO_COLLAPSE_MS = 5000;
   const complete = (v) => !!(v.definition && v.zh);   // 英文解釋與中文解釋都有，才算「取得完整資訊」
   const missingText = (v) => [!v.definition && 'English meaning', !v.zh && 'Chinese meaning'].filter(Boolean).join(' and ');
-  function reveal(v, pin) { // 展開；pin = 使用者主動展開，不會自動收起
-    clearTimeout(v._t); v.open = true; if (pin) v.pinned = true;
+  function reveal(v, pin) { // 展開；pin = 使用者主動展開，不會自動收起，並收起其他卡片
+    clearTimeout(v._t); v.open = true; if (pin) { v.pinned = true; collapseOthers(v); }
     if (!v.pinned && !v.loading && !v.failed && complete(v)) v._t = setTimeout(   // 取得完整資訊後才開始 5 秒倒數；缺資訊時保持展開
       () => { if (!v.pinned && items.includes(v)) { v.open = false; renderVocab(); } }, AUTO_COLLAPSE_MS);
+  }
+  function collapseOthers(v) { // 點開一張卡片時，收起其他已展開的卡片（查詢中、失敗的要留著才看得到狀態）
+    items.forEach((o) => { if (o !== v && o.open && !o.loading && !o.failed) collapse(o); });
   }
   function collapse(v) { clearTimeout(v._t); v.open = false; v.pinned = false; }
 
@@ -199,7 +202,7 @@
     const w = clean(raw);
     if (w.length < 2 || w.length > 40) { $('vmsg').textContent = 'Please select a single word.'; return; }
     const exist = findItem(w);
-    if (exist) { $('vmsg').textContent = `“${exist.word}” is already in the list.`; if (fromText && floatingMode()) { renderVocab(); showPop(exist); return; } reveal(exist); renderVocab(); flash(exist); return; }
+    if (exist) { $('vmsg').textContent = `“${exist.word}” is already in the list.`; if (fromText && floatingMode()) { renderVocab(); showPop(exist); return; } collapseOthers(exist); reveal(exist); renderVocab(); flash(exist); return; }
     const v = { word: w, pos: '', definition: '', zh: '', kk: '', lemma: '', ctx: sentenceOf(cfg.getBody(), w), open: !(fromText && floatingMode()) };
     items.push(v); $('vmsg').textContent = `Added “${w}”.`;
     renderVocab(); if (fromText && floatingMode()) showPop(v); else flash(v);
@@ -240,7 +243,7 @@
       speak(word);
       if (!w.matches('mark.vh')) return;
       const v = findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()));
-      if (v) { if (floatingMode()) showPop(v); else { reveal(v); renderVocab(); flash(v); } pick(v, marksOf(v).indexOf(w), false, true); } // 同時選取這個單字，標示文章中所有出現的位置
+      if (v) { if (floatingMode()) showPop(v); else { collapseOthers(v); reveal(v); renderVocab(); flash(v); } pick(v, marksOf(v).indexOf(w), false, true); } // 同時選取這個單字，標示文章中所有出現的位置
     });
     $('addForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('addInput'); if (i.value.trim()) addWord(i.value); i.value = ''; });
     $('vocabList').addEventListener('click', (e) => {
