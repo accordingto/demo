@@ -94,7 +94,7 @@
   }
   function step(d) { if (active) { active.idx += d; active.auto = false; clearTimeout(autoTimer); applyActive(); scrollToNow(); } }
 
-  // ---- 單字卡：剛加入時展開，查完 5 秒後自動收成第一行（單字、音標、發音）；點卡片或箭頭再展開 ----
+  // ---- 單字卡：剛加入時展開，查完 5 秒後自動收成第一行（單字、音標、發音）；點卡片再展開 ----
   const AUTO_COLLAPSE_MS = 5000;
   const complete = (v) => !!(v.definition && v.zh);   // 英文解釋與中文解釋都有，才算「取得完整資訊」
   const missingText = (v) => [!v.definition && 'English meaning', !v.zh && 'Chinese meaning'].filter(Boolean).join(' and ');
@@ -167,8 +167,7 @@
       const open = !!(v.open || v.loading || v.failed); // 查詢中與失敗時一定展開，才看得到狀態
       const detail = detailOf(v);
       return `<li data-w="${k}" class="${v.failed ? 'fail' : ''} ${partial ? 'partial' : ''} ${open ? 'open' : 'closed'}">${v.locked ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
-        `<div class="v1"><button type="button" class="tg" aria-expanded="${open}" aria-label="${open ? 'Collapse' : 'Expand'} ${esc(v.word)}" title="${open ? 'Collapse' : 'Expand'}">${open ? '▾' : '▸'}</button>` +
-        `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${open && v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
+        `<div class="v1"><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${open && v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
         `${open ? `<div class="vdet">${detail}</div>` : ''}</li>`;
     }).join('') : '<li class="empty">No words yet. Double-click (or double-tap) a word in the article, or type one above.</li>';
     applyActive();
@@ -247,12 +246,6 @@
     $('vocabList').addEventListener('click', (e) => {
       const sp = e.target.closest('.spk'); if (sp) return speak(sp.dataset.say);
       const del = e.target.closest('.del'); if (del) { items = items.filter((v) => v.word.toLowerCase() !== del.dataset.del); renderVocab(); return; }
-      const tgl = e.target.closest('.tg');
-      if (tgl) { // 箭頭：只負責展開／收起
-        const v = items.find((x) => x.word.toLowerCase() === tgl.closest('li').dataset.w);
-        if (v) { if (v.open) collapse(v); else reveal(v, true); renderVocab(); }
-        return;
-      }
       const failed = e.target.closest('li.fail, li.partial.open'); if (failed) { const v = byKey(failed.dataset.w); if (v) fillWord(v); return; }
       const li = e.target.closest('li[data-w]');
       if (li) {
