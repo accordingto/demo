@@ -136,7 +136,10 @@ $('save').addEventListener('click', async () => {
 $('libList').addEventListener('click', async (e) => {
   const btn = e.target.closest('button[data-act]'); if (!btn) return;
   const id = btn.closest('li').dataset.id, act = btn.dataset.act;
-  const afterOpen = () => (act === 'edit' ? startEdit() : $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  const afterOpen = () => {
+    $('library').classList.add('hidden');   // 開啟後自動收起文章庫
+    if (act === 'edit') startEdit(); else $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   try {
     if (cloud) {
       if (act === 'open' || act === 'edit') {
