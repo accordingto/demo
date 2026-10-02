@@ -69,11 +69,11 @@
   @media (max-width:639px) { #pastePanel .qrow { grid-template-columns:1fr; } }
   /* 手機：欄位兩兩並排、按鈕滿版 */
   @media (max-width:639px) {
-    .f { flex:1 1 40%; } .f.grow { flex-basis:100%; }
+    .bar > .f { flex:1 1 calc(50% - 5px); } .bar > .f.grow { flex:1 1 100%; } .bar > .f:first-child { flex-basis:100%; }
     #code, #words, #level, #genre { width:100%; }
-    .checks { flex:1 1 100%; justify-content:space-between; }
-    .tb { flex:1 1 40%; height:40px; } .lbl { display:inline; }
-    #go { flex:1 1 100%; height:40px; }
+    .checks { flex:1 1 100%; justify-content:space-between; height:44px; } .checks label { font-size:.95rem; gap:8px; }
+    .tb { flex:1 1 40%; height:46px; } .lbl { display:inline; }
+    #go { flex:1 1 100%; height:48px; font-size:1rem; }
     .actions button { flex:1 1 40%; }
   }
   @media print { #editBar, #form, #library, #pastePanel, #empty, #openReader, .actions, .share, #status, #linkMsg { display:none !important; } }

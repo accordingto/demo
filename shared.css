@@ -30,7 +30,7 @@ button:disabled { opacity:.5; cursor:wait; }
 .fsbar { position:absolute; top:16px; right:16px; margin:0; z-index:1; display:flex; align-items:center; justify-content:flex-end; gap:6px; }
 .fsbar button { min-height:32px; padding:0 12px; font-size:.9rem; }
 .fsbar .meta { margin-right:4px; }
-.doc .text h2 { min-height:32px; display:flex; align-items:center; margin:0 0 .3em; padding-right:110px; }
+.doc .text h2 { min-height:32px; display:flex; align-items:center; margin:0 0 .3em; padding-right:132px; }
 @media (min-width:640px) { .fsbar { top:20px; right:20px; } .doc .text h2 { padding-right:230px; } }
 @media (max-width:639px) { .fsbar .meta { display:none; } }
 /* 文章中的每個單字（供雙擊）；觸控裝置關閉系統的選字選單 */
@@ -89,3 +89,18 @@ mark.vh.now { background:#ffb840; color:#1b1f24; box-shadow:0 0 0 2px #fff0c2; a
   body { background:#fff; color:#000; } .layout { display:block; padding:0; }
   .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }
 }
+
+/* ---- iPhone / 觸控裝置 ---- */
+html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 橫放時不要自動放大文字 */
+@media (pointer:coarse), (max-width:639px) {
+  /* iOS Safari：輸入框字體小於 16px，點進去會自動放大整個頁面（而且常常不會縮回來） */
+  input[type=text], input[type=password], input[type=number], select, textarea, .pta, #pasteBody, #pasteTitle { font-size:16px; }
+  input[type=text], input[type=password], input[type=number], select { height:44px; }
+  button, .addrow button, .fsbar button { min-height:44px; }
+  .fsbar button { min-width:48px; }
+  .addrow input { height:44px; }
+  input[type=checkbox] { width:22px !important; height:22px !important; }
+  .editing #bodyText[contenteditable], .editing .qa li, .editing #doc h2[contenteditable] { font-size:max(16px, var(--fs, 18px)); }  /* 編輯時字體也不得小於 16px */
+  .qdel { min-width:44px; min-height:44px; }
+}
+.editing #bodyText[contenteditable] { font-size:max(16px, var(--fs, 18px)); line-height:1.8; }   /* 編輯時字體大小與閱讀時一致 */
