@@ -82,12 +82,17 @@
     $('hlText').textContent = `“${v.word}” ${active.idx + 1} / ${ms.length}`;
   }
   function scrollToNow() { document.querySelector('#bodyText mark.now')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-  function pick(v, idx, scroll = true) { // idx 未指定：同一個字再點就跳到下一處；換字則從第一處開始
+  // auto = 由「點文章中已標示的字」觸發的暫時標示：5 秒後（窄螢幕＝浮動單字卡消失時）自動恢復原狀
+  let autoTimer = 0;
+  function clearActive() { clearTimeout(autoTimer); autoTimer = 0; active = null; applyActive(); }
+  function pick(v, idx, scroll = true, auto = false) { // idx 未指定：同一個字再點就跳到下一處；換字則從第一處開始
     if (idx === undefined) idx = active && active.key === v.word.toLowerCase() ? active.idx + 1 : 0;
-    active = { key: v.word.toLowerCase(), idx };
+    clearTimeout(autoTimer); autoTimer = 0;
+    active = { key: v.word.toLowerCase(), idx, auto };
     applyActive(); if (scroll) scrollToNow();
+    if (auto && !floatingMode()) autoTimer = setTimeout(clearActive, AUTO_COLLAPSE_MS);
   }
-  function step(d) { if (active) { active.idx += d; applyActive(); scrollToNow(); } }
+  function step(d) { if (active) { active.idx += d; active.auto = false; clearTimeout(autoTimer); applyActive(); scrollToNow(); } }
 
   // ---- 單字卡：剛加入時展開，查完 5 秒後自動收成第一行（單字、音標、發音）；點卡片或箭頭再展開 ----
   const AUTO_COLLAPSE_MS = 5000;
@@ -127,7 +132,11 @@
     });
     return popEl;
   }
-  function hidePop() { if (popState) clearTimeout(popState.t); popState = null; if (popEl) popEl.classList.add('hidden'); }
+  function hidePop() {
+    if (popState) clearTimeout(popState.t);
+    popState = null; if (popEl) popEl.classList.add('hidden');
+    if (active?.auto) clearActive();   // 浮動單字卡消失 → 文章中的強調色與句子底色一起恢復
+  }
   function updatePop() {
     if (!popState) return;
     const v = byKey(popState.key);
@@ -232,7 +241,7 @@
       speak(word);
       if (!w.matches('mark.vh')) return;
       const v = findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()));
-      if (v) { if (floatingMode()) showPop(v); else { reveal(v); renderVocab(); flash(v); } pick(v, marksOf(v).indexOf(w), false); } // 同時選取這個單字，標示文章中所有出現的位置
+      if (v) { if (floatingMode()) showPop(v); else { reveal(v); renderVocab(); flash(v); } pick(v, marksOf(v).indexOf(w), false, true); } // 同時選取這個單字，標示文章中所有出現的位置
     });
     $('addForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('addInput'); if (i.value.trim()) addWord(i.value); i.value = ''; });
     $('vocabList').addEventListener('click', (e) => {
@@ -252,8 +261,8 @@
         else { reveal(v, true); pick(v); }                           // 已展開 → 跳到文章中的下一處
       }
     });
-    $('hlPrev').onclick = () => step(-1); $('hlNext').onclick = () => step(1); $('hlClear').onclick = () => { active = null; applyActive(); };
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && active) { active = null; applyActive(); } });
+    $('hlPrev').onclick = () => step(-1); $('hlNext').onclick = () => step(1); $('hlClear').onclick = clearActive;
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && active) clearActive(); });
   }
 
   window.Vocab = {
