@@ -75,7 +75,7 @@ mark.vh.now { background:#ffb840; color:#1b1f24; box-shadow:0 0 0 2px #fff0c2; a
 .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
 .lem { color:var(--muted); font-size:.85em; margin-left:.3em; }
 .def { margin-top:2px; } .zhl { color:#f0c36d; }
-#vocabList li > b { color:#7cc7ff; font-size:1.12em; letter-spacing:.2px; }  /* 單字：醒目的天藍色 */
+#vocabList .v1 > b { color:#7cc7ff; font-size:1.12em; letter-spacing:.2px; }  /* 單字：醒目的天藍色 */
 .def .pos { color:var(--accent); font-style:normal; font-weight:600; margin-right:2px; }
 .spk { min-height:0; padding:0 6px; margin-left:4px; font-size:.95rem; line-height:1.6; background:transparent; border:1px solid var(--line); color:var(--accent); border-radius:6px; }
 .del { float:right; min-height:0; padding:0 4px; background:none; border:0; color:var(--muted); font-size:1.1rem; line-height:1; }
@@ -104,3 +104,14 @@ html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 橫放時不
   .qdel { min-width:44px; min-height:44px; }
 }
 .editing #bodyText[contenteditable] { font-size:max(16px, var(--fs, 18px)); line-height:1.8; }   /* 編輯時字體大小與閱讀時一致 */
+
+/* 單字卡：第一行（箭頭、單字、音標、發音）永遠顯示；詳細內容展開時才顯示 */
+#vocabList .v1 { display:flex; align-items:center; flex-wrap:wrap; gap:2px 6px; padding-right:26px; }
+#vocabList li.closed { padding-top:6px; padding-bottom:6px; }
+#vocabList .vdet { margin-top:4px; padding-left:28px; animation:vdetIn .25s ease-out; }
+@keyframes vdetIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+#vocabList .tg { min-height:0; width:22px; height:22px; padding:0; margin:0; background:none; border:0; color:var(--muted); font-size:.85rem; line-height:1; flex:none; }
+#vocabList .tg:hover { color:var(--accent); }
+#vocabList .v1 .kk, #vocabList .v1 .spk { margin-left:0; }
+@media (pointer:coarse), (max-width:639px) { #vocabList .tg { width:32px; height:32px; font-size:1rem; } }
+@media print { #vocabList .tg { display:none !important; } }

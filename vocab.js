@@ -92,15 +92,26 @@
   }
   function step(d) { if (active) { active.idx += d; applyActive(); scrollToNow(); } }
 
+  // ---- 單字卡：剛加入時展開，查完 5 秒後自動收成第一行（單字、音標、發音）；點卡片或箭頭再展開 ----
+  const AUTO_COLLAPSE_MS = 5000;
+  function reveal(v, pin) { // 展開；pin = 使用者主動展開，不會自動收起
+    clearTimeout(v._t); v.open = true; if (pin) v.pinned = true;
+    if (!v.pinned && !v.loading && !v.failed) v._t = setTimeout(() => { if (!v.pinned && items.includes(v)) { v.open = false; renderVocab(); } }, AUTO_COLLAPSE_MS);
+  }
+  function collapse(v) { clearTimeout(v._t); v.open = false; v.pinned = false; }
+
   function renderVocab() {
     paintBody();
     $('vocabList').innerHTML = items.length ? items.map((v) => {
       const k = esc(v.word.toLowerCase());
+      const open = !!(v.open || v.loading || v.failed); // 查詢中與失敗時一定展開，才看得到狀態
       const detail = v.loading ? '<div class="def">Looking up…</div>'
         : v.failed ? `<div class="def">${esc(v.err || 'Lookup failed')} — click to retry</div>`
         : `<div class="def">${v.pos ? `<span class="pos">${esc(posLabel(v.pos))}</span> ` : ''}${esc(v.definition || '(no definition)')}</div>${v.zh ? `<div class="zhl">${esc(v.zh)}</div>` : ''}`;
-      return `<li data-w="${k}" class="${v.failed ? 'fail' : ''}">${v.locked ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
-        `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}${detail}</li>`;
+      return `<li data-w="${k}" class="${v.failed ? 'fail' : ''} ${open ? 'open' : 'closed'}">${v.locked ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
+        `<div class="v1"><button type="button" class="tg" aria-expanded="${open}" aria-label="${open ? 'Collapse' : 'Expand'} ${esc(v.word)}" title="${open ? 'Collapse' : 'Expand'}">${open ? '▾' : '▸'}</button>` +
+        `<b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${open && v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
+        `${open ? `<div class="vdet">${detail}</div>` : ''}</li>`;
     }).join('') : '<li class="empty">No words yet. Double-click (or double-tap) a word in the article, or type one above.</li>';
     applyActive();
     cfg.onChange(items);
@@ -120,6 +131,7 @@
       Object.assign(v, { pos: j.pos || '', kk: j.kk || '', definition: j.definition || '', zh: j.zh || '', lemma: j.lemma && j.lemma.toLowerCase() !== v.word.toLowerCase() ? j.lemma : '', err: '' });
     } catch (e) { v.failed = true; v.err = e.message; }
     v.loading = false;
+    if (v.open) reveal(v); // 查詢完成 → 開始 5 秒倒數（使用者已手動展開的不會收）
     renderVocab();
   }
   function flash(v) { // 單字表中對應的項目短暫反白，並捲到可見位置
@@ -130,8 +142,8 @@
     const w = clean(raw);
     if (w.length < 2 || w.length > 40) { $('vmsg').textContent = 'Please select a single word.'; return; }
     const exist = findItem(w);
-    if (exist) { $('vmsg').textContent = `“${exist.word}” is already in the list.`; flash(exist); return; }
-    const v = { word: w, pos: '', definition: '', zh: '', kk: '', lemma: '', ctx: sentenceOf(cfg.getBody(), w) };
+    if (exist) { $('vmsg').textContent = `“${exist.word}” is already in the list.`; reveal(exist); renderVocab(); flash(exist); return; }
+    const v = { word: w, pos: '', definition: '', zh: '', kk: '', lemma: '', ctx: sentenceOf(cfg.getBody(), w), open: true };
     items.push(v); $('vmsg').textContent = `Added “${w}”.`;
     renderVocab(); flash(v); fillWord(v);
   }
@@ -170,14 +182,25 @@
       speak(word);
       if (!w.matches('mark.vh')) return;
       const v = findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()));
-      if (v) { flash(v); pick(v, marksOf(v).indexOf(w)); } // 同時選取這個單字，標示文章中所有出現的位置
+      if (v) { reveal(v); renderVocab(); flash(v); pick(v, marksOf(v).indexOf(w)); } // 同時選取這個單字，標示文章中所有出現的位置
     });
     $('addForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('addInput'); if (i.value.trim()) addWord(i.value); i.value = ''; });
     $('vocabList').addEventListener('click', (e) => {
       const sp = e.target.closest('.spk'); if (sp) return speak(sp.dataset.say);
       const del = e.target.closest('.del'); if (del) { items = items.filter((v) => v.word.toLowerCase() !== del.dataset.del); renderVocab(); return; }
       const failed = e.target.closest('li.fail'); if (failed) { const v = items.find((x) => x.word.toLowerCase() === failed.dataset.w); if (v) fillWord(v); return; }
-      const li = e.target.closest('li[data-w]'); if (li) { const v = items.find((x) => x.word.toLowerCase() === li.dataset.w); if (v) pick(v); } // 點單字 → 標示並跳到文章中的位置
+      const tgl = e.target.closest('.tg');
+      if (tgl) { // 箭頭：只負責展開／收起
+        const v = items.find((x) => x.word.toLowerCase() === tgl.closest('li').dataset.w);
+        if (v) { if (v.open) collapse(v); else reveal(v, true); renderVocab(); }
+        return;
+      }
+      const li = e.target.closest('li[data-w]');
+      if (li) {
+        const v = items.find((x) => x.word.toLowerCase() === li.dataset.w); if (!v) return;
+        if (!v.open) { reveal(v, true); renderVocab(); pick(v, 0); } // 收起的卡片 → 展開，並標示文章中的位置
+        else { reveal(v, true); pick(v); }                           // 已展開 → 跳到文章中的下一處
+      }
     });
     if ($('hlPrev')) { $('hlPrev').onclick = () => step(-1); $('hlNext').onclick = () => step(1); $('hlClear').onclick = () => { active = null; applyActive(); }; }
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && active) { active = null; applyActive(); } });
@@ -186,7 +209,7 @@
   window.Vocab = {
     init(c) { cfg = { ...cfg, ...c }; bind(); renderVocab(); },
     getItems: () => items,
-    setItems(list) { items = (list || []).map((v) => ({ ...v })); active = null; $('vmsg').textContent = ''; renderVocab(); },
+    setItems(list) { items.forEach((x) => clearTimeout(x._t)); items = (list || []).map(({ word, pos, definition, zh, kk, lemma, locked, ctx }) => ({ word, pos, definition, zh, kk, lemma, locked, ctx })); active = null; $('vmsg').textContent = ''; renderVocab(); },
     repaint: renderVocab,
     freeze(on) { frozen = !!on; },
     sentenceOf, fillWord,
