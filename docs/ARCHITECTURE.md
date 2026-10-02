@@ -76,6 +76,7 @@
 | `currentLibId` | host.js | 文章在文章庫中的 id（有值才會自動同步單字表） |
 | `editState` | host-edit.js | 編輯中的狀態（`dirty`、`libId`） |
 | `cloud` / `cloudItems` / `cloudErr` | host-library.js | 是否用雲端文章庫、清單、最近錯誤 |
+| `vocabSig` | host-library.js | 上次存檔時單字表的簽名；`syncLib` 比對它才知道單字表是否真的有增減（有增減 → 自動存檔，沒存過的文章自動建立） |
 
 ### `Vocab`（`js/vocab.js`）— 兩頁共用的單字功能
 `window.Vocab`：`init({getBody,onChange})`、`getItems`、`setItems`、`repaint`、`freeze(on)`、`fillWord`。

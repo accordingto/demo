@@ -14,6 +14,11 @@ const REL = (n) => `${n} article${n === 1 ? '' : 's'}`;
 // 目前單字表（只存查詢完成的字）
 const settledVocab = () => Vocab.getItems().filter((v) => !v.loading && !v.failed).map(({ word, pos, definition, zh, kk, lemma }) => ({ word, pos, definition, zh, kk, lemma }));
 
+// 目前單字表的「簽名」：和上次存檔的比較，才知道單字表是不是真的有增減（render 重畫、查詢中的更新不算）
+let vocabSig = '[]';
+const sigNow = () => JSON.stringify(settledVocab());
+const markSynced = () => { vocabSig = sigNow(); };
+
 // ---- 雲端 ----
 function cloudCall(body) {
   const code = $('code').value.trim();
@@ -28,7 +33,7 @@ async function refreshCloud() {
 // 存到雲端（新文章 → 新 id；已在雲端的文章 → 更新同一個 id，短連結不變）
 async function cloudSave() {
   const res = await cloudCall({ action: 'save', id: currentLibId || undefined, article: current, vocab: settledVocab() });
-  currentLibId = res.id;
+  currentLibId = res.id; markSynced();
   return res.id;
 }
 
@@ -62,27 +67,50 @@ async function persistEdit() {
   try {
     if (cloud) { const id = await cloudSave(); showLink(shortLink(id)); $('linkMsg').textContent = '✅ Changes saved to the cloud library. The share link now shows the updated article.'; await refreshCloud(); return; }
     const l = libLoad(), it = l.find((x) => x.id === currentLibId); if (!it) return;
-    it.article = current; it.vocab = settledVocab();
+    it.article = current; it.vocab = settledVocab(); markSynced();
     $('linkMsg').textContent = libStore(l) ? '✅ Changes saved to your library. (Links you already shared keep the old version — create a new link to share this one.)' : '❌ Could not save';
     renderLib();
   } catch (e) { $('linkMsg').textContent = '❌ ' + e.message; }
 }
 
-// 文章已在文章庫時，單字表一有變動就自動同步（等查詢完成、稍微延遲後存）
+// 本機文章庫存檔：已有同標題同內容的就更新單字，否則新增一筆。回傳 { ok, vocab, created }
+function localSaveCurrent() {
+  const l = libLoad(), vocab = settledVocab();
+  const dup = l.find((it) => it.article.body === current.body && it.article.title === current.title);
+  let created = false;
+  if (dup) { dup.vocab = vocab; currentLibId = dup.id; }
+  else {
+    const entry = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), savedAt: Date.now(), article: current, vocab };
+    l.unshift(entry); currentLibId = entry.id; created = true;
+  }
+  const ok = libStore(l);
+  if (ok) markSynced();
+  renderLib();
+  return { ok, vocab, created };
+}
+
+// 單字表有增減就自動存檔：文章還沒存過 → 自動存成新文章；已在文章庫 → 更新同一篇（等查詢完成、稍微延遲後存）
 let syncTimer = null;
 function syncLib() {
-  if (!currentLibId) return;
+  if (!current || editState) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(async () => {
-    if (!currentLibId || Vocab.getItems().some((v) => v.loading)) return; // 還在查詢中，查完會再觸發一次
+    if (!current || editState || Vocab.getItems().some((v) => v.loading)) return; // 還在查詢中，查完會再觸發一次
+    if (sigNow() === vocabSig) return;                                              // 單字表沒有真的變動
+    const isNew = !currentLibId;
+    if (isNew && cloud && !$('code').value.trim()) return;                          // 雲端要存取碼；沒有就先不存
+    const n = settledVocab().length;
     if (cloud) {
-      try { await cloudCall({ action: 'save', id: currentLibId, article: current, vocab: settledVocab() }); $('vmsg').textContent = `Vocabulary saved to the cloud library (${settledVocab().length}).`; refreshCloud(); }
-      catch (e) { $('vmsg').textContent = `Could not sync to the cloud: ${e.message}`; }
+      try {
+        await cloudSave();
+        $('vmsg').textContent = isNew ? `Article saved to the cloud library automatically (${n} vocabulary words).` : `Vocabulary saved to the cloud library (${n}).`;
+        refreshCloud();
+      } catch (e) { $('vmsg').textContent = `Could not sync to the cloud: ${e.message}`; }
       return;
     }
-    const l = libLoad(), it = l.find((x) => x.id === currentLibId); if (!it) return;
-    it.vocab = settledVocab();
-    if (libStore(l)) { renderLib(); $('vmsg').textContent = `Vocabulary saved to library (${it.vocab.length}).`; }
+    const r = localSaveCurrent();
+    if (r.ok) $('vmsg').textContent = r.created ? `Article saved to your library automatically (${n} vocabulary words).` : `Vocabulary saved to library (${n}).`;
+    else $('vmsg').textContent = 'Could not save: browser storage is full or blocked.';
   }, 400);
 }
 
@@ -98,17 +126,10 @@ $('save').addEventListener('click', async () => {
     finally { $('save').disabled = false; }
     return;
   }
-  const l = libLoad(), vocab = settledVocab();
-  const dup = l.find((it) => it.article.body === current.body && it.article.title === current.title);
-  if (dup) {
-    dup.vocab = vocab; currentLibId = dup.id;
-    $('linkMsg').textContent = libStore(l) ? `✅ Library entry updated (${vocab.length} vocabulary words)` : '❌ Could not save';
-    renderLib(); return;
-  }
-  const entry = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), savedAt: Date.now(), article: current, vocab };
-  l.unshift(entry); currentLibId = entry.id;
-  $('linkMsg').textContent = libStore(l) ? `✅ Saved to your library with ${vocab.length} vocabulary words. New words you add now are saved automatically (stored in this browser only — export a backup now and then)` : '❌ Could not save: browser storage is full or blocked. Use “Create share link” instead.';
-  renderLib();
+  const r = localSaveCurrent();
+  $('linkMsg').textContent = !r.ok ? '❌ Could not save: browser storage is full or blocked. Use “Create share link” instead.'
+    : r.created ? `✅ Saved to your library with ${r.vocab.length} vocabulary words. New words you add now are saved automatically (stored in this browser only — export a backup now and then)`
+    : `✅ Library entry updated (${r.vocab.length} vocabulary words)`;
 });
 
 // ---- 清單上的按鈕：開啟 / 編輯 / 複製連結 / 刪除 ----

@@ -66,6 +66,7 @@ function render(a, vocab = [], libId = null) {
   ['link', 'copy', 'openReader'].forEach((id) => $(id).classList.add('hidden'));
   $('linkMsg').textContent = '';
   currentLibId = libId;
+  markSynced();   // 剛載入／產生的單字表不算「變動」
 }
 // 開啟一篇已存的文章（雲端或本機文章庫）
 function openArticle(article, vocab, libId) {
