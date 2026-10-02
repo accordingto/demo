@@ -1,5 +1,5 @@
 // 主持人頁與閱讀頁共用：單字表、雙擊加字、文章標示、字體大小
-// 需先載入 util.js；頁面需提供：#doc #bodyText #vocabList #addForm #addInput #vmsg #fsInc #fsDec #fsVal
+// 需先載入 util.js；頁面需提供：#doc #bodyText #vocabList #vmsg #fsInc #fsDec #fsVal
 (function () {
   let items = [];                 // 單字表項目；locked:true = 主持人挑的字（不可移除）
   let cfg = { getBody: () => '', onChange: () => {} };
@@ -165,7 +165,7 @@
       return `<li data-w="${k}" class="${v.failed ? 'fail' : ''} ${partial ? 'partial' : ''} ${open ? 'open' : 'closed'}">${v.locked ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
         `<div class="v1"><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${open && v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
         `${open ? `<div class="vdet">${detail}</div>` : ''}</li>`;
-    }).join('') : '<li class="empty">No words yet. Double-click (or double-tap) a word in the article, or type one above.</li>';
+    }).join('') : '<li class="empty">No words yet. Double-click a word in the article to add it.</li>';
     applyActive();
     updatePop();
     cfg.onChange(items);
@@ -262,7 +262,6 @@
       } else if (closed) renderVocab();
       setTimeout(() => tapEffect(wordIdx), 0);   // 等這次點擊的處理（可能重畫文章）完成後再播放
     });
-    $('addForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('addInput'); if (i.value.trim()) addWord(i.value); i.value = ''; });
     // 點單字表的卡片：發音、展開這張並收起其他張，文章中這個字換成橘色（不移動畫面、不標整句）
     $('vocabList').addEventListener('click', (e) => {
       const del = e.target.closest('.del'); if (del) { items = items.filter((v) => v.word.toLowerCase() !== del.dataset.del); renderVocab(); return; }

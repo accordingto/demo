@@ -69,8 +69,6 @@ mark.vh.cur { background:rgba(255,184,64,.50); box-shadow:0 0 0 1px rgba(255,184
 /* 單字表 */
 #vocabPanel h3 { margin:0 0 8px; font-size:1rem; color:var(--accent); }
 .hint { font-size:.72rem; font-weight:400; color:var(--muted); margin-left:6px; }
-.addrow { display:flex; gap:6px; margin-bottom:8px; }
-.addrow input { height:34px; } .addrow button { min-height:34px; padding:0 14px; }
 #vmsg { font-size:.8rem; color:var(--muted); min-height:1.2em; margin-bottom:6px; }
 #vocabList { list-style:none; margin:0; padding:0; }
 #vocabList li { background:var(--field); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:8px; line-height:1.5; }
@@ -87,7 +85,7 @@ mark.vh.cur { background:rgba(255,184,64,.50); box-shadow:0 0 0 1px rgba(255,184
 @media print {
   a.ulink { color:inherit; }
   mark.vh, mark.vh.cur { background:none; box-shadow:none; color:inherit; animation:none; }
-  .fsbar, #vocabPanel .addrow, #vmsg, .del { display:none !important; }
+  .fsbar, #vmsg, .del { display:none !important; }
   body { background:#fff; color:#000; } .layout { display:block; padding:0; }
   .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }
 }
@@ -98,9 +96,8 @@ html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 橫放時不
   /* iOS Safari：輸入框字體小於 16px，點進去會自動放大整個頁面（而且常常不會縮回來） */
   input[type=text], input[type=password], input[type=number], select, textarea, .pta, #pasteBody, #pasteTitle { font-size:16px; }
   input[type=text], input[type=password], input[type=number], select { height:44px; }
-  button, .addrow button, .fsbar button { min-height:44px; }
+  button, .fsbar button { min-height:44px; }
   .fsbar button { min-width:48px; }
-  .addrow input { height:44px; }
   input[type=checkbox] { width:22px !important; height:22px !important; }
   .editing #bodyText[contenteditable], .editing .qa li, .editing #doc h2[contenteditable] { font-size:max(16px, var(--fs, 18px)); }  /* 編輯時字體也不得小於 16px */
   .qdel { min-width:44px; min-height:44px; }
