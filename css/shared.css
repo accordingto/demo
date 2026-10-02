@@ -54,14 +54,8 @@ mark.vh:hover { background:rgba(124,199,255,.5); }
 a.ulink { color:#7cc7ff; text-decoration:underline; text-underline-offset:2px; word-break:break-all; }
 a.ulink:hover { color:#a8dcff; }
 
-/* 點單字表的字 → 文章中這個字的每一處（橘色）與所在的整句（淡橘底）；目前這一處更醒目 */
-.s.hit { background:rgba(255,184,64,.12); border-radius:4px; }
+/* 點單字（或單字卡）→ 文章中這個字的每一處換成橘色 */
 mark.vh.cur { background:rgba(255,184,64,.50); box-shadow:0 0 0 1px rgba(255,184,64,.95) inset; }
-mark.vh.now { background:#ffb840; color:#1b1f24; box-shadow:0 0 0 2px #fff0c2; animation:nowpulse .9s ease-out 1; }
-@keyframes nowpulse { 0% { box-shadow:0 0 0 0 rgba(255,184,64,.9); } 100% { box-shadow:0 0 0 12px rgba(255,184,64,0); } }
-#hlbar { display:flex; align-items:center; gap:6px; margin:0 0 8px; padding:6px 8px; border:1px solid rgba(255,184,64,.6); border-radius:8px; background:rgba(255,184,64,.10); font-size:.9rem; }
-#hlbar span { flex:1; color:#ffd48a; }
-#hlbar button { min-height:28px; padding:0 10px; font-size:.95rem; background:transparent; color:#ffd48a; border:1px solid rgba(255,184,64,.6); }
 #vocabList li.active { border-color:#ffb840; background:rgba(255,184,64,.08); }
 #vocabList li[data-w] { cursor:pointer; }
 
@@ -93,8 +87,7 @@ mark.vh.now { background:#ffb840; color:#1b1f24; box-shadow:0 0 0 2px #fff0c2; a
 
 @media print {
   a.ulink { color:inherit; }
-  mark.vh, mark.vh.cur, mark.vh.now { background:none; box-shadow:none; color:inherit; animation:none; }
-  .s.hit { background:none; } #hlbar { display:none !important; }
+  mark.vh, mark.vh.cur { background:none; box-shadow:none; color:inherit; animation:none; }
   .fsbar, #vocabPanel .addrow, #vmsg, .del { display:none !important; }
   body { background:#fff; color:#000; } .layout { display:block; padding:0; }
   .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }
@@ -127,8 +120,6 @@ html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 橫放時不
 #wordPop .v1 { display:flex; align-items:center; flex-wrap:wrap; gap:2px 8px; padding-right:40px; }
 #wordPop .v1 > b { color:#7cc7ff; font-size:1.25em; }
 #wordPop .vdet { margin-top:6px; font-size:1rem; }
-#wordPop .pact { margin-top:10px; display:flex; justify-content:flex-end; }
-#wordPop .pfind { min-height:40px; padding:0 14px; font-size:.9rem; }
 #wordPop .pclose { position:absolute; top:6px; right:6px; width:40px; height:40px; min-height:0; padding:0; background:none; border:0; color:var(--muted); font-size:1.6rem; line-height:1; }
 @keyframes popUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
 @media print { #wordPop { display:none !important; } }

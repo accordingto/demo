@@ -1,5 +1,5 @@
 // 主持人頁與閱讀頁共用：單字表、雙擊加字、文章標示、字體大小
-// 需先載入 util.js；頁面需提供：#doc #bodyText #vocabList #addForm #addInput #vmsg #hlbar #hlText #hlPrev #hlNext #hlClear #fsInc #fsDec #fsVal
+// 需先載入 util.js；頁面需提供：#doc #bodyText #vocabList #addForm #addInput #vmsg #fsInc #fsDec #fsVal
 (function () {
   let items = [];                 // 單字表項目；locked:true = 主持人挑的字（不可移除）
   let cfg = { getBody: () => '', onChange: () => {} };
@@ -35,7 +35,7 @@
     const keys = new Set();
     items.forEach((v) => { keys.add(v.word.toLowerCase()); if (v.lemma) keys.add(v.lemma.toLowerCase()); });
 
-    // 網址（http/https/www.）→ 可點擊的連結（新分頁開啟）。先把網址換成佔位符，避免被拆成單字或被句號切句
+    // 網址（http/https/www.）→ 可點擊的連結（新分頁開啟）。先把網址換成佔位符，避免被拆成單字
     const URL_RE = /\b(?:https?:\/\/|www\.)[^\s<>"“”]+/gi;
     const trimUrl = (u) => { // 去掉結尾的標點；結尾的「)」只有在沒有對應的「(」時才去掉
       for (;;) {
@@ -53,51 +53,40 @@
       if (!/^[A-Za-z]/.test(t)) return esc(t).replace(/\uE000(\d+)\uE001/g, (_, i) => linkHtml(urls[+i]));
       return stems(clean(t)).some((k) => keys.has(k)) ? `<mark class="vh w">${esc(t)}</mark>` : `<span class="w">${esc(t)}</span>`;
     };
-    // 每個句子包成 span.s（點單字表時可整句標示）；句子內每個字包成 span.w / mark.vh
-    const sentences = (p) => (p.match(/[^.!?]+(?:[.!?]+["'”’)]*)?\s*/g) || [p]).filter((x) => x.length);
     el.innerHTML = String(cfg.getBody() || '').split(/\n\s*\n/).filter((p) => p.trim()).map((p) => {
       const urls = [];
       const masked = p.replace(URL_RE, (m) => { const core = trimUrl(m); urls.push(core); return `\uE000${urls.length - 1}\uE001${m.slice(core.length)}`; });
-      return `<p>${sentences(masked).map((st) => `<span class="s">${st.split(/([A-Za-z][A-Za-z’'-]*)/).map((t) => wrap(t, urls)).join('')}</span>`).join('')}</p>`;
+      return `<p>${masked.split(/([A-Za-z][A-Za-z’'-]*)/).map((t) => wrap(t, urls)).join('')}</p>`;   // 每個字包成 span.w / mark.vh
     }).join('');
   }
 
-  // ---- 點單字表的某個字 → 文章中這個字的每一處（含整句）特別標示，並可逐一跳到每一處 ----
-  let active = null; // { key: 單字（小寫）, idx: 目前是第幾處 }
+  // ---- 文章中單字的強調色：把這個字在文章中的每一處標成橘色（不標整句、不捲動）----
+  let active = null; // { key: 單字（小寫）, auto: 是否為暫時標示 }
+  let autoTimer = 0;
   const keysOf = (v) => new Set([v.word.toLowerCase(), v.lemma ? v.lemma.toLowerCase() : ''].filter(Boolean));
   const marksOf = (v) => { const ks = keysOf(v); return [...document.querySelectorAll('#bodyText mark.vh')].filter((m) => stems(clean(m.textContent)).some((k) => ks.has(k))); };
   const activeItem = () => (active ? byKey(active.key) : null);
   function applyActive() {
-    document.querySelectorAll('#bodyText .cur, #bodyText .now, #bodyText .s.hit').forEach((e) => e.classList.remove('cur', 'now', 'hit'));
+    document.querySelectorAll('#bodyText .cur').forEach((e) => e.classList.remove('cur'));
     document.querySelectorAll('#vocabList li.active').forEach((e) => e.classList.remove('active'));
-    const bar = $('hlbar'), v = activeItem();
-    if (!v) { active = null; bar.classList.add('hidden'); return; }
-    const ms = marksOf(v);
-    const li = [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === active.key); if (li) li.classList.add('active');
-    bar.classList.remove('hidden');
-    if (!ms.length) { $('hlText').textContent = `“${v.word}” does not appear in the text.`; $('hlPrev').classList.add('hidden'); $('hlNext').classList.add('hidden'); return; }
-    $('hlPrev').classList.toggle('hidden', ms.length < 2); $('hlNext').classList.toggle('hidden', ms.length < 2);
-    active.idx = ((active.idx % ms.length) + ms.length) % ms.length;
-    ms.forEach((m, i) => { m.classList.add('cur'); m.closest('.s')?.classList.add('hit'); if (i === active.idx) m.classList.add('now'); });
-    $('hlText').textContent = `“${v.word}” ${active.idx + 1} / ${ms.length}`;
+    const v = activeItem();
+    if (!v) { active = null; return; }
+    marksOf(v).forEach((m) => m.classList.add('cur'));
+    [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === active.key)?.classList.add('active');
   }
-  function scrollToNow() { document.querySelector('#bodyText mark.now')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-  // auto = 由「點文章中已標示的字」觸發的暫時標示：點字光圈結束（約 1 秒）時，右側單字卡收起、文章中的標示恢復；
-  // 窄螢幕則是浮動單字卡消失時（5 秒後）才恢復
-  let autoTimer = 0;
   function clearActive() { clearTimeout(autoTimer); autoTimer = 0; active = null; applyActive(); }
-  function pick(v, idx, scroll = true, auto = false) { // idx 未指定：同一個字再點就跳到下一處；換字則從第一處開始
-    if (idx === undefined) idx = active && active.key === v.word.toLowerCase() ? active.idx + 1 : 0;
+  // auto = 點文章中的字所觸發的暫時標示：點字光圈結束（約 1 秒）時，剛展開的單字卡收起、強調色恢復；
+  // 窄螢幕則是浮動單字卡消失時（5 秒後）才恢復。點單字卡觸發的（auto=false）會一直保留到下一次點擊
+  function highlight(v, auto = false) {
     clearTimeout(autoTimer); autoTimer = 0;
-    active = { key: v.word.toLowerCase(), idx, auto };
-    applyActive(); if (scroll) scrollToNow();
+    active = { key: v.word.toLowerCase(), auto };
+    applyActive();
     if (auto && !floatingMode()) autoTimer = setTimeout(() => {
       const c = activeItem();
       if (c && !c.pinned && !c.loading && !c.failed) { collapse(c); renderVocab(); }   // 使用者自己展開（固定）的卡片不收
       clearActive();
     }, TAP_MS);
   }
-  function step(d) { if (active) { active.idx += d; active.auto = false; clearTimeout(autoTimer); applyActive(); scrollToNow(); } }
 
   // ---- 單字卡：剛加入時展開，查完 5 秒後自動收成第一行（單字、音標、發音）；點卡片再展開 ----
   const AUTO_COLLAPSE_MS = 5000;
@@ -136,7 +125,6 @@
       if (e.target.closest('.pclose')) return hidePop();
       if (popState) { popState.pinned = true; clearTimeout(popState.t); popState.t = 0; } // 點卡片 → 固定住，不再自動消失
       const sp = e.target.closest('.spk'); if (sp) return speak(sp.dataset.say);
-      if (e.target.closest('.pfind')) { pick(v); return; }
       if (v.failed || !complete(v)) fillWord(v);
     });
     return popEl;
@@ -144,7 +132,7 @@
   function hidePop() {
     if (popState) clearTimeout(popState.t);
     popState = null; if (popEl) popEl.classList.add('hidden');
-    if (active?.auto) clearActive();   // 浮動單字卡消失 → 文章中的強調色與句子底色一起恢復
+    if (active?.auto) clearActive();   // 浮動單字卡消失 → 文章中的強調色一起恢復
   }
   function updatePop() {
     if (!popState) return;
@@ -153,8 +141,7 @@
     const el = ensurePop();
     el.innerHTML = `<button type="button" class="pclose" aria-label="Close" title="Close">×</button>` +
       `<div class="v1"><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${spkBtn(v.word)}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
-      `<div class="vdet">${detailOf(v)}</div>` +
-      `<div class="pact"><button type="button" class="secondary pfind">Find in text ›</button></div>`;
+      `<div class="vdet">${detailOf(v)}</div>`;
     el.classList.remove('hidden');
     // 英文與中文都拿到之後才開始 5 秒倒數（點過卡片就固定住）
     if (!popState.pinned && !popState.t && !v.loading && !v.failed && complete(v)) popState.t = setTimeout(hidePop, AUTO_COLLAPSE_MS);
@@ -233,13 +220,22 @@
     setTimeout(() => el.classList.remove('tap'), TAP_MS);
   }
 
+  // 關閉所有單字卡（含浮動單字卡）並清除文章中的強調色；查詢中、失敗的卡片要留著才看得到狀態。回傳是否有卡片被收起
+  function closeAll() {
+    hidePop(); clearActive();
+    let changed = false;
+    items.forEach((o) => { if (o.open && !o.loading && !o.failed) { collapse(o); changed = true; } });
+    return changed;
+  }
+
   // ---- 事件 ----
   function bind() {
     $('fsInc').onclick = () => setFs(fs + 2);
     $('fsDec').onclick = () => setFs(fs - 2);
     setFs(fs);
     // 點文章中的單字：
-    //  • 點一下 → 發音（文章上出現的原樣，例如 called）；若是已標示的字，單字庫中對應的項目也會反白並捲到可見位置
+    //  • 點一下 → 發音（文章上出現的原樣，例如 called）、播放光圈，並關閉所有單字卡；
+    //    若是已加入單字庫的字（有底色），改為打開它的單字卡（窄螢幕＝浮動單字卡），並把文章中這個字標成橘色
     //  • 短時間內連點兩下同一個字（滑鼠雙擊／iPad 雙點）→ 加入單字表
     // 這裡自己計時判斷，不依賴 dblclick 事件（iPad 的 Safari 對 dblclick 不可靠）。
     let last = { text: '', t: 0 };
@@ -257,31 +253,34 @@
       last = { text: key, t: now };
       speak(word);
       const wordIdx = [...$('bodyText').querySelectorAll('.w')].indexOf(w);
+      const v = w.matches('mark.vh') ? (findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()))) : null;
+      const closed = closeAll();
+      if (v) {
+        if (floatingMode()) showPop(v); else reveal(v);
+        highlight(v, true);
+        renderVocab(); if (!floatingMode()) flash(v);
+      } else if (closed) renderVocab();
       setTimeout(() => tapEffect(wordIdx), 0);   // 等這次點擊的處理（可能重畫文章）完成後再播放
-      if (!w.matches('mark.vh')) return;
-      const v = findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()));
-      if (v) { if (floatingMode()) showPop(v); else { collapseOthers(v); reveal(v); renderVocab(); flash(v); } pick(v, marksOf(v).indexOf(w), false, true); } // 同時選取這個單字，標示文章中所有出現的位置
     });
     $('addForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('addInput'); if (i.value.trim()) addWord(i.value); i.value = ''; });
+    // 點單字表的卡片：發音、展開這張並收起其他張，文章中這個字換成橘色（不移動畫面、不標整句）
     $('vocabList').addEventListener('click', (e) => {
       const sp = e.target.closest('.spk'); if (sp) return speak(sp.dataset.say);
       const del = e.target.closest('.del'); if (del) { items = items.filter((v) => v.word.toLowerCase() !== del.dataset.del); renderVocab(); return; }
-      const failed = e.target.closest('li.fail, li.partial.open'); if (failed) { const v = byKey(failed.dataset.w); if (v) fillWord(v); return; }
-      const li = e.target.closest('li[data-w]');
-      if (li) {
-        const v = byKey(li.dataset.w); if (!v) return;
-        if (!v.open) { reveal(v, true); renderVocab(); pick(v, 0); } // 收起的卡片 → 展開，並標示文章中的位置
-        else { reveal(v, true); pick(v); }                           // 已展開 → 跳到文章中的下一處
-      }
+      const li = e.target.closest('li[data-w]'); const v = li && byKey(li.dataset.w); if (!v) return;
+      const retry = li.matches('li.fail, li.partial.open');   // 查詢失敗或缺資訊 → 點一下重查
+      speak(v.word);
+      hidePop(); reveal(v, true); highlight(v);   // reveal(pin) 會收起其他卡片
+      renderVocab();
+      if (retry) fillWord(v);
     });
-    $('hlPrev').onclick = () => step(-1); $('hlNext').onclick = () => step(1); $('hlClear').onclick = clearActive;
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && active) clearActive(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && active) clearActive(); });   // Esc：清除強調色
   }
 
   window.Vocab = {
     init(c) { cfg = { ...cfg, ...c }; bind(); renderVocab(); },
     getItems: () => items,
-    setItems(list) { items.forEach((x) => clearTimeout(x._t)); items = (list || []).map(({ word, pos, definition, zh, kk, lemma, locked, ctx }) => ({ word, pos, definition, zh, kk, lemma, locked, ctx })); active = null; $('vmsg').textContent = ''; renderVocab(); },
+    setItems(list) { items.forEach((x) => clearTimeout(x._t)); clearTimeout(autoTimer); items = (list || []).map(({ word, pos, definition, zh, kk, lemma, locked, ctx }) => ({ word, pos, definition, zh, kk, lemma, locked, ctx })); active = null; $('vmsg').textContent = ''; renderVocab(); },
     repaint: renderVocab,
     freeze(on) { frozen = !!on; },
     fillWord,
