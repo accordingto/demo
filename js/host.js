@@ -93,7 +93,6 @@ async function run() {
 }
 $('form').addEventListener('submit', (e) => { e.preventDefault(); run(); });
 $('regen').addEventListener('click', run);
-$('print').addEventListener('click', () => window.print());
 
 // ---- 分享連結 ----
 // 雲端：短連結 read.html?a=<id>（內容存在雲端，永遠最新版）
