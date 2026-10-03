@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { validate, buildMessages, paragraphCount, arcPlan } = require('../api/_prompt');
+const { validate, buildMessages, paragraphCount, arcPlan, GENRES, ARC } = require('../api/_prompt');
 const { parseArticle, normalizeParagraphs, parseSections, toList } = require('../api/_parse');
 const { articleTokens, isReasoning, reasoningParams } = require('../api/_model');
 const { safeEqual, makeLimiter, clip } = require('../api/_util');
@@ -178,5 +178,19 @@ test('css files have balanced braces', () => {
   for (const f of ['css/themes.css', 'css/shared.css', 'css/host.css', 'css/settings.css']) {
     const t = fs.readFileSync(require('node:path').join(__dirname, '..', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     assert.equal(t.split('{').length, t.split('}').length, `${f}: { and } counts differ`);
+  }
+});
+
+// ---- 文體：後端清單、起承轉合與 index.html 的選項要一致 ----
+test('genres: every genre has an arc, validates, builds a prompt, and matches the <select>', () => {
+  const html = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  const options = [...html.match(/<select id="genre">[\s\S]*?<\/select>/)[0].matchAll(/<option value="([a-z]+)"/g)].map((m) => m[1]);
+  assert.deepEqual([...options].sort(), Object.keys(GENRES).sort());
+  for (const g of Object.keys(GENRES)) {
+    assert.ok(ARC[g] && ARC[g].open && ARC[g].dev && ARC[g].turn && ARC[g].close, `ARC.${g}`);
+    assert.equal(validate({ words: 300, level: 'B1', topic: 't', genre: g }).value.genre, g);
+    const [, user] = buildMessages(opts({ genre: g }));
+    assert.ok(user.content.includes(GENRES[g]), `prompt mentions ${g}`);
+    assert.equal(arcPlan(5, g).length, 5);
   }
 });

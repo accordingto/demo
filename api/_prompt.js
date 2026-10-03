@@ -1,7 +1,23 @@
 // /api/generate 的輸入驗證與提示詞（檔名以底線開頭，Vercel 不會把它當成 API 路由）
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-const GENRES = { explanation: 'an expository (explanatory) article', story: 'a short story', news: 'a news-style article' };
+// 文體：id → 給 AI 的描述。id 必須和 index.html 的 #genre 選項一致（tests 會檢查）
+const GENRES = {
+  explanation: 'an expository (explanatory) article',
+  story: 'a short story',
+  news: 'a news-style article',
+  fable: 'a short fable with a clear moral lesson',
+  letter: 'a personal letter or email to a friend',
+  blog: 'a personal blog post or diary entry in the first person',
+  opinion: 'an opinion piece (editorial) that argues one clear point of view',
+  biography: 'a short biography of a real or well-known person',
+  howto: 'a how-to guide that explains a process step by step, written as flowing paragraphs (no lists)',
+  review: 'a review of a product, book, film, restaurant or place',
+  travel: 'a travel article that describes a place and the experience of visiting it',
+  science: 'a popular science article for general readers',
+  history: 'a short history article about a period, event or invention',
+  speech: 'a short speech that a speaker gives to an audience',
+};
 const MIN_WORDS = 100, MAX_WORDS = 1000;
 
 // 各文體的「起承轉合」寫法
@@ -23,6 +39,72 @@ const ARC = {
     dev: 'Details, background and a quote or reaction from someone involved (承).',
     turn: 'A complication, an opposing view or an unexpected development (轉).',
     close: 'What happens next, the impact, or a closing comment (合).',
+  },
+  fable: {
+    open: 'Introduce the animal or person characters and their ordinary world (起).',
+    dev: 'Show what the characters want and the first actions they take, step by step (承).',
+    turn: 'A mistake, a clash or a surprise that exposes the lesson (轉).',
+    close: 'Show the outcome and state the moral clearly in one or two sentences (合).',
+  },
+  letter: {
+    open: 'Greet the reader warmly and say why you are writing (起).',
+    dev: 'Share news, stories and details about what has been happening (承).',
+    turn: 'Raise a question, a problem, a request or some unexpected news (轉).',
+    close: 'End with wishes, a plan to meet or reply, and a friendly sign-off (合).',
+  },
+  blog: {
+    open: 'Start with a hook from your day or a thought that made you write (起).',
+    dev: 'Tell what happened or what you did, with personal details and feelings (承).',
+    turn: 'A moment that surprised you or changed how you felt (轉).',
+    close: 'Reflect on what you learned and look ahead (合).',
+  },
+  opinion: {
+    open: 'State the issue and your position clearly (起).',
+    dev: 'Give reasons and evidence that support your position, one reason per paragraph (承).',
+    turn: 'Raise the strongest opposing view and answer it (轉).',
+    close: 'Restate your position and end with a call to think or act (合).',
+  },
+  biography: {
+    open: 'Introduce the person and why they matter (起).',
+    dev: 'Describe their early life and the steps of their career or work (承).',
+    turn: 'A challenge, failure or turning point in their life (轉).',
+    close: 'Their achievements, legacy and what we can learn from them (合).',
+  },
+  howto: {
+    open: 'Say what the process achieves and why it is worth learning (起).',
+    dev: 'Explain the main steps in order, with tips for each step (承).',
+    turn: 'Warn about common mistakes and how to fix them (轉).',
+    close: 'Sum up the result and encourage the reader to try it (合).',
+  },
+  review: {
+    open: 'Introduce the thing you are reviewing and your first impression (起).',
+    dev: 'Describe what it is like, with concrete details about its good points (承).',
+    turn: 'Describe its weak points or something that disappointed you (轉).',
+    close: 'Give an overall verdict and say who would enjoy it (合).',
+  },
+  travel: {
+    open: 'Set the scene: where it is and what first strikes a visitor (起).',
+    dev: 'Describe places, food, people and things to do in an order a traveller could follow (承).',
+    turn: 'A surprise, a difficulty or a local secret that changes the visit (轉).',
+    close: 'Practical advice and a memorable closing thought (合).',
+  },
+  science: {
+    open: 'Open with a surprising question or fact about the topic (起).',
+    dev: 'Explain how it works with simple examples and comparisons (承).',
+    turn: 'Describe a common misunderstanding or an open question scientists still debate (轉).',
+    close: 'Explain why it matters in everyday life (合).',
+  },
+  history: {
+    open: 'Set the time and place and explain the situation before the event (起).',
+    dev: 'Tell how events unfolded in time order (承).',
+    turn: 'The key moment or decision that changed everything (轉).',
+    close: 'The consequences and how the event is remembered today (合).',
+  },
+  speech: {
+    open: 'Greet the audience and grab their attention with a story or question (起).',
+    dev: 'Develop your main message with examples the audience can relate to (承).',
+    turn: 'Challenge the audience or share a personal turning point (轉).',
+    close: 'End with a memorable closing line and a call to action (合).',
   },
   any: {
     open: 'Introduce the topic or situation in an engaging way (起).',
@@ -53,7 +135,7 @@ function validate(b) {
   const topic = String(b.topic ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
   if (topic.length < 1 || topic.length > 100) return { error: 'Topic is required and must be at most 100 characters' };
   const genre = b.genre ? String(b.genre) : '';
-  if (genre && !GENRES[genre]) return { error: 'Genre must be one of explanation, story, news' };
+  if (genre && !GENRES[genre]) return { error: `Genre must be one of: ${Object.keys(GENRES).join(', ')}` };
   return { value: { words, level: b.level, topic, genre, questions: !!b.questions, discussion: !!b.discussion } };
 }
 
@@ -116,4 +198,4 @@ function buildMessages(o) {
   return [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: user }];
 }
 
-module.exports = { validate, buildMessages, paragraphCount, arcPlan, LEVELS };
+module.exports = { validate, buildMessages, paragraphCount, arcPlan, LEVELS, GENRES, ARC };

@@ -122,7 +122,7 @@
 |---|---|
 | 調整文章品質／提示詞 | `api/_prompt.js` |
 | 支援別的模型或參數 | `api/_model.js`、`api/_groq.js` |
-| 加新的文體 | `_prompt.js` 的 `GENRES`、`ARC`；`index.html` 的 `#genre` 選項 |
+| 加新的文體 | `_prompt.js` 的 `GENRES`、`ARC`；`index.html` 的 `#genre` 選項（測試檢查三者一致） |
 | 調整單字卡行為 | `js/vocab.js` |
 | 改版面 | `css/shared.css`（兩頁）、`css/host.css`（主持人頁） |
 | 改顏色／新增主題、閱讀設定項 | `css/themes.css`、`js/prefs.js`、`js/settings.js` |

@@ -10,7 +10,7 @@
 @media (min-width:1280px) { .lbl { display:inline; } }
 .f { display:flex; flex-direction:column; gap:2px; min-width:0; }
 .f label { font-size:.7rem; color:var(--muted); margin:0; line-height:1.2; font-weight:500; white-space:nowrap; }
-#code { width:96px; } .spin { width:84px; } #level { width:64px; } #genre { width:104px; }
+#code { width:96px; } .spin { width:84px; } #level { width:64px; } #genre { width:124px; }
 .checks { display:flex; gap:10px; align-items:center; height:34px; }
 .checks label { display:inline-flex; align-items:center; gap:4px; font-size:.82rem; white-space:nowrap; cursor:pointer; }
 .checks input { width:16px; height:16px; margin:0; }

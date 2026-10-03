@@ -21,7 +21,10 @@
       <div class="f"><label for="level">CEFR</label>
         <select id="level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div>
       <div class="f"><label for="genre">Genre</label>
-        <select id="genre"><option value="">Any</option><option value="explanation">Explanation</option><option value="story">Story</option><option value="news">News style</option></select></div>
+        <select id="genre"><option value="">Any</option>
+          <optgroup label="Informational"><option value="explanation">Explanation</option><option value="science">Science</option><option value="history">History</option><option value="biography">Biography</option><option value="howto">How-to guide</option><option value="travel">Travel</option><option value="news">News style</option></optgroup>
+          <optgroup label="Narrative"><option value="story">Story</option><option value="fable">Fable</option></optgroup>
+          <optgroup label="Personal &amp; opinion"><option value="blog">Blog / diary</option><option value="letter">Letter / email</option><option value="opinion">Opinion</option><option value="review">Review</option><option value="speech">Speech</option></optgroup></select></div>
       <div class="checks">
         <label><input type="checkbox" id="questions" checked>Comprehension</label>
         <label><input type="checkbox" id="discussion" checked>Discussion</label>
