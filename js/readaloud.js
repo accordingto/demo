@@ -1,4 +1,4 @@
-// 朗讀文章：標題右上角的 ▶ 朗讀全文，以及每個段落前面的 ▶ 只朗讀該段。朗讀中按鈕變成 ⏸，再按暫停／繼續。
+// 朗讀文章：標題右上角的 ▶ 朗讀全文，以及每個段落前面的 ▶ 從該段開始往下念。朗讀中按鈕變成 ⏸，再按暫停／繼續。
 // 需先載入 prefs.js、tts.js、vocab.js。暫停 = 停在目前這一句，繼續時從這一句重新念（各平台的 pause/resume 不可靠，所以不用）。
 (function () {
   const allBtns = [...document.querySelectorAll('.readall')];
@@ -12,7 +12,7 @@
   const WORD_RE = /[A-Za-z][A-Za-z’'-]*/g;   // 和 vocab.js 切字的規則相同：每個字對應畫面上一個 span.w（網址念成 link，對應 a.ulink）
   const speechText = (sentence) => sentence.replace(URL_RE, ' link ');
 
-  let st = { status: 'idle', mode: 'all', p: 0, s: 0, w: -1 };   // status：idle｜playing｜paused；mode：all＝全文｜para＝單段；p／s／w＝目前段落／句子／字
+  let st = { status: 'idle', p: 0, s: 0, w: -1 };   // status：idle｜playing｜paused；p／s／w＝目前段落／句子／字
   let gen = 0;          // 每次開始、暫停、停止都加一；舊的語音事件看到 gen 不同就忽略
   let signature = '';   // 開始朗讀時的文章內容；文章被換掉或編輯就停止
 
@@ -29,7 +29,7 @@
       b.title = b.getAttribute('aria-label');
     });
     highlight();
-    const allOn = st.mode === 'all' && st.status !== 'idle', playingAll = allOn && st.status === 'playing';
+    const allOn = st.status !== 'idle', playingAll = allOn && st.status === 'playing';
     allBtns.forEach((b) => {
       b.innerHTML = playingAll ? ICON.pause : ICON.play;
       const label = playingAll ? 'Pause reading' : allOn ? 'Resume reading the article' : 'Read the whole article aloud';
@@ -81,13 +81,13 @@
   }
   function advance(my) {   // 這一段念完：全文模式接著念下一段，否則結束
     if (my !== gen) return;
-    if (st.mode === 'all' && st.p + 1 < paras().length) { st.p++; st.s = 0; st.w = -1; refresh(); speakCurrent(); } else stop();
+    if (st.p + 1 < paras().length) { st.p++; st.s = 0; st.w = -1; refresh(); speakCurrent(); } else stop();
   }
 
-  function start(p, mode) {
+  function start(p) {   // 從第 p 段開始，一段接一段念到文章結尾
     speechSynthesis.cancel(); gen++;
     signature = paras().join('\n');
-    st = { status: 'playing', mode, p, s: 0, w: -1 };
+    st = { status: 'playing', p, s: 0, w: -1 };
     refresh();
     speakCurrent();
   }
@@ -98,13 +98,13 @@
   document.addEventListener('click', (e) => {
     const all = e.target.closest('.readall'), one = e.target.closest('.pread');
     if (all) {
-      if (st.status !== 'idle' && st.mode === 'all') return st.status === 'playing' ? pause() : resume();
-      return start(0, 'all');
+      if (st.status !== 'idle') return st.status === 'playing' ? pause() : resume();
+      return start(0);
     }
     if (one) {
       const i = [...document.querySelectorAll('#bodyText p')].indexOf(one.closest('p'));
       if (isCurrent(i)) return st.status === 'playing' ? pause() : resume();
-      start(i, 'para');
+      start(i);   // 點某一段的 ▶：從這一段一直念到最後一段
     }
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && st.status !== 'idle') stop(); });
