@@ -79,7 +79,7 @@
     u.onend = () => { done(); if (my === gen) { st.s++; speakCurrent(); } };
     u.onerror = (e) => { done(); if (my === gen && e.error !== 'canceled' && e.error !== 'interrupted') stop(); };
     keep = u;   // 保留參照：部分瀏覽器會把沒人引用的語音物件回收掉，事件（邊界、結束）就不會觸發
-    speechSynthesis.speak(u);
+    TTS.say(u);
   }
   function advance(my) {   // 這一段念完：全文模式接著念下一段，否則結束
     if (my !== gen) return;
@@ -87,15 +87,15 @@
   }
 
   function start(p) {   // 從第 p 段開始，一段接一段念到文章結尾
-    speechSynthesis.cancel(); gen++;
+    TTS.cancel(); gen++;
     signature = paras().join('\n');
     st = { status: 'playing', p, s: 0, w: -1 };
     refresh();
     speakCurrent();
   }
-  function pause() { gen++; speechSynthesis.cancel(); st.status = 'paused'; st.w = -1; refresh(); }   // 暫停時保留句子底色
-  function resume() { speechSynthesis.cancel(); gen++; st.status = 'playing'; refresh(); speakCurrent(); }
-  function stop() { gen++; speechSynthesis.cancel(); st.status = 'idle'; st.w = -1; refresh(); }
+  function pause() { gen++; TTS.cancel(); st.status = 'paused'; st.w = -1; refresh(); }   // 暫停時保留句子底色
+  function resume() { TTS.cancel(); gen++; st.status = 'playing'; refresh(); speakCurrent(); }
+  function stop() { gen++; TTS.cancel(); st.status = 'idle'; st.w = -1; refresh(); }
 
   document.addEventListener('click', (e) => {
     const all = e.target.closest('.readall'), one = e.target.closest('.pread');
@@ -111,7 +111,7 @@
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && st.status !== 'idle') stop(); });
   document.addEventListener('bodypainted', () => { if (st.status !== 'idle' && paras().join('\n') !== signature) stop(); else refresh(); });   // 文章換了或被編輯 → 停止
-  window.addEventListener('pagehide', () => speechSynthesis.cancel());
+  window.addEventListener('pagehide', () => TTS.cancel());
 
   window.ReadAloud = { stop, refresh };
   refresh();

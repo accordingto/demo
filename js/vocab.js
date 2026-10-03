@@ -12,8 +12,7 @@
   function speak(text, force) {   // force：設定視窗的測試，不管開關
     if (!TTS.canSpeak || (!force && !Prefs.get('speak'))) return;
     window.ReadAloud?.stop();     // 點字時，正在朗讀的段落先停止
-    speechSynthesis.cancel();
-    speechSynthesis.speak(TTS.utter(text));
+    TTS.say(TTS.utter(text));
   }
 
   const clean = (raw) => raw.toLowerCase().replace(/[’‘]/g, "'").replace(/^[^a-z]+|[^a-z]+$/g, '').replace(/\s+/g, ' ');
