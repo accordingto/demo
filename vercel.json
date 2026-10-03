@@ -1,6 +1,21 @@
 {
   "functions": {
-    "api/generate.js": { "maxDuration": 60 },
-    "api/define.js": { "maxDuration": 30 }
-  }
+    "api/generate.js": {
+      "maxDuration": 60
+    },
+    "api/define.js": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ]
 }

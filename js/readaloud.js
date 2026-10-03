@@ -13,6 +13,7 @@
   const speechText = (sentence) => sentence.replace(URL_RE, ' link ');
 
   let st = { status: 'idle', p: 0, s: 0, w: -1 };   // status：idle｜playing｜paused；p／s／w＝目前段落／句子／字
+  let keep = null;      // 目前這句的語音物件
   let gen = 0;          // 每次開始、暫停、停止都加一；舊的語音事件看到 gen 不同就忽略
   let signature = '';   // 開始朗讀時的文章內容；文章被換掉或編輯就停止
 
@@ -77,6 +78,7 @@
     const done = () => clearInterval(timer);
     u.onend = () => { done(); if (my === gen) { st.s++; speakCurrent(); } };
     u.onerror = (e) => { done(); if (my === gen && e.error !== 'canceled' && e.error !== 'interrupted') stop(); };
+    keep = u;   // 保留參照：部分瀏覽器會把沒人引用的語音物件回收掉，事件（邊界、結束）就不會觸發
     speechSynthesis.speak(u);
   }
   function advance(my) {   // 這一段念完：全文模式接著念下一段，否則結束
