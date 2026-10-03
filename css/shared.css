@@ -34,7 +34,9 @@ button:disabled { opacity:.5; cursor:wait; }
 .doc .text p { position:relative; padding-left:2.6rem; border-radius:6px; }
 .pread { position:absolute; left:0; top:calc((var(--fs) * var(--lh) - 30px) / 2); width:30px; height:30px; min-height:0; padding:0; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:.95rem; line-height:1; background:transparent; color:var(--accent); border:1px solid var(--accent); -webkit-user-select:none; user-select:none; }
 .pread:hover { background:var(--hover); }
-.doc .text p.reading { background:color-mix(in srgb, var(--accent) 12%, transparent); }
+/* 朗讀中：目前這一句有底色，正在念的字變色 */
+.s.speaking { background:color-mix(in srgb, var(--accent) 28%, transparent); border-radius:4px; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+.w.speaking, a.ulink.speaking { background:var(--accent); color:var(--accent-ink); border-radius:4px; box-shadow:0 0 0 2px var(--accent); }
 .doc .text p.reading .pread { background:var(--accent); color:var(--accent-ink); }
 html[data-tts="off"] .pread { display:none; }
 @media (max-width:639px) { .doc .text p { padding-left:2.2rem; } .pread { width:28px; height:28px; top:calc((var(--fs) * var(--lh) - 28px) / 2); } }
@@ -87,7 +89,7 @@ mark.vh.cur { background:var(--cur-bg); box-shadow:0 0 0 1px var(--cur-ring) ins
 .del:hover { color:var(--err); }
 
 @media print {
-  .pread { display:none !important; } .doc .text p { padding-left:0; }
+  .pread { display:none !important; } .doc .text p { padding-left:0; } .s.speaking, .w.speaking { background:none !important; color:inherit !important; box-shadow:none !important; }
   a.ulink { color:inherit; }
   mark.vh, mark.vh.cur { background:none; box-shadow:none; color:inherit; animation:none; }
   #vmsg, .del { display:none !important; }

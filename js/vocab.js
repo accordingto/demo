@@ -25,40 +25,50 @@
   const byKey = (k) => items.find((x) => x.word.toLowerCase() === k);   // 以小寫單字找項目
   const findItem = (w) => items.find((v) => stems(w).includes(v.word.toLowerCase()));
 
-  // ---- 在主文章上標示：每個字包成 span.w（供雙擊），已加入的字用底色標示（含變化形）----
+  // ---- 在主文章上標示：段落 → 句子 span.s → 每個字 span.w（供點擊／雙擊／朗讀標示），已加入的字用底色標示（含變化形）----
   let frozen = false; // 就地編輯期間暫停重畫文章（避免打字時內容被覆蓋）
+
+  // 網址（http/https/www.）→ 可點擊的連結（新分頁開啟）。先把網址換成佔位符，避免被拆成單字、被句號切句
+  const URL_RE = /\b(?:https?:\/\/|www\.)[^\s<>"“”]+/gi;
+  const trimUrl = (u) => { // 去掉結尾的標點；結尾的「)」只有在沒有對應的「(」時才去掉
+    for (;;) {
+      if (/[.,;:!?'’\]}]$/.test(u)) u = u.slice(0, -1);
+      else if (u.endsWith(')') && (u.match(/\)/g) || []).length > (u.match(/\(/g) || []).length) u = u.slice(0, -1);
+      else return u;
+    }
+  };
+  const linkHtml = (u) => {
+    const href = /^www\./i.test(u) ? 'https://' + u : u;
+    try { if (!/^https?:$/.test(new URL(href).protocol)) return esc(u); } catch { return esc(u); } // 只允許 http/https
+    return `<a class="ulink" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>`;
+  };
+  const bodyParas = () => String(cfg.getBody() || '').split(/\n\s*\n/).filter((p) => p.trim());
+  // 把一個段落切成句子（網址先遮住）。回傳 { urls, sents }；sents 裡的網址是佔位符
+  function splitParagraph(p) {
+    const urls = [];
+    const masked = p.replace(URL_RE, (m) => { const core = trimUrl(m); urls.push(core); return `${urls.length - 1}${m.slice(core.length)}`; });
+    return { urls, sents: (masked.match(/[^.!?]+(?:[.!?]+["'”’)]*)?\s*/g) || [masked]).filter((x) => x.length) };
+  }
+  const unmask = (t, urls) => t.replace(/(\d+)/g, (_, i) => urls[+i]);
+
   function paintBody() {
     const el = $('bodyText'); if (!el || frozen) return;
     const keys = new Set();
     items.forEach((v) => { keys.add(v.word.toLowerCase()); if (v.lemma) keys.add(v.lemma.toLowerCase()); });
-
-    // 網址（http/https/www.）→ 可點擊的連結（新分頁開啟）。先把網址換成佔位符，避免被拆成單字
-    const URL_RE = /\b(?:https?:\/\/|www\.)[^\s<>"“”]+/gi;
-    const trimUrl = (u) => { // 去掉結尾的標點；結尾的「)」只有在沒有對應的「(」時才去掉
-      for (;;) {
-        if (/[.,;:!?'’\]}]$/.test(u)) u = u.slice(0, -1);
-        else if (u.endsWith(')') && (u.match(/\)/g) || []).length > (u.match(/\(/g) || []).length) u = u.slice(0, -1);
-        else return u;
-      }
-    };
-    const linkHtml = (u) => {
-      const href = /^www\./i.test(u) ? 'https://' + u : u;
-      try { if (!/^https?:$/.test(new URL(href).protocol)) return esc(u); } catch { return esc(u); } // 只允許 http/https
-      return `<a class="ulink" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>`;
-    };
     const wrap = (t, urls) => {
-      if (!/^[A-Za-z]/.test(t)) return esc(t).replace(/\uE000(\d+)\uE001/g, (_, i) => linkHtml(urls[+i]));
+      if (!/^[A-Za-z]/.test(t)) return esc(t).replace(/(\d+)/g, (_, i) => linkHtml(urls[+i]));
       return stems(clean(t)).some((k) => keys.has(k)) ? `<mark class="vh w">${esc(t)}</mark>` : `<span class="w">${esc(t)}</span>`;
     };
-    el.innerHTML = String(cfg.getBody() || '').split(/\n\s*\n/).filter((p) => p.trim()).map((p) => {
-      const urls = [];
-      const masked = p.replace(URL_RE, (m) => { const core = trimUrl(m); urls.push(core); return `\uE000${urls.length - 1}\uE001${m.slice(core.length)}`; });
-      return `<p><button type="button" class="pread"></button>${masked.split(/([A-Za-z][A-Za-z’'-]*)/).map((t) => wrap(t, urls)).join('')}</p>`;   // 每個字包成 span.w / mark.vh
+    el.innerHTML = bodyParas().map((p) => {
+      const { urls, sents } = splitParagraph(p);
+      return `<p><button type="button" class="pread"></button>${sents.map((st) => `<span class="s">${st.split(/([A-Za-z][A-Za-z’'-]*)/).map((t) => wrap(t, urls)).join('')}</span>`).join('')}</p>`;
     }).join('');
     document.dispatchEvent(new Event('bodypainted'));   // 朗讀按鈕（js/readaloud.js）重新標示目前狀態
   }
-  // 文章的段落（純文字），和 paintBody 的分段一致；朗讀用
-  const paragraphs = () => String(cfg.getBody() || '').split(/\n\s*\n/).filter((p) => p.trim()).map((p) => p.replace(/\s+/g, ' ').trim());
+  // 文章的段落（純文字），和 paintBody 的分段一致
+  const paragraphs = () => bodyParas().map((p) => p.replace(/\s+/g, ' ').trim());
+  // 每個段落的句子（網址還原）；和畫面上的 span.s 一一對應，朗讀用
+  const paragraphSentences = () => bodyParas().map((p) => { const { urls, sents } = splitParagraph(p); return sents.map((st) => unmask(st, urls).replace(/\s+/g, ' ').trim()); });
 
   // ---- 文章中單字的強調色：把這個字在文章中的每一處標成橘色（不標整句、不捲動）----
   let active = null; // { key: 單字（小寫）, auto: 是否為暫時標示 }
@@ -274,7 +284,7 @@
     setItems(list) { items.forEach((x) => clearTimeout(x._t)); clearTimeout(autoTimer); items = (list || []).map(({ word, pos, definition, zh, kk, lemma, locked, ctx }) => ({ word, pos, definition, zh, kk, lemma, locked, ctx })); active = null; $('vmsg').textContent = ''; renderVocab(); },
     repaint: renderVocab,
     freeze(on) { frozen = !!on; if (on) window.ReadAloud?.stop(); },   // 編輯時停止朗讀
-    paragraphs,
+    paragraphs, paragraphSentences,
     fillWord,
     speakSample() { speak('Hello, this is a pronunciation test.', true); },   // 設定視窗的「Test」按鈕
   };
