@@ -47,8 +47,7 @@
   panel.id = 'settings'; panel.className = 'hidden'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Reading settings');
   panel.innerHTML =
     '<div class="shead"><b>⚙ Reading settings</b><span><button type="button" class="secondary" id="sReset">Reset</button><button type="button" class="sclose" id="sClose" aria-label="Close">×</button></span></div>' +
-    '<div class="sbody">' + themes + SECTIONS.map((s) => `<section><h4>${s.title}</h4>${s.items.map(control).join('')}</section>`).join('') +
-    '<button type="button" class="secondary" id="sTest">▶ Test pronunciation</button></div>';
+    '<div class="sbody">' + themes + SECTIONS.map((s) => `<section><h4>${s.title}</h4>${s.items.map(control).join('')}${s.title === 'Pronunciation' ? '<button type="button" class="secondary" id="sTest">▶ Test pronunciation</button>' : ''}</section>`).join('') + '</div>';
   document.body.appendChild(panel);
 
   // 把目前設定顯示到畫面上
