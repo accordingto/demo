@@ -22,7 +22,7 @@ a.btn.secondary { color:var(--accent); border:1px solid var(--accent); }
 .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
 #preview .actions { border-top:1px solid var(--line); padding-top:16px; }
 .share { width:100%; margin-top:8px; font-size:.8rem; }
-#empty { text-align:center; color:var(--muted); padding:48px 16px; border-style:dashed; }
+#empty { position:relative; text-align:center; color:var(--muted); padding:48px 16px; border-style:dashed; }
 #empty .big { font-size:2.2rem; }
 #library { padding:12px 16px; }
 #library h3 { margin:0; font-size:1rem; color:var(--accent); }
@@ -45,11 +45,11 @@ a.btn.secondary { color:var(--accent); border:1px solid var(--accent); }
 #pastePanel .pmode select { width:auto; max-width:100%; }
 #pasteMsg { margin-top:8px; font-size:.9rem; }
 /* 就地編輯（所見即所得） */
-#editBar { position:sticky; top:8px; z-index:5; display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:var(--card); border:1px solid var(--accent); border-radius:10px; padding:8px 12px; margin:0 0 14px; box-shadow:0 4px 14px rgba(0,0,0,.45); }
+#editBar { position:sticky; top:8px; z-index:5; display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:var(--card); border:1px solid var(--accent); border-radius:10px; padding:8px 12px; margin:0 0 14px; box-shadow:0 4px 14px var(--shadow); }
 #editBar .grow { flex:1 1 260px; font-size:.88rem; }
 #editBar button { min-height:34px; padding:0 14px; }
-.editing #doc h2[contenteditable], .editing #bodyText[contenteditable], .qtext { outline:1px dashed rgba(79,184,154,.65); outline-offset:3px; border-radius:6px; caret-color:#ffb840; }
-.editing #bodyText[contenteditable] { white-space:pre-wrap; background:rgba(79,184,154,.06); padding:8px 10px; min-height:8em; }
+.editing #doc h2[contenteditable], .editing #bodyText[contenteditable], .qtext { outline:1px dashed color-mix(in srgb, var(--accent) 65%, transparent); outline-offset:3px; border-radius:6px; caret-color:var(--cur-ring); }
+.editing #bodyText[contenteditable] { white-space:pre-wrap; background:color-mix(in srgb, var(--accent) 7%, transparent); padding:8px 10px; min-height:8em; }
 .editing #doc h2[contenteditable]:focus, .editing #bodyText:focus, .qtext:focus { outline:2px solid var(--accent); }
 .qtext { display:inline-block; min-width:55%; padding:1px 6px; }
 .qdel { min-height:0; padding:0 6px; margin-left:6px; background:none; border:0; color:var(--muted); font-size:1.1rem; line-height:1; }

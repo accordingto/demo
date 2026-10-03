@@ -1,0 +1,98 @@
+/* 色彩主題與閱讀偏好（兩頁共用）。主題 = html[data-theme]；閱讀偏好由 js/prefs.js 寫成 html 上的 CSS 變數 */
+
+/* 預設 = Dark */
+:root, html[data-theme="dark"] {
+  color-scheme:dark;
+  --bg:#14171c; --card:#1d222a; --field:#12151a; --line:#333b47;
+  --ink:#e6e8eb; --muted:#9aa4b2; --accent:#4fb89a; --accent-ink:#0b1a15;
+  --err:#ff8a80; --warn:#f0c36d; --link:#7cc7ff; --link-hover:#a8dcff; --vocab:#7cc7ff;
+  --hover:rgba(255,255,255,.08);
+  --mark-bg:rgba(124,199,255,.30); --mark-ring:rgba(124,199,255,.35); --mark-hover:rgba(124,199,255,.5);
+  --cur-bg:rgba(255,184,64,.50); --cur-ring:rgba(255,184,64,.95); --cur-soft:rgba(255,184,64,.08);
+  --shadow:rgba(0,0,0,.6);
+}
+/* Night：純黑底（OLED 省電、夜間閱讀） */
+html[data-theme="night"] {
+  color-scheme:dark;
+  --bg:#000; --card:#0c0c0c; --field:#050505; --line:#262626;
+  --ink:#cfcfcf; --muted:#8a8a8a; --accent:#4fb89a; --accent-ink:#04120d;
+  --err:#ff8a80; --warn:#e0b45f; --link:#7cc7ff; --link-hover:#a8dcff; --vocab:#7cc7ff;
+  --hover:rgba(255,255,255,.07);
+  --mark-bg:rgba(124,199,255,.26); --mark-ring:rgba(124,199,255,.35); --mark-hover:rgba(124,199,255,.45);
+  --cur-bg:rgba(255,184,64,.45); --cur-ring:rgba(255,184,64,.9); --cur-soft:rgba(255,184,64,.08);
+  --shadow:rgba(0,0,0,.8);
+}
+/* Gray：柔和深灰 */
+html[data-theme="gray"] {
+  color-scheme:dark;
+  --bg:#2b2d31; --card:#36393f; --field:#2b2d31; --line:#4a4e57;
+  --ink:#e3e5e8; --muted:#a6abb4; --accent:#5cc4a6; --accent-ink:#0b1a15;
+  --err:#ff9a90; --warn:#f0c36d; --link:#8ccfff; --link-hover:#b3e0ff; --vocab:#8ccfff;
+  --hover:rgba(255,255,255,.08);
+  --mark-bg:rgba(140,207,255,.28); --mark-ring:rgba(140,207,255,.4); --mark-hover:rgba(140,207,255,.45);
+  --cur-bg:rgba(255,184,64,.5); --cur-ring:rgba(255,184,64,.95); --cur-soft:rgba(255,184,64,.1);
+  --shadow:rgba(0,0,0,.5);
+}
+/* Light：白底黑字 */
+html[data-theme="light"] {
+  color-scheme:light;
+  --bg:#f1f3f5; --card:#fff; --field:#f8f9fa; --line:#d5dae0;
+  --ink:#111418; --muted:#586170; --accent:#0f766e; --accent-ink:#fff;
+  --err:#b42318; --warn:#8a5a00; --link:#1d4ed8; --link-hover:#1e40af; --vocab:#1d4ed8;
+  --hover:rgba(0,0,0,.06);
+  --mark-bg:rgba(29,78,216,.14); --mark-ring:rgba(29,78,216,.3); --mark-hover:rgba(29,78,216,.24);
+  --cur-bg:rgba(255,160,0,.45); --cur-ring:rgba(210,120,0,.9); --cur-soft:rgba(255,160,0,.12);
+  --shadow:rgba(0,0,0,.2);
+}
+/* Paper：類紙張底色 + 黑字 */
+html[data-theme="paper"] {
+  color-scheme:light;
+  --bg:#e6dfcc; --card:#f4eedd; --field:#faf6ea; --line:#cdc3a8;
+  --ink:#161616; --muted:#5a5446; --accent:#7a5a2e; --accent-ink:#fff;
+  --err:#a32a1c; --warn:#7a4e00; --link:#1f4f8f; --link-hover:#163a6b; --vocab:#1f4f8f;
+  --hover:rgba(0,0,0,.06);
+  --mark-bg:rgba(31,79,143,.14); --mark-ring:rgba(31,79,143,.3); --mark-hover:rgba(31,79,143,.24);
+  --cur-bg:rgba(230,140,0,.40); --cur-ring:rgba(180,100,0,.9); --cur-soft:rgba(230,140,0,.12);
+  --shadow:rgba(60,45,10,.25);
+}
+/* Sepia：褐色護眼 */
+html[data-theme="sepia"] {
+  color-scheme:light;
+  --bg:#ecdfc2; --card:#f6ecd5; --field:#fbf4e2; --line:#d4c298;
+  --ink:#4a3826; --muted:#7d6a52; --accent:#9a6428; --accent-ink:#fff;
+  --err:#a32a1c; --warn:#7a4e00; --link:#5b3f9e; --link-hover:#432d78; --vocab:#6a3fa8;
+  --hover:rgba(74,56,38,.08);
+  --mark-bg:rgba(106,63,168,.14); --mark-ring:rgba(106,63,168,.3); --mark-hover:rgba(106,63,168,.24);
+  --cur-bg:rgba(230,140,0,.42); --cur-ring:rgba(180,100,0,.9); --cur-soft:rgba(230,140,0,.12);
+  --shadow:rgba(74,56,38,.25);
+}
+/* Contrast：高對比（黑底黃字） */
+html[data-theme="contrast"] {
+  color-scheme:dark;
+  --bg:#000; --card:#000; --field:#000; --line:#ffe600;
+  --ink:#fff; --muted:#e6e6e6; --accent:#ffe600; --accent-ink:#000;
+  --err:#ff7b72; --warn:#ffe600; --link:#6fd8ff; --link-hover:#a8ecff; --vocab:#6fd8ff;
+  --hover:rgba(255,230,0,.2);
+  --mark-bg:rgba(111,216,255,.35); --mark-ring:#6fd8ff; --mark-hover:rgba(111,216,255,.55);
+  --cur-bg:rgba(255,150,0,.65); --cur-ring:#ff9600; --cur-soft:rgba(255,150,0,.15);
+  --shadow:rgba(0,0,0,.9);
+}
+
+/* ---- 閱讀偏好（文章與題目）---- */
+:root { --fs:18px; --lh:1.8; --para:1em; --ls:0em; --align:left; --measure:none; --reader-font:inherit; }
+.doc, .qa { font-family:var(--reader-font); }
+.doc .text, .qa { max-width:var(--measure); margin-left:auto; margin-right:auto; width:100%; }
+.doc .text p { font-size:var(--fs); line-height:var(--lh); margin:0 0 var(--para); text-align:var(--align); letter-spacing:var(--ls); }
+html[data-align="justify"] .doc .text p { hyphens:auto; -webkit-hyphens:auto; }
+.qa li { line-height:var(--lh); letter-spacing:var(--ls); }
+
+/* 不顯示單字標示 */
+html[data-hl="off"] mark.vh:not(.cur) { background:none; box-shadow:none; }
+
+/* 關閉動畫 */
+html[data-anim="off"] *, html[data-anim="off"] *::before, html[data-anim="off"] *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+
+/* 螢幕調暗與暖色（護眼）：蓋在整個畫面上，不擋操作 */
+html::before { content:""; position:fixed; inset:0; background:#000; opacity:var(--dim,0); pointer-events:none; z-index:9998; }
+html::after  { content:""; position:fixed; inset:0; background:#ff9a2e; mix-blend-mode:multiply; opacity:var(--warm,0); pointer-events:none; z-index:9998; }
+@media print { html::before, html::after { display:none; } }

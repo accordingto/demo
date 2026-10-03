@@ -64,8 +64,9 @@
 ## 前端
 
 ### 載入順序（classic script，共用全域作用域）
-- 主持人頁：`util.js` → `vocab.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-main.js`
-- 閱讀頁：`util.js` → `vocab.js` → `reader.js`
+- 共通：`prefs.js` 放在 `<head>`（同步載入，頁面繪製前就套用主題，避免先閃一下預設主題）
+- 主持人頁：`util.js` → `vocab.js` → `settings.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-main.js`
+- 閱讀頁：`util.js` → `vocab.js` → `settings.js` → `reader.js`
 
 各 host 模組之間的函式只在**執行時**互相呼叫；但 `Vocab.init` 一執行就會呼叫 `onChange(syncLib)`，所以放在最後載入的 `host-main.js`。
 
@@ -88,6 +89,14 @@
 - **點擊規則**：點文章單字 → `speak` + `closeAll`（收起所有卡片、關浮動卡、清橘色）；若是已加入的字再 `reveal`／`showPop` 並 `highlight(v, auto=true)`（光圈結束時收卡、清色）。點單字卡 → `speak`、`reveal(v, true)`（固定並收起其他）、`highlight(v)`（橘色保留到下一次點擊）。沒有捲動、沒有整句標示。
 - **浮動單字卡**（窄螢幕）：`showPop`／`updatePop`／`hidePop`；與清單卡片共用 `detailOf(v)` 產生內容。
 - `freeze(true)`：編輯期間暫停重畫文章。
+
+### 閱讀偏好與主題（`prefs.js`、`settings.js`、`css/themes.css`）
+- `Prefs` 保存一個物件（`localStorage['rc-prefs']`），`clean()` 負責驗證（數值夾在範圍內、列舉值只接受白名單）；`set(patch)` → 存檔 → `apply()` → 通知監聽者。其他分頁改了設定會透過 `storage` 事件同步。
+- `apply()` 把偏好寫成 `<html>` 上的 `data-theme`／`data-align`／`data-hl`／`data-anim` 與 CSS 變數（`--fs`、`--lh`、`--para`、`--ls`、`--align`、`--measure`、`--reader-font`、`--dim`、`--warm`）。
+- 主題只是 `themes.css` 裡的一組顏色變數（`--bg`、`--card`、`--ink`、`--accent`、`--mark-bg`、`--cur-bg`…）；其他 CSS 一律用變數、不寫死顏色。**新增主題**：在 `themes.css` 加一個 `html[data-theme="x"]` 區塊，並在 `prefs.js` 的 `THEMES` 加一筆（`id`、`label` 與色票顏色）。
+- 調暗與暖色用 `html::before`／`html::after` 兩個蓋在整個畫面上的偽元素（`pointer-events:none`）實作。
+- `settings.js` 依 `SECTIONS` 設定表產生視窗內容；**新增設定項**：在 `prefs.js` 的 `DEFAULTS`／`clean()` 加欄位、在 `apply()` 套用，再在 `SECTIONS` 加一列。
+- `vocab.js` 的 `speak()` 讀取 `Prefs`（開關、速度、口音）。
 
 ### 兩種分享連結
 | | 雲端（建議） | 本機 |
@@ -115,5 +124,6 @@
 | 支援別的模型或參數 | `api/_model.js`、`api/_groq.js` |
 | 加新的文體 | `_prompt.js` 的 `GENRES`、`ARC`；`index.html` 的 `#genre` 選項 |
 | 調整單字卡行為 | `js/vocab.js` |
-| 改版面／顏色 | `css/shared.css`（兩頁）、`css/host.css`（主持人頁） |
+| 改版面 | `css/shared.css`（兩頁）、`css/host.css`（主持人頁） |
+| 改顏色／新增主題、閱讀設定項 | `css/themes.css`、`js/prefs.js`、`js/settings.js` |
 | 換儲存方式 | 實作與 `_store.js` 相同介面（`configured`、`cmd`、`pipeline`），`library.js`／`article.js` 不需動 |

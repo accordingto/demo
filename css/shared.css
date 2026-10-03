@@ -1,15 +1,15 @@
 /* 主持人頁（index.html）與閱讀頁（read.html）共用的版面與樣式 */
-:root { color-scheme:dark; --bg:#14171c; --card:#1d222a; --ink:#e6e8eb; --muted:#9aa4b2; --accent:#4fb89a; --line:#333b47; --err:#ff8a80; --field:#12151a; }
+/* 顏色一律用 css/themes.css 定義的變數（主題可切換） */
 * { box-sizing: border-box; }
 body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif; line-height:1.6; touch-action:manipulation; }
 .layout { max-width:1760px; margin:0 auto; padding:12px; display:grid; gap:12px; grid-template-columns:1fr; align-items:start; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
 input[type=text], input[type=password], input[type=number], select { width:100%; padding:6px 8px; height:34px; font-size:.9rem; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
-button { font-family:inherit; font-size:.95rem; padding:8px 16px; min-height:40px; border:0; border-radius:8px; background:var(--accent); color:#0b1a15; font-weight:600; cursor:pointer; }
+button { font-family:inherit; font-size:.95rem; padding:8px 16px; min-height:40px; border:0; border-radius:8px; background:var(--accent); color:var(--accent-ink); font-weight:600; cursor:pointer; }
 button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
 button:disabled { opacity:.5; cursor:wait; }
 .msg { margin-top:12px; font-size:.95rem; }
-.err { color:var(--err); } .warn { color:#f0c36d; }
+.err { color:var(--err); } .warn { color:var(--warn); }
 .meta { color:var(--muted); font-size:.9rem; }
 .hidden { display:none !important; }
 
@@ -24,39 +24,34 @@ button:disabled { opacity:.5; cursor:wait; }
 /* 文章 */
 .doc { display:grid; gap:24px; grid-template-columns:1fr; }
 .doc h2 { margin:.1em 0; font-size:1.5rem; }
-.doc .text p { font-family:inherit; font-size:var(--fs,18px); line-height:1.8; margin:0 0 1em; }   /* 與標題同一種字型 */
 #preview { position:relative; }
-/* 字體按鈕與標題同一列（按鈕靠右、與標題垂直置中）；手機只留 A−／A+ */
-.fsbar { position:absolute; top:16px; right:16px; margin:0; z-index:1; display:flex; align-items:center; justify-content:flex-end; gap:6px; }
-.fsbar button { min-height:32px; padding:0 12px; font-size:.9rem; }
-.fsbar .meta { margin-right:4px; }
-.doc .text h2 { min-height:32px; display:flex; align-items:center; margin:0 0 .3em; padding-right:132px; }
-@media (min-width:640px) { .fsbar { top:20px; right:20px; } .doc .text h2 { padding-right:230px; } }
-@media (max-width:639px) { .fsbar .meta { display:none; } }
+/* 閱讀設定（齒輪）按鈕與標題同一列（樣式在 css/settings.css）；標題右邊留出齒輪的位置 */
+.doc .text h2 { min-height:36px; display:flex; align-items:center; margin:0 0 .3em; padding-right:52px; }
+
 /* 文章中的每個單字（供雙擊）；觸控裝置關閉系統的選字選單 */
 .w { border-radius:3px; cursor:pointer; }  /* 點任何單字都會發音 */
-@media (hover:hover) { .w:not(.vh):hover { background:rgba(255,255,255,.08); } }
+@media (hover:hover) { .w:not(.vh):hover { background:var(--hover); } }
 @media (pointer:coarse) { .w { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; } }
-mark.vh { background:rgba(124,199,255,.30); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; box-shadow:0 0 0 1px rgba(124,199,255,.35) inset; cursor:pointer; }  /* 已加入單字庫的字：底色標示 */
-mark.vh:hover { background:rgba(124,199,255,.5); }
+mark.vh { background:var(--mark-bg); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; box-shadow:0 0 0 1px var(--mark-ring) inset; cursor:pointer; }  /* 已加入單字庫的字：底色標示 */
+mark.vh:hover { background:var(--mark-hover); }
 
 /* 點單字的回饋：約 1 秒的光圈＋底色（不改變字寬，不會讓版面跳動） */
 .w.tap { animation:wordTap 1s ease-out; }
 @keyframes wordTap {
-  0%   { background:rgba(79,184,154,.95); color:#0b1a15; box-shadow:0 0 0 0 rgba(79,184,154,1); }
-  15%  { background:rgba(79,184,154,.80); color:#0b1a15; box-shadow:0 0 0 8px rgba(79,184,154,.45); }
-  65%  { background:rgba(79,184,154,.55); color:#fff; box-shadow:0 0 0 4px rgba(79,184,154,.25); }
-  100% { box-shadow:0 0 0 0 rgba(79,184,154,0); }
+  0%   { background:color-mix(in srgb, var(--accent) 95%, transparent); color:var(--accent-ink); box-shadow:0 0 0 0 var(--accent); }
+  15%  { background:color-mix(in srgb, var(--accent) 80%, transparent); color:var(--accent-ink); box-shadow:0 0 0 8px color-mix(in srgb, var(--accent) 45%, transparent); }
+  65%  { background:color-mix(in srgb, var(--accent) 45%, transparent); box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent); }
+  100% { box-shadow:0 0 0 0 transparent; }
 }
 @media print { .w.tap { animation:none; } }
 
 /* 文章中的網址：可點擊的連結（新分頁開啟） */
-a.ulink { color:#7cc7ff; text-decoration:underline; text-underline-offset:2px; word-break:break-all; }
-a.ulink:hover { color:#a8dcff; }
+a.ulink { color:var(--link); text-decoration:underline; text-underline-offset:2px; word-break:break-all; }
+a.ulink:hover { color:var(--link-hover); }
 
 /* 點單字（或單字卡）→ 文章中這個字的每一處換成橘色 */
-mark.vh.cur { background:rgba(255,184,64,.50); box-shadow:0 0 0 1px rgba(255,184,64,.95) inset; }
-#vocabList li.active { border-color:#ffb840; background:rgba(255,184,64,.08); }
+mark.vh.cur { background:var(--cur-bg); box-shadow:0 0 0 1px var(--cur-ring) inset; }
+#vocabList li.active { border-color:var(--cur-ring); background:var(--cur-soft); }
 #vocabList li[data-w] { cursor:pointer; }
 
 /* 題目區：上下排列，跟著文字大小設定 */
@@ -73,11 +68,11 @@ mark.vh.cur { background:rgba(255,184,64,.50); box-shadow:0 0 0 1px rgba(255,184
 #vocabList { list-style:none; margin:0; padding:0; }
 #vocabList li { background:var(--field); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:8px; line-height:1.5; }
 #vocabList li.empty { background:none; border-style:dashed; color:var(--muted); }
-#vocabList li.on { border-color:var(--accent); } #vocabList li.fail { color:#f0c36d; cursor:pointer; }
+#vocabList li.on { border-color:var(--accent); } #vocabList li.fail { color:var(--warn); cursor:pointer; }
 .kk { color:var(--muted); font-size:.9em; margin-left:.3em; }
 .lem { color:var(--muted); font-size:.85em; margin-left:.3em; }
-.def { margin-top:2px; } .zhl { color:#f0c36d; }
-#vocabList .v1 > b { color:#7cc7ff; font-size:1.12em; letter-spacing:.2px; }  /* 單字：醒目的天藍色 */
+.def { margin-top:2px; } .zhl { color:var(--warn); }
+#vocabList .v1 > b { color:var(--vocab); font-size:1.12em; letter-spacing:.2px; }  /* 單字：醒目的天藍色 */
 .def .pos { color:var(--accent); font-style:normal; font-weight:600; margin-right:2px; }
 .del { float:right; min-height:0; padding:0 4px; background:none; border:0; color:var(--muted); font-size:1.1rem; line-height:1; }
 .del:hover { color:var(--err); }
@@ -85,7 +80,7 @@ mark.vh.cur { background:rgba(255,184,64,.50); box-shadow:0 0 0 1px rgba(255,184
 @media print {
   a.ulink { color:inherit; }
   mark.vh, mark.vh.cur { background:none; box-shadow:none; color:inherit; animation:none; }
-  .fsbar, #vmsg, .del { display:none !important; }
+  #vmsg, .del { display:none !important; }
   body { background:#fff; color:#000; } .layout { display:block; padding:0; }
   .card, .qa section { border:0; background:#fff; color:#000; } .meta { color:#444; } .qa h3 { color:#000; } .qa { display:block; }
 }
@@ -96,13 +91,12 @@ html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 橫放時不
   /* iOS Safari：輸入框字體小於 16px，點進去會自動放大整個頁面（而且常常不會縮回來） */
   input[type=text], input[type=password], input[type=number], select, textarea, .pta, #pasteBody, #pasteTitle { font-size:16px; }
   input[type=text], input[type=password], input[type=number], select { height:44px; }
-  button, .fsbar button { min-height:44px; }
-  .fsbar button { min-width:48px; }
+  button { min-height:44px; }
   input[type=checkbox] { width:22px !important; height:22px !important; }
   .editing #bodyText[contenteditable], .editing .qa li, .editing #doc h2[contenteditable] { font-size:max(16px, var(--fs, 18px)); }  /* 編輯時字體也不得小於 16px */
   .qdel { min-width:44px; min-height:44px; }
 }
-.editing #bodyText[contenteditable] { font-size:max(16px, var(--fs, 18px)); line-height:1.8; }   /* 編輯時字體大小與閱讀時一致 */
+.editing #bodyText[contenteditable] { font-size:max(16px, var(--fs, 18px)); line-height:var(--lh); }   /* 編輯時字體大小與閱讀時一致 */
 
 /* 單字卡：第一行（單字、音標、發音）永遠顯示；詳細內容展開時才顯示 */
 #vocabList .v1 { display:flex; align-items:center; flex-wrap:wrap; gap:2px 8px; padding-right:26px; }
@@ -112,9 +106,9 @@ html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 橫放時不
 #vocabList .v1 .kk { margin-left:0; }
 /* 手機／平板直放：從畫面下方浮出的單字卡 */
 #wordPop { position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); max-width:560px; margin:0 auto; z-index:30; max-height:48vh; overflow:auto;
-  background:var(--card); border:1px solid var(--accent); border-radius:14px; padding:12px 14px 12px; box-shadow:0 8px 28px rgba(0,0,0,.6); animation:popUp .22s ease-out; }
+  background:var(--card); border:1px solid var(--accent); border-radius:14px; padding:12px 14px 12px; box-shadow:0 8px 28px var(--shadow); animation:popUp .22s ease-out; }
 #wordPop .v1 { display:flex; align-items:center; flex-wrap:wrap; gap:2px 8px; padding-right:40px; }
-#wordPop .v1 > b { color:#7cc7ff; font-size:1.25em; }
+#wordPop .v1 > b { color:var(--vocab); font-size:1.25em; }
 #wordPop .vdet { margin-top:6px; font-size:1rem; }
 #wordPop .pclose { position:absolute; top:6px; right:6px; width:40px; height:40px; min-height:0; padding:0; background:none; border:0; color:var(--muted); font-size:1.6rem; line-height:1; }
 @keyframes popUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }

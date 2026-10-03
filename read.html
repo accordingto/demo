@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>English Reading</title>
+<link rel="stylesheet" href="css/themes.css">
 <link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/settings.css">
+<script src="js/prefs.js"></script>
 </head>
 <body>
 <!-- 版面與功能和主持人頁相同（共用 css/shared.css、js/util.js、js/vocab.js）：左＝文章（含題目），右＝單字表 -->
@@ -12,7 +15,7 @@
   <div class="work">
     <div>
       <section id="preview" class="card">
-        <div class="fsbar"><span class="meta">Text size</span><button type="button" id="fsDec" class="secondary" aria-label="Smaller text">A−</button><span id="fsVal" class="meta">18px</span><button type="button" id="fsInc" class="secondary" aria-label="Larger text">A+</button></div>
+        <div class="fsbar"><button type="button" class="secondary gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings">⚙</button></div>
         <div id="doc" class="doc"></div>
         <div id="qa" class="qa"></div>
       </section>
@@ -27,6 +30,7 @@
 
 <script src="js/util.js"></script>
 <script src="js/vocab.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/reader.js"></script>
 </body>
 </html>

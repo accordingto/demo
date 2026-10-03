@@ -1,5 +1,5 @@
 // 主持人頁與閱讀頁共用：單字表、雙擊加字、文章標示、字體大小
-// 需先載入 util.js；頁面需提供：#doc #bodyText #vocabList #vmsg #fsInc #fsDec #fsVal
+// 需先載入 util.js；頁面需提供：#doc #bodyText #vocabList #vmsg
 (function () {
   let items = [];                 // 單字表項目；locked:true = 主持人挑的字（不可移除）
   let cfg = { getBody: () => '', onChange: () => {} };
@@ -10,11 +10,12 @@
 
   // ---- 發音：瀏覽器內建語音合成（免費、不需 API）----
   const canSpeak = !!window.speechSynthesis && typeof window.SpeechSynthesisUtterance === 'function';
-  function speak(text) {
-    if (!canSpeak) return;
+  function speak(text, force) {   // 設定（js/prefs.js）：可關閉、可調速度、可選美式／英式口音（force：設定視窗的測試，不管開關）
+    if (!canSpeak || (!force && window.Prefs && !Prefs.get('speak'))) return;
+    const uk = window.Prefs && Prefs.get('accent') === 'uk';
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.85;
-    const v = speechSynthesis.getVoices().find((x) => /^en[-_]US/i.test(x.lang)); if (v) u.voice = v;
+    const u = new SpeechSynthesisUtterance(text); u.lang = uk ? 'en-GB' : 'en-US'; u.rate = window.Prefs ? Prefs.get('rate') : 0.85;
+    const v = speechSynthesis.getVoices().find((x) => (uk ? /^en[-_]GB/i : /^en[-_]US/i).test(x.lang)); if (v) u.voice = v;
     speechSynthesis.speak(u);
   }
 
@@ -202,15 +203,6 @@
     fillWord(v);
   }
 
-  // ---- 文章字體大小（即時生效，記在這個瀏覽器）----
-  let fs = 18;
-  try { fs = Number(localStorage.getItem('rc-fs-host')) || 18; } catch {}
-  function setFs(n) {
-    fs = Math.min(36, Math.max(12, n));
-    document.documentElement.style.setProperty('--fs', fs + 'px'); $('fsVal').textContent = fs + 'px';
-    try { localStorage.setItem('rc-fs-host', fs); } catch {}
-  }
-
   // 點到的單字：短暫的光圈與底色（約 1 秒），讓人知道點了哪個字
   // 點擊處理中可能會重畫文章（展開單字卡等），舊的元素會被換掉，所以用「第幾個字」在重畫之後再找出來
   function tapEffect(idx) {
@@ -230,9 +222,6 @@
 
   // ---- 事件 ----
   function bind() {
-    $('fsInc').onclick = () => setFs(fs + 2);
-    $('fsDec').onclick = () => setFs(fs - 2);
-    setFs(fs);
     // 點文章中的單字：
     //  • 點一下 → 發音（文章上出現的原樣，例如 called）、播放光圈，並關閉所有單字卡；
     //    若是已加入單字庫的字（有底色），改為打開它的單字卡（窄螢幕＝浮動單字卡），並把文章中這個字標成橘色
@@ -286,5 +275,6 @@
     repaint: renderVocab,
     freeze(on) { frozen = !!on; },
     fillWord,
+    speakSample() { speak('Hello, this is a pronunciation test.', true); },   // 設定視窗的「Test」按鈕
   };
 })();

@@ -1,0 +1,89 @@
+// 閱讀設定視窗（齒輪）：電子書閱讀器常見的設定。需先載入 prefs.js；頁面上所有 .gear 按鈕都會開關這個視窗
+(function () {
+  const P = window.Prefs;
+  const pct = (v) => Math.round(v * 100) + '%';
+  const em = (v) => (v === 0 ? 'None' : v + ' em');
+
+  // 設定項目：type = seg（分段按鈕）｜range（滑桿）｜toggle（開關）
+  const SECTIONS = [
+    { title: 'Text', items: [
+      { key: 'fs', label: 'Text size', type: 'range', min: 12, max: 40, step: 1, show: (v) => v + ' px', stepper: 2 },
+      { key: 'font', label: 'Font', type: 'fonts' },
+      { key: 'lh', label: 'Line spacing', type: 'range', min: 1.2, max: 2.6, step: 0.1, show: (v) => v.toFixed(1) },
+      { key: 'para', label: 'Paragraph spacing', type: 'range', min: 0, max: 2, step: 0.25, show: em },
+      { key: 'ls', label: 'Letter spacing', type: 'range', min: 0, max: 0.12, step: 0.01, show: (v) => (v === 0 ? 'Normal' : v.toFixed(2) + ' em') },
+      { key: 'measure', label: 'Text width', type: 'seg', options: [['narrow', 'Narrow'], ['medium', 'Medium'], ['wide', 'Wide'], ['full', 'Full']] },
+      { key: 'align', label: 'Alignment', type: 'seg', options: [['left', 'Left'], ['justify', 'Justified']] },
+    ] },
+    { title: 'Display', items: [
+      { key: 'dim', label: 'Dim screen', type: 'range', min: 0, max: 0.6, step: 0.05, show: (v) => (v === 0 ? 'Off' : pct(v)) },
+      { key: 'warm', label: 'Warm light (reduce blue)', type: 'range', min: 0, max: 0.6, step: 0.05, show: (v) => (v === 0 ? 'Off' : pct(v)) },
+      { key: 'hl', label: 'Highlight vocabulary words', type: 'toggle' },
+      { key: 'anim', label: 'Animations', type: 'toggle' },
+    ] },
+    { title: 'Pronunciation', items: [
+      { key: 'speak', label: 'Pronounce words on tap', type: 'toggle' },
+      { key: 'accent', label: 'Accent', type: 'seg', options: [['us', 'American'], ['uk', 'British']] },
+      { key: 'rate', label: 'Speed', type: 'range', min: 0.5, max: 1.2, step: 0.05, show: (v) => v.toFixed(2) + '×' },
+    ] },
+  ];
+
+  const row = (it, body) => `<div class="srow" data-key="${it.key}"><div class="slabel"><span>${it.label}</span><span class="sval" data-val="${it.key}"></span></div>${body}</div>`;
+  function control(it) {
+    if (it.type === 'range') {
+      const step = it.stepper ? `<button type="button" class="secondary sstep" data-step="-${it.stepper}" aria-label="Smaller">A−</button>` : '';
+      const step2 = it.stepper ? `<button type="button" class="secondary sstep" data-step="${it.stepper}" aria-label="Larger">A+</button>` : '';
+      return row(it, `<div class="srange">${step}<input type="range" data-k="${it.key}" min="${it.min}" max="${it.max}" step="${it.step}" aria-label="${it.label}">${step2}</div>`);
+    }
+    if (it.type === 'seg') return row(it, `<div class="seg" role="group" aria-label="${it.label}">${it.options.map(([v, l]) => `<button type="button" class="secondary" data-k="${it.key}" data-v="${v}">${l}</button>`).join('')}</div>`);
+    if (it.type === 'toggle') return `<label class="srow stoggle" data-key="${it.key}"><span>${it.label}</span><input type="checkbox" data-k="${it.key}" role="switch"></label>`;
+    if (it.type === 'fonts') return row(it, `<div class="fontgrid">${Object.entries(P.FONTS).map(([id, f]) => `<button type="button" class="secondary" data-k="font" data-v="${id}" style="font-family:${f.css.replace(/"/g, "'")}">${f.label}</button>`).join('')}</div>`);
+    return '';
+  }
+  const themes = `<section><h4>Theme</h4><div class="themes" role="group" aria-label="Theme">${P.THEMES.map((t) =>
+    `<button type="button" class="swatch" data-k="theme" data-v="${t.id}" style="--sw-bg:${t.bg};--sw-ink:${t.ink};--sw-hl:${t.hl}" aria-label="${t.label} theme"><span class="sw-a">Aa</span><span class="sw-n">${t.label}</span></button>`).join('')}</div></section>`;
+
+  const panel = document.createElement('div');
+  panel.id = 'settings'; panel.className = 'hidden'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Reading settings');
+  panel.innerHTML =
+    '<div class="shead"><b>⚙ Reading settings</b><span><button type="button" class="secondary" id="sReset">Reset</button><button type="button" class="sclose" id="sClose" aria-label="Close">×</button></span></div>' +
+    '<div class="sbody">' + themes + SECTIONS.map((s) => `<section><h4>${s.title}</h4>${s.items.map(control).join('')}</section>`).join('') +
+    '<button type="button" class="secondary" id="sTest">▶ Test pronunciation</button></div>';
+  document.body.appendChild(panel);
+
+  // 把目前設定顯示到畫面上
+  function sync() {
+    const p = P.get();
+    panel.querySelectorAll('[data-k][data-v]').forEach((b) => { const on = String(p[b.dataset.k]) === b.dataset.v; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    panel.querySelectorAll('input[type=range]').forEach((i) => { i.value = p[i.dataset.k]; });
+    panel.querySelectorAll('input[type=checkbox]').forEach((i) => { i.checked = !!p[i.dataset.k]; });
+    SECTIONS.forEach((s) => s.items.forEach((it) => { if (it.show) panel.querySelector(`[data-val="${it.key}"]`).textContent = it.show(p[it.key]); }));
+  }
+  P.onChange(sync); sync();
+
+  panel.addEventListener('input', (e) => {
+    const t = e.target, k = t.dataset.k; if (!k) return;
+    if (t.type === 'range') P.set({ [k]: Number(t.value) });
+    else if (t.type === 'checkbox') P.set({ [k]: t.checked });
+  });
+  panel.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'sClose') return toggle(false);
+    if (b.id === 'sReset') return P.reset();
+    if (b.id === 'sTest') return window.Vocab?.speakSample?.();
+    if (b.dataset.step) return P.set({ fs: P.get('fs') + Number(b.dataset.step) });
+    if (b.dataset.k) P.set({ [b.dataset.k]: b.dataset.v });
+  });
+
+  const gears = [...document.querySelectorAll('.gear')];
+  const onGear = (t) => gears.some((g) => g.contains(t));
+  function toggle(open) {
+    open = open === undefined ? panel.classList.contains('hidden') : open;
+    panel.classList.toggle('hidden', !open);
+    gears.forEach((g) => g.setAttribute('aria-expanded', open));
+    if (open) panel.querySelector('.swatch.on, button')?.focus({ preventScroll: true });
+  }
+  gears.forEach((g) => g.addEventListener('click', () => toggle()));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.classList.contains('hidden')) { toggle(false); gears.find((g) => g.offsetParent)?.focus(); } });
+  document.addEventListener('pointerdown', (e) => { if (!panel.classList.contains('hidden') && !panel.contains(e.target) && !onGear(e.target)) toggle(false); });
+})();
