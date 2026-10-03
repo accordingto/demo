@@ -34,3 +34,7 @@
 #sTest { width:100%; margin-top:12px; min-height:44px; }
 @media (max-width:639px) { .themes { grid-template-columns:repeat(4,1fr); } }
 @media print { #settings, .iconbtn { display:none !important; } }
+
+.stestmsg { margin-top:8px; font-size:.78rem; line-height:1.5; color:var(--muted); white-space:pre-line; }
+.stestmsg:empty { display:none; }
+.stestmsg.ok { color:var(--accent); } .stestmsg.err { color:var(--err); }

@@ -285,6 +285,11 @@
     freeze(on) { frozen = !!on; if (on) window.ReadAloud?.stop(); },   // 編輯時停止朗讀
     paragraphs, paragraphSentences,
     fillWord,
-    speakSample() { speak('Hello, this is a pronunciation test.', true); },   // 設定視窗的「Test」按鈕
+    speakSample(h = {}) {   // 設定視窗的「Test」按鈕：不管開關都念，並回報開始／結束／錯誤
+      if (!TTS.canSpeak) return h.error?.('unsupported');
+      const u = TTS.utter('Hello, this is a pronunciation test.');
+      u.onstart = () => h.start?.(); u.onend = () => h.end?.(); u.onerror = (e) => h.error?.(e.error || 'unknown');
+      window.ReadAloud?.stop(); TTS.say(u);
+    },
   };
 })();

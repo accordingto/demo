@@ -47,7 +47,7 @@
   panel.id = 'settings'; panel.className = 'hidden'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Reading settings');
   panel.innerHTML =
     '<div class="shead"><b>⚙ Reading settings</b><span><button type="button" class="secondary" id="sReset">Reset</button><button type="button" class="sclose" id="sClose" aria-label="Close">×</button></span></div>' +
-    '<div class="sbody">' + themes + SECTIONS.map((s) => `<section><h4>${s.title}</h4>${s.items.map(control).join('')}${s.title === 'Pronunciation' ? '<button type="button" class="secondary" id="sTest">▶ Test pronunciation</button>' : ''}</section>`).join('') + '</div>';
+    '<div class="sbody">' + themes + SECTIONS.map((s) => `<section><h4>${s.title}</h4>${s.items.map(control).join('')}${s.title === 'Pronunciation' ? '<button type="button" class="secondary" id="sTest">▶ Test pronunciation</button><div id="sTestMsg" class="stestmsg" role="status"></div>' : ''}</section>`).join('') + '</div>';
   document.body.appendChild(panel);
 
   // 把目前設定顯示到畫面上
@@ -69,10 +69,26 @@
     const b = e.target.closest('button'); if (!b) return;
     if (b.id === 'sClose') return toggle(false);
     if (b.id === 'sReset') return P.reset();
-    if (b.id === 'sTest') return window.Vocab?.speakSample?.();
+    if (b.id === 'sTest') return testSpeech();
     if (b.dataset.step) return P.set({ fs: P.get('fs') + Number(b.dataset.step) });
     if (b.dataset.k) P.set({ [b.dataset.k]: b.dataset.v });
   });
+
+  // 發音測試：顯示語音引擎實際回報了什麼，方便找出沒聲音的原因
+  function testSpeech() {
+    const msg = panel.querySelector('#sTestMsg'), i = TTS.info();
+    const base = `Voices found: ${i.voices} · using: ${i.voice}`;
+    if (!i.canSpeak) { msg.className = 'stestmsg err'; msg.textContent = 'This browser does not support speech synthesis.'; return; }
+    let answered = false;
+    const show = (cls, t) => { msg.className = 'stestmsg ' + cls; msg.textContent = t + '\n' + base; };
+    show('', 'Starting…');
+    const timer = setTimeout(() => { if (!answered) show('err', 'The speech engine did not respond. Check that the silent switch is off, the volume is up, and a voice is installed (iPhone/iPad: Settings → Accessibility → Spoken Content → Voices).'); }, 2500);
+    Vocab.speakSample({
+      start: () => { answered = true; clearTimeout(timer); show('ok', 'Playing…'); },
+      end: () => { answered = true; clearTimeout(timer); show('ok', 'Done. If you heard nothing, check the silent switch and volume.'); },
+      error: (e) => { answered = true; clearTimeout(timer); show('err', `Speech error: ${e}. ` + (e === 'not-allowed' ? 'The browser blocked it — tap the button again.' : e === 'synthesis-failed' || e === 'voice-unavailable' ? 'No usable voice: install an English voice in the device settings.' : '')); },
+    });
+  }
 
   const gears = [...document.querySelectorAll('.gear')];
   const onGear = (t) => gears.some((g) => g.contains(t));

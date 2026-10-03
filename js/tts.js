@@ -5,8 +5,9 @@ window.TTS = (() => {
   function utter(text) {
     const uk = Prefs.get('accent') === 'uk';
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = uk ? 'en-GB' : 'en-US'; u.rate = Prefs.get('rate');
-    const v = speechSynthesis.getVoices().find((x) => (uk ? /^en[-_]GB/i : /^en[-_]US/i).test(x.lang)); if (v) u.voice = v;
+    u.lang = uk ? 'en-GB' : 'en-US';
+    try { u.rate = Prefs.get('rate'); } catch { /* 忽略：用預設語速 */ }
+    try { const v = speechSynthesis.getVoices().find((x) => (uk ? /^en[-_]GB/i : /^en[-_]US/i).test(x.lang)); if (v) u.voice = v; } catch { /* 指定語音失敗就用裝置預設 */ }
     return u;
   }
 
@@ -22,5 +23,12 @@ window.TTS = (() => {
     if (busy()) { speechSynthesis.cancel(); timer = setTimeout(() => { timer = 0; speechSynthesis.speak(u); }, 80); }
     else speechSynthesis.speak(u);
   }
-  return { canSpeak, utter, say, cancel };
+  // 診斷資訊（設定視窗的 Test 用）：有幾個語音、會用哪一個
+  function info() {
+    const voices = canSpeak ? speechSynthesis.getVoices() : [];
+    const uk = Prefs.get('accent') === 'uk';
+    const v = voices.find((x) => (uk ? /^en[-_]GB/i : /^en[-_]US/i).test(x.lang));
+    return { canSpeak, voices: voices.length, voice: v ? `${v.name} (${v.lang})` : 'device default' };
+  }
+  return { canSpeak, utter, say, cancel, info };
 })();
