@@ -10,10 +10,19 @@
 @media (min-width:1280px) { .lbl { display:inline; } }
 .f { display:flex; flex-direction:column; gap:2px; min-width:0; }
 .f label { font-size:.7rem; color:var(--muted); margin:0; line-height:1.2; font-weight:500; white-space:nowrap; }
-#code { width:96px; } #words { width:70px; } #level { width:64px; } #genre { width:104px; }
+#code { width:96px; } .spin { width:84px; } #level { width:64px; } #genre { width:104px; }
 .checks { display:flex; gap:10px; align-items:center; height:34px; }
 .checks label { display:inline-flex; align-items:center; gap:4px; font-size:.82rem; white-space:nowrap; cursor:pointer; }
 .checks input { width:16px; height:16px; margin:0; }
+/* 數字上下調整（▲▼ 每次 ±100）：隱藏瀏覽器內建的小箭頭，自己畫一組 */
+.spin { position:relative; }
+.spin input { padding-right:26px; -moz-appearance:textfield; appearance:textfield; }
+.spin input::-webkit-outer-spin-button, .spin input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.spin-btns { position:absolute; top:1px; right:1px; bottom:1px; width:24px; display:flex; flex-direction:column; border-left:1px solid var(--line); border-radius:0 7px 7px 0; overflow:hidden; }
+.spin-btns button { flex:1; min-height:0; padding:0; font-size:.55rem; line-height:1; background:transparent; color:var(--muted); border:0; border-radius:0; font-weight:400; }
+.spin-btns button:hover { background:var(--hover); color:var(--accent); }
+.spin-btns button + button { border-top:1px solid var(--line); }
+@media (pointer:coarse), (max-width:639px) { .spin input { padding-right:44px; } .spin-btns { width:40px; } .spin-btns button { font-size:.75rem; } }
 #go { height:34px; min-height:0; padding:0 18px; }
 #status { margin:8px 0 0; font-size:.9rem; }
 #status:empty { display:none; }
@@ -63,7 +72,7 @@ a.btn.secondary { color:var(--accent); border:1px solid var(--accent); }
 /* 手機：欄位兩兩並排、按鈕滿版 */
 @media (max-width:639px) {
   .bar > .f { flex:1 1 calc(50% - 5px); } .bar > .f.grow { flex:1 1 100%; } .bar > .f:first-child { flex-basis:100%; }
-  #code, #words, #level, #genre { width:100%; }
+  #code, .spin, #level, #genre { width:100%; }
   .checks { flex:1 1 100%; justify-content:space-between; height:44px; } .checks label { font-size:.95rem; gap:8px; }
   .tb { flex:1 1 40%; height:46px; } .lbl { display:inline; }
   #go { flex:1 1 100%; height:48px; font-size:1rem; }

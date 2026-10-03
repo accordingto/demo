@@ -15,13 +15,14 @@ test('validate: accepts good input and cleans the topic', () => {
   assert.deepEqual(value, { words: 300, level: 'C2', topic: 'the history of coffee', genre: 'story', questions: true, discussion: false });
 });
 test('validate: rejects bad input', () => {
-  for (const bad of [{ words: 99 }, { words: 2001 }, { words: 150.5 }, { level: 'D1' }, { topic: '' }, { topic: 'x'.repeat(101) }, { genre: 'poem' }]) {
+  for (const bad of [{ words: 99 }, { words: 1001 }, { words: 150.5 }, { level: 'D1' }, { topic: '' }, { topic: 'x'.repeat(101) }, { genre: 'poem' }]) {
     assert.ok(validate({ words: 300, level: 'B1', topic: 't', ...bad }).error, JSON.stringify(bad));
   }
 });
 
 test('paragraphCount / arcPlan: first is opening, last is closing, a turn exists', () => {
   assert.equal(paragraphCount(100), 2);
+  assert.equal(paragraphCount(1000), 9);
   assert.equal(paragraphCount(2000), 12);
   for (const n of [2, 3, 5, 12]) {
     const plan = arcPlan(n, 'story');

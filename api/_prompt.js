@@ -2,7 +2,7 @@
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 const GENRES = { explanation: 'an expository (explanatory) article', story: 'a short story', news: 'a news-style article' };
-const MIN_WORDS = 100, MAX_WORDS = 2000;
+const MIN_WORDS = 100, MAX_WORDS = 1000;
 
 // 各文體的「起承轉合」寫法
 const ARC = {

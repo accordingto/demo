@@ -17,7 +17,20 @@ function loadSettings() {
     SAVED.forEach((id) => { if (id in o) { const el = $(id); if (el.type === 'checkbox') el.checked = !!o[id]; else el.value = o[id]; } });
   } catch { /* 忽略 */ }
 }
+// 字數：100–1000，▲▼（或方向鍵、滑鼠滾輪不處理）每次 ±100，並對齊到整百
+const MIN_WORDS = 100, MAX_WORDS = 1000, WORDS_STEP = 100;
+function stepWords(dir) {
+  const v = Number($('words').value) || 300;
+  const next = dir > 0 ? (Math.floor(v / WORDS_STEP) + 1) * WORDS_STEP : (Math.ceil(v / WORDS_STEP) - 1) * WORDS_STEP;
+  $('words').value = Math.min(MAX_WORDS, Math.max(MIN_WORDS, next));
+  $('words').dispatchEvent(new Event('input', { bubbles: true }));   // 讓設定記憶也更新
+}
+document.querySelector('.spin-btns').addEventListener('click', (e) => { const b = e.target.closest('button[data-d]'); if (b) stepWords(Number(b.dataset.d)); });
+$('words').addEventListener('keydown', (e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); stepWords(e.key === 'ArrowUp' ? 1 : -1); } });
+$('words').addEventListener('change', () => { const v = Number($('words').value); if (v) $('words').value = Math.min(MAX_WORDS, Math.max(MIN_WORDS, Math.round(v))); });
+
 loadSettings();
+$('words').value = Math.min(MAX_WORDS, Math.max(MIN_WORDS, Number($('words').value) || 300));   // 舊的設定可能超過上限
 $('form').addEventListener('input', saveSettings);
 $('form').addEventListener('change', saveSettings);
 
