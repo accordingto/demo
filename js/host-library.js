@@ -43,22 +43,28 @@ const libEntries = () => cloud
   ? cloudItems.map((i) => ({ id: i.id, title: i.title, level: i.level, words: i.wordCount, vocab: i.vocabCount, ts: i.updatedAt }))
   : libLoad().map((it) => ({ id: it.id, title: it.article.title, level: it.article.level, words: it.article.wordCount, vocab: (it.vocab || []).length, ts: it.savedAt }));
 
+let libQuery = '';
+const fmtDate = (ts) => { try { return new Date(ts).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return ''; } };
 function renderLib() {
-  const l = libEntries(), local = libLoad();
-  $('libBtn').innerHTML = `${cloud ? '☁' : '📚'} <span class="lbl">Library </span>(${cloud && cloudErr ? '–' : l.length})`;
-  $('libTitle').textContent = cloud ? '☁ Library (cloud — open it on any device)' : '📚 Library (saved in this browser)';
+  const all = libEntries(), local = libLoad();
+  const q = libQuery.trim().toLowerCase(), l = q ? all.filter((it) => it.title.toLowerCase().includes(q)) : all;
+  $('libCount').textContent = cloud && cloudErr ? '–' : all.length;
+  $('libSub').textContent = cloud ? 'Cloud · any device' : 'Saved in this browser';
+  $('libTitle').textContent = 'Library';
+  $('libSubtitle').textContent = cloud ? 'Cloud library — open it on any device with your access code.' : 'Saved in this browser. Set up cloud storage to open articles on any device.';
   $('libExport').classList.toggle('hidden', cloud); $('libImport').classList.toggle('hidden', cloud);
   $('libUpload').classList.toggle('hidden', !(cloud && local.length));
   $('libDiag').classList.toggle('hidden', cloud); // 還沒啟用雲端時，提供「檢查雲端設定」
-  $('libUpload').textContent = `⬆ Upload ${REL(local.length)} from this browser`;
-  if (cloud && cloudErr) { $('libList').innerHTML = `<li style="grid-column:1/-1;color:var(--err)">${esc(cloudErr)}</li>`; return; }
+  $('libUpload').textContent = `Upload ${REL(local.length)} from this browser`;
+  if (cloud && cloudErr) { $('libList').innerHTML = `<li class="empty-state"><strong>Could not load the library</strong>${esc(cloudErr)}</li>`; return; }
   $('libList').innerHTML = l.length ? l.map((it) =>
-    `<li data-id="${esc(it.id)}"><div class="t">${esc(it.title)}</div>` +
-    `<div class="m">${it.level ? 'Level ' + esc(it.level) : '✍ Pasted text'} ・ ${it.words || ''} words ・ 📖 ${it.vocab} vocabulary ・ ${cloud ? 'updated' : 'saved'} ${new Date(it.ts).toLocaleDateString()}</div>` +
-    '<div class="b"><button type="button" data-act="open">Open</button><button type="button" class="secondary" data-act="edit">✍ Edit</button><button type="button" class="secondary" data-act="copy">Copy link</button><button type="button" class="secondary danger" data-act="del">Delete</button></div></li>'
-  ).join('') : '<li style="grid-column:1/-1;color:var(--muted)">No saved articles yet. Generate or paste one and press “💾 Save article”.</li>';
+    `<li class="libcard" data-id="${esc(it.id)}"><div class="t">${esc(it.title)}</div>` +
+    `<div class="chips2">${it.level ? `<span class="chip lv">${esc(it.level)}</span>` : '<span class="chip">Pasted</span>'}<span class="chip">${it.words || 0} words</span><span class="chip">${it.vocab} vocab</span></div>` +
+    `<div class="when">${cloud ? 'Updated' : 'Saved'} ${fmtDate(it.ts)}</div>` +
+    '<div class="b"><button type="button" class="grow" data-act="open">Open</button><button type="button" class="secondary" data-act="edit">Edit</button><button type="button" class="secondary" data-act="copy">Copy link</button><button type="button" class="secondary danger" data-act="del" aria-label="Delete">Delete</button></div></li>'
+  ).join('') : (q ? `<li class="empty-state"><strong>No matches</strong>Nothing in your library matches “${esc(libQuery)}”.</li>` : '<li class="empty-state"><strong>No saved articles yet</strong>Create an article and press Save (or just add a word — it saves automatically).</li>');
 }
-$('libBtn').addEventListener('click', () => { $('library').classList.toggle('hidden'); if (cloud && !$('library').classList.contains('hidden')) refreshCloud(); });
+$('libSearch').addEventListener('input', (e) => { libQuery = e.target.value; renderLib(); });
 $('code').addEventListener('change', () => { if (cloud) refreshCloud(); });
 
 // ---- 儲存 / 同步 ----
@@ -137,8 +143,7 @@ $('libList').addEventListener('click', async (e) => {
   const btn = e.target.closest('button[data-act]'); if (!btn) return;
   const id = btn.closest('li').dataset.id, act = btn.dataset.act;
   const afterOpen = () => {
-    $('library').classList.add('hidden');   // 開啟後自動收起文章庫
-    if (act === 'edit') startEdit(); else $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (act === 'edit') startEdit();   // 開啟後 render() 已切到 Article 畫面
   };
   try {
     if (cloud) {

@@ -31,8 +31,8 @@ $('words').addEventListener('change', () => { const v = Number($('words').value)
 
 loadSettings();
 $('words').value = Math.min(MAX_WORDS, Math.max(MIN_WORDS, Number($('words').value) || 300));   // 舊的設定可能超過上限
-$('form').addEventListener('input', saveSettings);
-$('form').addEventListener('change', saveSettings);
+// 設定欄位（存取碼在側邊欄、其餘在 Create 表單）有變動就記住
+for (const ev of ['input', 'change']) document.addEventListener(ev, (e) => { if (SAVED.includes(e.target.id)) saveSettings(); });
 
 // ---- 產生文章：讀取 SSE 串流（progress / result / error）----
 async function generate(payload, onProgress) {
@@ -74,10 +74,10 @@ function render(a, vocab = [], libId = null) {
   Vocab.repaint();
   $('qa').innerHTML = questionsHtml(a.questions, a.discussion);
   $('regen').classList.toggle('hidden', a.source === 'pasted');   // 貼上的文章沒有「重新產生」，改用「Edit」
-  $('empty').classList.add('hidden');
-  $('preview').classList.remove('hidden');
-  ['link', 'copy', 'openReader'].forEach((id) => $(id).classList.add('hidden'));
+  $('shareBox').classList.add('hidden');
   $('linkMsg').textContent = '';
+  updateNavArticle(a.title);
+  showView('read');
   currentLibId = libId;
   markSynced();   // 剛載入／產生的單字表不算「變動」
 }
@@ -92,16 +92,16 @@ async function run() {
     code: $('code').value, topic: $('topic').value, words: Number($('words').value), level: $('level').value,
     genre: $('genre').value, questions: $('questions').checked, discussion: $('discussion').checked,
   };
+  const st = view === 'read' ? $('linkMsg') : $('status');   // 在文章畫面按 Regenerate 時，進度顯示在文章下方
   $('go').disabled = $('regen').disabled = true;
-  $('status').className = 'msg'; $('status').textContent = '⏳ Generating…';
+  st.className = 'msg meta'; st.textContent = '⏳ Generating…';
   try {
-    current = await generate(payload, (n) => { $('status').textContent = `⏳ Generating… (${n} characters received)`; });
-    $('status').textContent = '';
+    current = await generate(payload, (n) => { st.textContent = `⏳ Generating… (${n} characters received)`; });
+    st.textContent = '';
     render(current);
-    if (narrowQuery.matches) $('preview').scrollIntoView({ behavior: 'smooth' }); // 窄螢幕才需要捲動
   } catch (e) {
-    $('status').className = 'msg err'; $('status').textContent = '❌ ' + e.message;
-    if (e.message === 'Incorrect access code') { $('code').value = ''; saveSettings(); $('code').focus(); } // 存的是錯誤的碼就清掉
+    st.className = 'msg err'; st.textContent = '❌ ' + e.message;
+    if (e.message === 'Incorrect access code') { $('code').value = ''; saveSettings(); askForCode(); } // 存的是錯誤的碼就清掉，並打開側邊欄讓你重新輸入
   } finally { $('go').disabled = $('regen').disabled = false; }
 }
 $('form').addEventListener('submit', (e) => { e.preventDefault(); run(); });
@@ -117,8 +117,7 @@ async function buildLink(a, vocab = []) {
   return new URL('read.html', location.href).href + '#' + data;
 }
 function showLink(url) {
-  $('link').value = url; $('link').classList.remove('hidden'); $('copy').classList.remove('hidden');
-  $('openReader').href = url; $('openReader').classList.remove('hidden');
+  $('link').value = url; $('shareBox').classList.remove('hidden'); $('openReader').href = url;
 }
 // 複製文字；瀏覽器不允許時改成手動複製。btn：按鈕上短暫顯示 Copied ✓
 async function copyText(text, btn, idleLabel) {

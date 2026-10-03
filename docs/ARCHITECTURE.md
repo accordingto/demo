@@ -71,10 +71,16 @@
 
 ### 載入順序（classic script，共用全域作用域）
 - 共通：`prefs.js` 放在 `<head>`（同步載入，頁面繪製前就套用主題，避免先閃一下預設主題）
-- 主持人頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-main.js`
+- 主持人頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `host-nav.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-main.js`
 - 閱讀頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `reader.js`
 
 各 host 模組之間的函式只在**執行時**互相呼叫；但 `Vocab.init` 一執行就會呼叫 `onChange(syncLib)`，所以放在最後載入的 `host-main.js`。
+
+### 主持人頁的導覽（`host-nav.js`、`css/app.css`）
+- **三個畫面** `section.view[data-view]`：`create`／`read`／`library`；`showView(v)` 切換（還沒有文章時 `read` 會退回 `create`）並更新側邊欄、上方列標題與網址 `#v`（`pushState`，所以上一頁可用）。**Create 的三個分頁** `[data-panel]`：`gen`／`paste`／`link`，由 `showTab(t)` 切換。
+- **側邊欄與抽屜是同一個元素 `#sidebar`**：≥ 1280px 是 sticky 欄；< 1280px 是 `position:fixed` 抽屜（`body.nav-open` 控制，`#scrim` 為遮罩）。上方列 `#topbar` 只在 < 1280px 顯示。
+- 其他模組呼叫導覽的方式：`render()` → `showView('read')` 並 `updateNavArticle(title)`；`openPaste()` → `showView('create'); showTab('paste')`；缺存取碼時 `askForCode()`（窄螢幕打開抽屜並對焦）。
+- 存取碼 `#code` 在側邊欄；設定記憶改為在 `document` 上監聽 `input`／`change`，只處理 `SAVED` 內的欄位。
 
 ### 主持人頁的全域狀態
 | 變數 | 檔案 | 意義 |

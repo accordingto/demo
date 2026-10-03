@@ -2,123 +2,230 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>Reading Club Article Generator</title>
+<title>Reading Club</title>
 <link rel="stylesheet" href="css/themes.css">
 <link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/host.css">
 <link rel="stylesheet" href="css/settings.css">
 <script src="js/prefs.js"></script>
 </head>
 <body>
-<div class="layout">
-  <form id="form" class="card">
-    <div class="bar">
-      <div class="f"><label for="code">Access code</label><input type="password" id="code" autocomplete="off" required></div>
-      <div class="f grow"><label for="topic">Topic</label><input type="text" id="topic" maxlength="100" placeholder="e.g. the history of coffee" title="Topic (max 100 characters)" required></div>
-      <div class="f"><label for="words">Words</label><div class="spin"><input type="number" id="words" min="100" max="1000" step="1" value="300" title="100 – 1000 words (▲▼ or arrow keys: ±100)" required><span class="spin-btns"><button type="button" data-d="1" tabindex="-1" aria-label="Increase by 100">▲</button><button type="button" data-d="-1" tabindex="-1" aria-label="Decrease by 100">▼</button></span></div></div>
-      <div class="f"><label for="level">CEFR</label>
-        <select id="level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div>
-      <div class="f"><label for="genre">Genre</label>
-        <select id="genre"><option value="">Any</option>
-          <optgroup label="Informational"><option value="explanation">Explanation</option><option value="science">Science</option><option value="history">History</option><option value="biography">Biography</option><option value="howto">How-to guide</option><option value="travel">Travel</option><option value="news">News style</option></optgroup>
-          <optgroup label="Narrative"><option value="story">Story</option><option value="fable">Fable</option></optgroup>
-          <optgroup label="Analytical"><option value="analysis">Analyst briefing (numbered points)</option></optgroup>
-          <optgroup label="Personal &amp; opinion"><option value="blog">Blog / diary</option><option value="letter">Letter / email</option><option value="opinion">Opinion</option><option value="review">Review</option><option value="speech">Speech</option></optgroup></select></div>
-      <div class="checks">
-        <label><input type="checkbox" id="questions" checked>Comprehension</label>
-        <label><input type="checkbox" id="discussion" checked>Discussion</label>
-      </div>
-      <button type="submit" id="go">Generate</button>
-      <button type="button" id="pasteBtn" class="secondary tb" title="Paste your own text">✍ Paste<span class="lbl"> text</span></button>
-      <button type="button" id="libBtn" class="secondary tb" title="Saved articles">📚 Library</button>
-    </div>
-    <div id="status" class="msg" role="status"></div>
-  </form>
+<!-- 圖示（SVG sprite）：<svg class="ic"><use href="#i-名稱"/></svg> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-create" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2zM22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/></symbol>
+    <symbol id="i-library" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4zM3 12l9 4 9-4M3 17l9 4 9-4"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M14 9l2 2"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-paste" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  </defs>
+</svg>
 
-  <section id="pastePanel" class="card hidden">
-    <div class="head">
-      <h3>✍ Paste your own text</h3>
-      <span class="meta" id="pasteInfo">0 words</span>
+<div class="app">
+  <!-- 側邊欄：≥1280px 固定在左邊；較窄的螢幕（手機、平板）收成抽屜，用上方的 ☰ 打開 -->
+  <aside id="sidebar" aria-label="Main menu">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg class="ic"><use href="#i-book"/></svg></span>
+      <span class="brand-name">Reading Club</span>
+      <button type="button" class="nav-close" id="navClose" aria-label="Close menu"><svg class="ic"><use href="#i-close"/></svg></button>
     </div>
-    <div class="urlrow">
-      <input type="url" id="pasteUrl" inputmode="url" placeholder="Or paste an article link (https://…) to import its main text" autocomplete="off" spellcheck="false">
-      <button type="button" id="pasteFetch" class="secondary">Import from link</button>
+    <nav class="nav" aria-label="Sections">
+      <button type="button" class="nav-item" data-view="create"><svg class="ic"><use href="#i-create"/></svg><span class="nav-label">Create<small>Generate, paste or import</small></span></button>
+      <button type="button" class="nav-item" data-view="read" id="navRead" disabled><svg class="ic"><use href="#i-book"/></svg><span class="nav-label">Article<small id="navArticle">No article yet</small></span></button>
+      <button type="button" class="nav-item" data-view="library" id="libBtn"><svg class="ic"><use href="#i-library"/></svg><span class="nav-label">Library<small id="libSub">Saved articles</small></span><span class="badge" id="libCount">0</span></button>
+    </nav>
+    <div class="nav-sep"></div>
+    <button type="button" class="nav-item gear" aria-haspopup="dialog" aria-expanded="false"><svg class="ic"><use href="#i-gear"/></svg><span class="nav-label">Reading settings<small>Theme, font, voice…</small></span></button>
+    <div class="side-foot">
+      <label for="code"><svg class="ic"><use href="#i-key"/></svg>Access code</label>
+      <input type="password" id="code" autocomplete="off" placeholder="Enter once, remembered here">
+      <small>Needed to generate, import and sync your library.</small>
     </div>
-    <input type="text" id="pasteTitle" maxlength="120" placeholder="Title (optional)" autocomplete="off">
-    <div class="pmode"><label for="pasteMode">Paragraphs</label>
-      <select id="pasteMode" title="How to split the pasted text into paragraphs">
-        <option value="auto">Auto-detect</option>
-        <option value="lines">Every line break starts a paragraph</option>
-        <option value="blank">Only blank lines start a paragraph</option>
-      </select></div>
-    <textarea id="pasteBody" placeholder="Paste or type an English article here…" spellcheck="false"></textarea>
-    <div class="qrow">
-      <div><label for="pasteQ">Comprehension questions <span class="meta">(optional, one per line, max 5)</span></label><textarea id="pasteQ" class="pta" rows="3" spellcheck="false"></textarea></div>
-      <div><label for="pasteD">Discussion questions <span class="meta">(optional, one per line, max 5)</span></label><textarea id="pasteD" class="pta" rows="3" spellcheck="false"></textarea></div>
-    </div>
-    <div class="actions">
-      <button type="button" id="pasteUse">Use this text</button>
-      <button type="button" id="pasteClear" class="secondary">Clear</button>
-      <button type="button" id="pasteCancel" class="secondary">Close</button>
-    </div>
-    <div id="pasteMsg" class="meta" role="status">No access code needed — pasted text is not sent to the AI. You can look up words, save it to your library and share it just like a generated article.</div>
-  </section>
+  </aside>
+  <div id="scrim" aria-hidden="true"></div>
 
-  <section id="library" class="card hidden">
-    <div class="head">
-      <h3 id="libTitle">📚 Library (saved in this browser)</h3>
-      <div class="btns">
-        <button type="button" id="libDiag" class="secondary hidden">☁ Check cloud setup</button>
-        <button type="button" id="libUpload" class="hidden">⬆ Upload local articles</button>
-        <button type="button" id="libExport" class="secondary">Export backup</button>
-        <button type="button" id="libImport" class="secondary">Import backup</button>
-        <input type="file" id="libFile" accept="application/json,.json" class="hidden">
-      </div>
-    </div>
-    <div id="libMsg" class="meta" role="status" style="margin-bottom:8px"></div>
-    <ul id="libList" class="libList"></ul>
-  </section>
+  <div class="main">
+    <header id="topbar">
+      <button type="button" class="iconbtn plain" id="navOpen" aria-label="Open menu" aria-controls="sidebar"><svg class="ic"><use href="#i-menu"/></svg></button>
+      <div class="tb-title" id="tbTitle">Create</div>
+      <button type="button" class="iconbtn plain gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false"><svg class="ic"><use href="#i-gear"/></svg></button>
+    </header>
 
-  <div class="work">
-    <div>
-    <div id="empty" class="card"><div class="fsbar"><button type="button" class="secondary iconbtn gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings">⚙</button></div><div class="big">📖</div>Set your options and press “Generate”. The preview will appear here.</div>
-    <section id="preview" class="card hidden">
-      <div class="fsbar"><button type="button" class="secondary iconbtn readall" aria-label="Read the whole article aloud" title="Read the whole article aloud"></button><button type="button" class="secondary iconbtn gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings">⚙</button></div>
-      <div id="editBar" class="hidden" role="toolbar">
-        <span class="grow"><b>✍ Editing</b> — click the title, the text or a question and type. <span id="editInfo" class="meta"></span> <span id="editMsg" class="err"></span></span>
-        <button type="button" id="editSave">Save changes</button>
-        <button type="button" id="editCancel" class="secondary">Cancel</button>
-      </div>
-      <div id="doc" class="doc"></div>
-      <div class="actions" id="previewActions">
-        <button type="button" id="regen" class="secondary">Regenerate</button>
-        <button type="button" id="editText" class="secondary">✍ Edit</button>
-        <button type="button" id="save" class="secondary">💾 Save article</button>
-        <button type="button" id="mkLink">Create share link</button>
-        <button type="button" id="copy" class="secondary hidden">Copy link</button>
-        <a id="openReader" class="btn secondary hidden" href="#" target="_blank" rel="noopener">Open reader view ↗</a>
-      </div>
-      <input type="text" id="link" class="share hidden" readonly>
-      <div id="linkMsg" class="msg meta"></div>
-      <div id="qa" class="qa"></div>
-    </section>
-    </div>
-    <aside id="vocabPanel" class="card">
-      <h3>Vocabulary<span class="hint">double-click a word in the article</span></h3>
-      <div id="vmsg" role="status"></div>
-      <ul id="vocabList"></ul>
-    </aside>
+    <main class="content">
+      <!-- ① Create：AI 產生／貼上文字／從網址匯入（三個分頁）-->
+      <section id="viewCreate" class="view" data-view="create">
+        <div class="hero">
+          <h1>What would you like to read today?</h1>
+          <p>Let AI write an article for your study group, paste your own text, or import one from a link.</p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="How to create an article">
+          <button type="button" class="tab" role="tab" data-tab="gen" aria-selected="true"><svg class="ic"><use href="#i-create"/></svg><span>Generate</span></button>
+          <button type="button" class="tab" role="tab" data-tab="paste" aria-selected="false"><svg class="ic"><use href="#i-paste"/></svg><span>Paste text</span></button>
+          <button type="button" class="tab" role="tab" data-tab="link" aria-selected="false"><svg class="ic"><use href="#i-link"/></svg><span>From a link</span></button>
+        </div>
+
+        <!-- Generate -->
+        <form id="form" class="card panel" data-panel="gen">
+          <div class="field big">
+            <label for="topic">Topic</label>
+            <input type="text" id="topic" maxlength="100" placeholder="e.g. the history of coffee" title="Topic (max 100 characters)" required>
+          </div>
+          <div class="grid2">
+            <div class="field"><label for="words">Length</label><div class="spin"><input type="number" id="words" min="100" max="1000" step="1" value="300" title="100 – 1000 words (▲▼ or arrow keys: ±100)" required><span class="spin-btns"><button type="button" data-d="1" tabindex="-1" aria-label="Increase by 100">▲</button><button type="button" data-d="-1" tabindex="-1" aria-label="Decrease by 100">▼</button></span></div><small class="help">words (100–1000)</small></div>
+            <div class="field"><label for="genre">Genre</label>
+              <select id="genre"><option value="">Any</option>
+                <optgroup label="Informational"><option value="explanation">Explanation</option><option value="science">Science</option><option value="history">History</option><option value="biography">Biography</option><option value="howto">How-to guide</option><option value="travel">Travel</option><option value="news">News style</option></optgroup>
+                <optgroup label="Narrative"><option value="story">Story</option><option value="fable">Fable</option></optgroup>
+                <optgroup label="Analytical"><option value="analysis">Analyst briefing (numbered points)</option></optgroup>
+                <optgroup label="Personal &amp; opinion"><option value="blog">Blog / diary</option><option value="letter">Letter / email</option><option value="opinion">Opinion</option><option value="review">Review</option><option value="speech">Speech</option></optgroup></select></div>
+          </div>
+          <div class="field">
+            <label id="levelLabel">Language level <span class="level-name" id="levelName"></span></label>
+            <div class="chips" role="group" aria-labelledby="levelLabel" id="levelChips"></div>
+            <select id="level" class="sr" tabindex="-1" aria-hidden="true"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select>
+          </div>
+          <div class="toggles">
+            <label class="toggle"><input type="checkbox" id="questions" checked><span class="track"></span><span class="tt">Comprehension questions<small>2 questions</small></span></label>
+            <label class="toggle"><input type="checkbox" id="discussion" checked><span class="track"></span><span class="tt">Discussion questions<small>2 questions</small></span></label>
+          </div>
+          <button type="submit" id="go" class="primary-lg"><svg class="ic"><use href="#i-create"/></svg><span>Generate article</span></button>
+          <div id="status" class="msg" role="status"></div>
+        </form>
+
+        <!-- Paste text -->
+        <section id="pastePanel" class="card panel hidden" data-panel="paste">
+          <div class="head"><h2>Paste your own text</h2><span class="meta" id="pasteInfo">0 words</span></div>
+          <input type="text" id="pasteTitle" maxlength="120" placeholder="Title (optional)" autocomplete="off">
+          <textarea id="pasteBody" placeholder="Paste or type an English article here…" spellcheck="false"></textarea>
+          <div class="pmode"><label for="pasteMode">Paragraphs</label>
+            <select id="pasteMode" title="How to split the pasted text into paragraphs">
+              <option value="auto">Auto-detect</option>
+              <option value="lines">Every line break starts a paragraph</option>
+              <option value="blank">Only blank lines start a paragraph</option>
+            </select></div>
+          <details class="qdetails"><summary>Add your own questions <span class="meta">(optional)</span></summary>
+            <div class="qrow">
+              <div><label for="pasteQ">Comprehension questions <span class="meta">(one per line, max 5)</span></label><textarea id="pasteQ" class="pta" rows="3" spellcheck="false"></textarea></div>
+              <div><label for="pasteD">Discussion questions <span class="meta">(one per line, max 5)</span></label><textarea id="pasteD" class="pta" rows="3" spellcheck="false"></textarea></div>
+            </div>
+          </details>
+          <div class="actions">
+            <button type="button" id="pasteUse" class="primary-lg"><svg class="ic"><use href="#i-check"/></svg><span>Use this text</span></button>
+            <button type="button" id="pasteClear" class="secondary">Clear</button>
+          </div>
+          <div id="pasteMsg" class="meta" role="status">Pasted text is not sent to the AI and needs no access code. You can look up words, save it to your library and share it just like a generated article.</div>
+        </section>
+
+        <!-- From a link -->
+        <section id="linkPanel" class="panel hidden" data-panel="link">
+          <div class="linkhero card">
+            <div class="linkicon" aria-hidden="true"><svg class="ic"><use href="#i-link"/></svg></div>
+            <h2>Import an article from a link</h2>
+            <p>Paste the address of a news story, blog post or encyclopedia page. We pull out the main text — no menus, ads or comments.</p>
+            <div class="urlbox">
+              <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+              <input type="url" id="pasteUrl" inputmode="url" placeholder="https://example.com/interesting-article" autocomplete="off" spellcheck="false" aria-label="Article link">
+              <button type="button" id="pasteFetch"><span>Import</span></button>
+            </div>
+            <div id="importMsg" class="importmsg" role="status"></div>
+          </div>
+
+          <article id="importPreview" class="import-preview card hidden" aria-live="polite">
+            <div class="ip-bar"></div>
+            <div class="ip-meta"><span class="chip" id="ipHost"></span><span class="chip" id="ipWords"></span><span class="chip warn hidden" id="ipTrunc">shortened</span></div>
+            <h3 id="ipTitle"></h3>
+            <p class="excerpt" id="ipExcerpt"></p>
+            <div class="skeleton" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="ip-actions">
+              <button type="button" id="importUse" class="primary-lg"><svg class="ic"><use href="#i-check"/></svg><span>Use this article</span></button>
+              <button type="button" id="importEdit" class="secondary">Review &amp; edit text</button>
+            </div>
+          </article>
+
+          <ol class="steps" aria-label="How it works">
+            <li><b>1</b><div><strong>Paste a link</strong><span>Any public article page.</span></div></li>
+            <li><b>2</b><div><strong>We find the story</strong><span>Title and main text, cleaned up.</span></div></li>
+            <li><b>3</b><div><strong>Read &amp; learn</strong><span>Look up words, listen, share.</span></div></li>
+          </ol>
+          <p class="tip"><strong>Can’t import a page?</strong> Some sites need JavaScript, a login or block automatic readers. Copy the text and use the <button type="button" class="linkbtn" data-goto-tab="paste">Paste text</button> tab instead. For personal study only — please respect the site’s copyright.</p>
+        </section>
+      </section>
+
+      <!-- ② Article：文章與單字表 -->
+      <section id="viewRead" class="view hidden" data-view="read">
+        <div class="work">
+          <div>
+            <section id="preview" class="card article">
+              <div class="fsbar"><button type="button" class="secondary iconbtn readall" aria-label="Read the whole article aloud" title="Read the whole article aloud"></button><button type="button" class="secondary iconbtn gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings"><svg class="ic"><use href="#i-gear"/></svg></button></div>
+              <div id="editBar" class="hidden" role="toolbar">
+                <span class="grow"><b>Editing</b> — click the title, the text or a question and type. <span id="editInfo" class="meta"></span> <span id="editMsg" class="err"></span></span>
+                <button type="button" id="editSave">Save changes</button>
+                <button type="button" id="editCancel" class="secondary">Cancel</button>
+              </div>
+              <div id="doc" class="doc"></div>
+              <div class="toolbar" id="previewActions">
+                <button type="button" id="editText" class="pill"><svg class="ic"><use href="#i-edit"/></svg><span>Edit</span></button>
+                <button type="button" id="save" class="pill"><svg class="ic"><use href="#i-save"/></svg><span>Save</span></button>
+                <button type="button" id="regen" class="pill"><svg class="ic"><use href="#i-refresh"/></svg><span>Regenerate</span></button>
+                <button type="button" id="mkLink" class="pill solid"><svg class="ic"><use href="#i-share"/></svg><span>Share</span></button>
+              </div>
+              <div id="shareBox" class="sharebox hidden">
+                <input type="text" id="link" class="share" readonly aria-label="Share link">
+                <button type="button" id="copy" class="secondary">Copy</button>
+                <a id="openReader" class="btn secondary" href="#" target="_blank" rel="noopener">Open ↗</a>
+              </div>
+              <div id="linkMsg" class="msg meta"></div>
+              <div id="qa" class="qa"></div>
+            </section>
+          </div>
+          <aside id="vocabPanel" class="card">
+            <h3>Vocabulary<span class="hint">double-click a word in the article</span></h3>
+            <div id="vmsg" role="status"></div>
+            <ul id="vocabList"></ul>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ③ Library -->
+      <section id="viewLibrary" class="view hidden" data-view="library">
+        <div class="page-head">
+          <div><h1 id="libTitle">Library</h1><p class="sub" id="libSubtitle">Saved in this browser</p></div>
+          <div class="btns">
+            <button type="button" id="libDiag" class="secondary hidden">Check cloud setup</button>
+            <button type="button" id="libUpload" class="hidden">Upload local articles</button>
+            <button type="button" id="libExport" class="secondary">Export backup</button>
+            <button type="button" id="libImport" class="secondary">Import backup</button>
+            <input type="file" id="libFile" accept="application/json,.json" class="hidden">
+          </div>
+        </div>
+        <label class="searchbox"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input type="search" id="libSearch" placeholder="Search saved articles" autocomplete="off" aria-label="Search saved articles"></label>
+        <div id="libMsg" class="meta" role="status"></div>
+        <ul id="libList" class="libList"></ul>
+      </section>
+    </main>
   </div>
 </div>
 
-<!-- 載入順序：util → vocab → host 各模組 → host-main（啟動） -->
+<!-- 載入順序：util → vocab → host 各模組 → host-main（啟動）-->
 <script src="js/util.js"></script>
 <script src="js/tts.js"></script>
 <script src="js/vocab.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/readaloud.js"></script>
+<script src="js/host-nav.js"></script>
 <script src="js/host.js"></script>
 <script src="js/paste-text.js"></script>
 <script src="js/host-paste.js"></script>

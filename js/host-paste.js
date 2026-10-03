@@ -3,7 +3,7 @@
 
 const PASTE_KEY = 'rc-paste-draft';
 const PF = { t: 'pasteTitle', b: 'pasteBody', q: 'pasteQ', d: 'pasteD', m: 'pasteMode' };   // 草稿欄位 → 輸入框 id
-const PASTE_NOTE = 'Pasted text is not sent to the AI and needs no access code. Importing from a link does need the access code (top bar). You can look up words, save it to your library and share it just like a generated article. URLs in the text become clickable links.';
+const PASTE_NOTE = 'Pasted text is not sent to the AI and needs no access code. Importing from a link does need the access code (left menu). You can look up words, save it to your library and share it just like a generated article. URLs in the text become clickable links.';
 
 function savePasteDraft() { try { localStorage.setItem(PASTE_KEY, JSON.stringify(Object.fromEntries(Object.entries(PF).map(([k, id]) => [k, $(id).value])))); } catch { /* 忽略 */ } }
 const HOW = { blank: 'blank lines', lines: 'each line break', joined: 'line breaks joined (hard-wrapped text)' };
@@ -17,50 +17,53 @@ function fillPaste(o) { Object.entries(PF).forEach(([k, id]) => { $(id).value = 
 function loadDraft() { let d = {}; try { d = JSON.parse(localStorage.getItem(PASTE_KEY) || '{}') || {}; } catch { /* 忽略 */ } fillPaste(d); }
 function setPasteMsg(t, err) { $('pasteMsg').className = err ? 'msg err' : 'meta'; $('pasteMsg').textContent = t; }
 
-function openPaste() {
-  loadDraft();
-  setPasteMsg(PASTE_NOTE);
-  $('pastePanel').classList.remove('hidden'); $('library').classList.add('hidden');
-  $('pasteBody').focus(); $('pastePanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-const closePaste = () => $('pastePanel').classList.add('hidden');
+// 切到 Create 的「貼上文字」分頁
+function openPaste() { loadDraft(); setPasteMsg(PASTE_NOTE); showView('create'); showTab('paste'); $('pasteBody').focus({ preventScroll: true }); }
 
-$('pasteBtn').addEventListener('click', () => $('pastePanel').classList.contains('hidden') ? openPaste() : closePaste());
-$('pasteCancel').addEventListener('click', closePaste);
 $('pasteClear').addEventListener('click', () => { fillPaste({}); $('pasteUrl').value = ''; savePasteDraft(); $('pasteBody').focus(); });
 Object.values(PF).forEach((id) => $(id).addEventListener('input', () => { if (id === 'pasteBody') updatePasteInfo(); savePasteDraft(); }));
 $('pasteMode').addEventListener('change', () => { updatePasteInfo(); savePasteDraft(); });
 loadDraft();
 
-$('pasteUse').addEventListener('click', () => {
+// 把貼上欄位的內容當成文章來用。成功回傳 true
+function usePastedText() {
   const body = pasteResult().text;
   const n = countWordsIn(body);
-  if (n < 20) return setPasteMsg('Please use at least 20 words.', true);
-  if (n > 8000) return setPasteMsg(`That is ${n} words — please keep it under 8000 words (very long texts make the share link too long).`, true);
-  if (!/[A-Za-z]{3}/.test(body)) return setPasteMsg('This does not look like English text.', true);
+  const fail = (t) => { showTab('paste'); setPasteMsg(t, true); return false; };
+  if (n < 20) return fail('Please use at least 20 words.');
+  if (n > 8000) return fail(`That is ${n} words — please keep it under 8000 words (very long texts make the share link too long).`);
+  if (!/[A-Za-z]{3}/.test(body)) return fail('This does not look like English text.');
   const title = $('pasteTitle').value.replace(/\s+/g, ' ').trim() || body.split(/\s+/).slice(0, 6).join(' ').replace(/[.,;:!?"“”]+$/, '') + '…';
   current = { source: 'pasted', title, body, level: '', targetWords: n, wordCount: n, withinTolerance: true, questions: toLines($('pasteQ').value), discussion: toLines($('pasteD').value) };
-  render(current, []);
-  closePaste();
-  $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  render(current, []);   // 切到 Article 畫面
   setPasteMsg(n > 3000 ? `Using ${n} words. Long texts make a long share link — test it before sending.` : PASTE_NOTE);
-});
+  return true;
+}
+$('pasteUse').addEventListener('click', usePastedText);
 
-// ---- 從網址匯入：後端（/api/extract）抓網頁、擷取主要文章，填進標題與本文，讓你確認後再按 Use this text ----
+// ---- 從網址匯入：後端（/api/extract）抓網頁、擷取主要文章，先顯示預覽卡，確認後才使用 ----
+const setImportMsg = (t, kind) => { const m = $('importMsg'); m.className = 'importmsg' + (kind ? ' ' + kind : ''); m.textContent = t || ''; };
 async function importFromUrl() {
   const url = $('pasteUrl').value.trim(), code = $('code').value.trim();
-  if (!url) return setPasteMsg('Paste an article link first.', true);
-  if (!code) return setPasteMsg('Enter the access code in the top bar first — importing from a link needs it.', true);
-  if ($('pasteBody').value.trim() && !confirm('Replace the text below with the article from this link?')) return;
-  $('pasteFetch').disabled = true; setPasteMsg('⏳ Reading the page…');
+  if (!url) { setImportMsg('Paste an article link first.', 'err'); return $('pasteUrl').focus(); }
+  if (!code) { setImportMsg('Enter the access code in the menu first — importing from a link needs it.', 'err'); return askForCode(); }
+  const box = $('importPreview'), btn = $('pasteFetch');
+  btn.disabled = true; btn.firstElementChild.textContent = 'Importing…';
+  box.classList.remove('hidden'); box.classList.add('loading'); setImportMsg('Reading the page and finding the article…');
   try {
     const j = await postJson('/api/extract', { code, url });
-    $('pasteTitle').value = j.title || ''; $('pasteBody').value = j.text;
+    $('pasteTitle').value = j.title || ''; $('pasteBody').value = j.text; $('pasteMode').value = 'blank';
     updatePasteInfo(); savePasteDraft();
-    setPasteMsg(`✅ Imported ${j.words} words from ${j.host}${j.truncated ? ' (shortened to fit the limit)' : ''}. Check the text, then press “Use this text”. For personal study — please respect the site’s copyright.`);
-    $('pasteBody').scrollTop = 0;
-  } catch (e) { setPasteMsg('❌ ' + e.message, true); }
-  finally { $('pasteFetch').disabled = false; }
+    $('ipTitle').textContent = j.title || 'Untitled article';
+    $('ipHost').textContent = j.host; $('ipWords').textContent = `${j.words.toLocaleString()} words`; $('ipTrunc').classList.toggle('hidden', !j.truncated);
+    $('ipExcerpt').textContent = j.text.split('\n\n').slice(0, 3).join(' ');
+    box.classList.remove('loading'); setImportMsg('Found the article. Use it as is, or review and edit the text first.', 'ok');
+  } catch (e) {
+    box.classList.add('hidden'); box.classList.remove('loading'); setImportMsg(e.message, 'err');
+    if (e.message === 'Incorrect access code') askForCode();
+  } finally { btn.disabled = false; btn.firstElementChild.textContent = 'Import'; }
 }
 $('pasteFetch').addEventListener('click', importFromUrl);
 $('pasteUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); importFromUrl(); } });
+$('importUse').addEventListener('click', usePastedText);
+$('importEdit').addEventListener('click', () => { showTab('paste'); $('pasteBody').focus(); $('pasteBody').scrollTop = 0; });

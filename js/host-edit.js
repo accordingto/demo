@@ -19,7 +19,6 @@ function addQuestion(ol, afterLi) {
 
 function startEdit() {
   if (!current || editState) return;
-  closePaste(); $('library').classList.add('hidden');
   editState = { dirty: false, libId: currentLibId };
   Vocab.freeze(true);   // 編輯期間不重畫文章，避免打字時內容被覆蓋
   document.body.classList.add('editing');
