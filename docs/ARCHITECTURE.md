@@ -65,8 +65,8 @@
 
 ### 載入順序（classic script，共用全域作用域）
 - 共通：`prefs.js` 放在 `<head>`（同步載入，頁面繪製前就套用主題，避免先閃一下預設主題）
-- 主持人頁：`util.js` → `vocab.js` → `settings.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-main.js`
-- 閱讀頁：`util.js` → `vocab.js` → `settings.js` → `reader.js`
+- 主持人頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-main.js`
+- 閱讀頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `reader.js`
 
 各 host 模組之間的函式只在**執行時**互相呼叫；但 `Vocab.init` 一執行就會呼叫 `onChange(syncLib)`，所以放在最後載入的 `host-main.js`。
 
@@ -97,6 +97,13 @@
 - 調暗與暖色用 `html::before`／`html::after` 兩個蓋在整個畫面上的偽元素（`pointer-events:none`）實作。
 - `settings.js` 依 `SECTIONS` 設定表產生視窗內容；**新增設定項**：在 `prefs.js` 的 `DEFAULTS`／`clean()` 加欄位、在 `apply()` 套用，再在 `SECTIONS` 加一列。
 - `vocab.js` 的 `speak()` 讀取 `Prefs`（開關、速度、口音）。
+
+### 朗讀（`tts.js`、`readaloud.js`）
+- `TTS.utter(text)` 依 `Prefs`（口音、語速）建立語音；點字發音（`vocab.js` 的 `speak`）與朗讀共用。
+- `ReadAloud` 是一個小狀態機：`status`（idle／playing／paused）、`mode`（all／para）、`p`／`s`（目前段落／句子）。文章被切成句子逐句念（避免部分瀏覽器念太長會被截斷），`gen` 計數器讓被取消的語音事件失效。
+- **暫停 = 取消語音並記住位置，繼續 = 從這一句重新念**；不用 `speechSynthesis.pause()`，因為各平台（特別是 Android）不可靠。
+- 段落按鈕由 `vocab.js` 的 `paintBody` 產生（`<p>` 裡的 `.pread`）；每次重畫文章會送出 `bodypainted` 事件，`ReadAloud` 據此重新標示狀態，若文章內容變了就停止。段落文字來自 `Vocab.paragraphs()`（與畫面分段一致）；網址朗讀成「link」。
+- 瀏覽器不支援語音合成時，所有朗讀按鈕自動隱藏。
 
 ### 兩種分享連結
 | | 雲端（建議） | 本機 |

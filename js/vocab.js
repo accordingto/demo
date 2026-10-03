@@ -8,15 +8,12 @@
   const POS_FULL = { n: 'noun', v: 'verb', vt: 'verb', vi: 'verb', adj: 'adjective', adv: 'adverb', prep: 'preposition', conj: 'conjunction', pron: 'pronoun', det: 'determiner', interj: 'interjection', int: 'interjection', art: 'article', num: 'numeral' };
   const posLabel = (p) => { const k = String(p || '').trim().toLowerCase().replace(/\.$/, ''); return k ? `(${POS_FULL[k] || k})` : ''; };
 
-  // ---- 發音：瀏覽器內建語音合成（免費、不需 API）----
-  const canSpeak = !!window.speechSynthesis && typeof window.SpeechSynthesisUtterance === 'function';
-  function speak(text, force) {   // 設定（js/prefs.js）：可關閉、可調速度、可選美式／英式口音（force：設定視窗的測試，不管開關）
-    if (!canSpeak || (!force && window.Prefs && !Prefs.get('speak'))) return;
-    const uk = window.Prefs && Prefs.get('accent') === 'uk';
+  // ---- 點字發音（語音合成的設定與共用部分在 js/tts.js；設定可關閉）----
+  function speak(text, force) {   // force：設定視窗的測試，不管開關
+    if (!TTS.canSpeak || (!force && !Prefs.get('speak'))) return;
+    window.ReadAloud?.stop();     // 點字時，正在朗讀的段落先停止
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text); u.lang = uk ? 'en-GB' : 'en-US'; u.rate = window.Prefs ? Prefs.get('rate') : 0.85;
-    const v = speechSynthesis.getVoices().find((x) => (uk ? /^en[-_]GB/i : /^en[-_]US/i).test(x.lang)); if (v) u.voice = v;
-    speechSynthesis.speak(u);
+    speechSynthesis.speak(TTS.utter(text));
   }
 
   const clean = (raw) => raw.toLowerCase().replace(/[’‘]/g, "'").replace(/^[^a-z]+|[^a-z]+$/g, '').replace(/\s+/g, ' ');
@@ -56,9 +53,12 @@
     el.innerHTML = String(cfg.getBody() || '').split(/\n\s*\n/).filter((p) => p.trim()).map((p) => {
       const urls = [];
       const masked = p.replace(URL_RE, (m) => { const core = trimUrl(m); urls.push(core); return `\uE000${urls.length - 1}\uE001${m.slice(core.length)}`; });
-      return `<p>${masked.split(/([A-Za-z][A-Za-z’'-]*)/).map((t) => wrap(t, urls)).join('')}</p>`;   // 每個字包成 span.w / mark.vh
+      return `<p><button type="button" class="pread"></button>${masked.split(/([A-Za-z][A-Za-z’'-]*)/).map((t) => wrap(t, urls)).join('')}</p>`;   // 每個字包成 span.w / mark.vh
     }).join('');
+    document.dispatchEvent(new Event('bodypainted'));   // 朗讀按鈕（js/readaloud.js）重新標示目前狀態
   }
+  // 文章的段落（純文字），和 paintBody 的分段一致；朗讀用
+  const paragraphs = () => String(cfg.getBody() || '').split(/\n\s*\n/).filter((p) => p.trim()).map((p) => p.replace(/\s+/g, ' ').trim());
 
   // ---- 文章中單字的強調色：把這個字在文章中的每一處標成橘色（不標整句、不捲動）----
   let active = null; // { key: 單字（小寫）, auto: 是否為暫時標示 }
@@ -273,7 +273,8 @@
     getItems: () => items,
     setItems(list) { items.forEach((x) => clearTimeout(x._t)); clearTimeout(autoTimer); items = (list || []).map(({ word, pos, definition, zh, kk, lemma, locked, ctx }) => ({ word, pos, definition, zh, kk, lemma, locked, ctx })); active = null; $('vmsg').textContent = ''; renderVocab(); },
     repaint: renderVocab,
-    freeze(on) { frozen = !!on; },
+    freeze(on) { frozen = !!on; if (on) window.ReadAloud?.stop(); },   // 編輯時停止朗讀
+    paragraphs,
     fillWord,
     speakSample() { speak('Hello, this is a pronunciation test.', true); },   // 設定視窗的「Test」按鈕
   };

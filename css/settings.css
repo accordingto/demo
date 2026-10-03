@@ -1,8 +1,10 @@
 /* 閱讀設定（齒輪）按鈕與浮動視窗 */
-.gear { min-height:36px; width:36px; padding:0; font-size:1.2rem; line-height:1; border-radius:50%; }
-.fsbar { position:absolute; top:16px; right:16px; z-index:1; display:flex; align-items:center; }
+/* 標題右上角的圓形圖示按鈕：朗讀全文（.readall）與閱讀設定（.gear） */
+.iconbtn { min-height:36px; width:36px; padding:0; font-size:1.2rem; line-height:1; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; }
+.iconbtn.on { background:var(--accent); color:var(--accent-ink); }
+.fsbar { position:absolute; top:16px; right:16px; z-index:1; display:flex; align-items:center; gap:8px; }
 @media (min-width:640px) { .fsbar { top:20px; right:20px; } }
-@media (pointer:coarse), (max-width:639px) { .gear { min-height:44px; width:44px; } }
+@media (pointer:coarse), (max-width:639px) { .iconbtn { min-height:44px; width:44px; } }
 
 #settings { position:fixed; z-index:9999; top:64px; right:16px; width:360px; max-width:calc(100vw - 24px); max-height:calc(100vh - 80px); display:flex; flex-direction:column;
   background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:14px; box-shadow:0 12px 40px var(--shadow); animation:popUp .18s ease-out; }
@@ -31,4 +33,4 @@
 #settings .swatch.on { background:var(--sw-bg); color:var(--sw-ink); border-color:var(--accent); box-shadow:0 0 0 2px var(--accent); }
 #sTest { width:100%; margin-top:16px; }
 @media (max-width:639px) { .themes { grid-template-columns:repeat(4,1fr); } }
-@media print { #settings, .gear { display:none !important; } }
+@media print { #settings, .iconbtn { display:none !important; } }
