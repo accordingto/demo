@@ -30,16 +30,12 @@ button:disabled { opacity:.5; cursor:wait; }
 
 /* 文章中的每個單字（供雙擊）；觸控裝置關閉系統的選字選單 */
 .w { border-radius:3px; cursor:pointer; }  /* 點任何單字都會發音 */
-/* 段落前的朗讀按鈕（js/readaloud.js）：放在左邊的空白欄，和第一行對齊；朗讀中的段落有淡色底 */
-.doc .text p { position:relative; padding-left:2.6rem; border-radius:6px; }
-.pread { position:absolute; left:0; top:calc((var(--fs) * var(--lh) - 30px) / 2); width:30px; height:30px; min-height:0; padding:0; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:.95rem; line-height:1; background:transparent; color:var(--accent); border:1px solid var(--accent); -webkit-user-select:none; user-select:none; }
+/* 段落前的朗讀按鈕（js/readaloud.js）：靠左浮動，和第一行同高，第二行起文字回到整個版面寬度（不浪費左邊空白）*/
+.doc .text p { display:flow-root; border-radius:6px; }
+.pread { --d:min(30px, calc(var(--fs) * var(--lh))); float:left; width:var(--d); height:var(--d); margin:0 .6rem 0 0; min-height:0; padding:0; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:calc(var(--d) * .5); line-height:1; background:transparent; color:var(--accent); border:1px solid var(--accent); -webkit-user-select:none; user-select:none; position:relative; }
 .pread:hover { background:var(--hover); }
-/* 朗讀中：目前這一句有底色，正在念的字變色 */
-.s.speaking { background:color-mix(in srgb, var(--accent) 28%, transparent); border-radius:4px; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
-.w.speaking, a.ulink.speaking { background:var(--accent); color:var(--accent-ink); border-radius:4px; box-shadow:0 0 0 2px var(--accent); }
 .doc .text p.reading .pread { background:var(--accent); color:var(--accent-ink); }
 html[data-tts="off"] .pread { display:none; }
-@media (max-width:639px) { .doc .text p { padding-left:2.2rem; } .pread { width:28px; height:28px; top:calc((var(--fs) * var(--lh) - 28px) / 2); } }
 @media (pointer:coarse) { .pread::after { content:""; position:absolute; inset:-8px; } }   /* 手機上加大點擊範圍 */
 @media (hover:hover) { .w:not(.vh):hover { background:var(--hover); } }
 @media (pointer:coarse) { .w { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; } }
@@ -89,7 +85,7 @@ mark.vh.cur { background:var(--cur-bg); box-shadow:0 0 0 1px var(--cur-ring) ins
 .del:hover { color:var(--err); }
 
 @media print {
-  .pread { display:none !important; } .doc .text p { padding-left:0; } .s.speaking, .w.speaking { background:none !important; color:inherit !important; box-shadow:none !important; }
+  .pread { display:none !important; } .s.speaking, .w.speaking { background:none !important; color:inherit !important; box-shadow:none !important; }
   a.ulink { color:inherit; }
   mark.vh, mark.vh.cur { background:none; box-shadow:none; color:inherit; animation:none; }
   #vmsg, .del { display:none !important; }
