@@ -194,3 +194,15 @@ test('genres: every genre has an arc, validates, builds a prompt, and matches th
     assert.equal(arcPlan(5, g).length, 5);
   }
 });
+
+// ---- CSS 必備規則與相容性（曾經不小心刪掉朗讀標示的樣式；舊 iPad Safari 不支援 color-mix）----
+test('css: read-aloud highlight rules exist and no color-mix / inset shorthand is used', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+  const shared = read('css/shared.css');
+  for (const sel of ['.s.speaking', '.w.speaking']) assert.ok(shared.includes(sel), `${sel} rule missing in shared.css`);
+  for (const f of ['css/themes.css', 'css/shared.css', 'css/host.css', 'css/settings.css']) {
+    assert.ok(!/color-mix\(/.test(read(f)), `${f} uses color-mix (not supported by older iPad Safari)`);
+    assert.ok(!/[^-]inset\s*:/.test(read(f)), `${f} uses the inset shorthand`);
+  }
+});

@@ -57,8 +57,8 @@ a.btn.secondary { color:var(--accent); border:1px solid var(--accent); }
 #editBar { position:sticky; top:8px; z-index:5; display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:var(--card); border:1px solid var(--accent); border-radius:10px; padding:8px 12px; margin:0 0 14px; box-shadow:0 4px 14px var(--shadow); }
 #editBar .grow { flex:1 1 260px; font-size:.88rem; }
 #editBar button { min-height:34px; padding:0 14px; }
-.editing #doc h2[contenteditable], .editing #bodyText[contenteditable], .qtext { outline:1px dashed color-mix(in srgb, var(--accent) 65%, transparent); outline-offset:3px; border-radius:6px; caret-color:var(--cur-ring); }
-.editing #bodyText[contenteditable] { white-space:pre-wrap; background:color-mix(in srgb, var(--accent) 7%, transparent); padding:8px 10px; min-height:8em; }
+.editing #doc h2[contenteditable], .editing #bodyText[contenteditable], .qtext { outline:1px dashed rgba(var(--accent-rgb), 0.65); outline-offset:3px; border-radius:6px; caret-color:var(--cur-ring); }
+.editing #bodyText[contenteditable] { white-space:pre-wrap; background:rgba(var(--accent-rgb), 0.07); padding:8px 10px; min-height:8em; }
 .editing #doc h2[contenteditable]:focus, .editing #bodyText:focus, .qtext:focus { outline:2px solid var(--accent); }
 .qtext { display:inline-block; min-width:55%; padding:1px 6px; }
 .qdel { min-height:0; padding:0 6px; margin-left:6px; background:none; border:0; color:var(--muted); font-size:1.1rem; line-height:1; }

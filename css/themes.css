@@ -3,6 +3,7 @@
 /* 預設 = Dark */
 :root, html[data-theme="dark"] {
   color-scheme:dark;
+  --accent-rgb:79,184,154;
   --bg:#14171c; --card:#1d222a; --field:#12151a; --line:#333b47;
   --ink:#e6e8eb; --muted:#9aa4b2; --accent:#4fb89a; --accent-ink:#0b1a15;
   --err:#ff8a80; --warn:#f0c36d; --link:#7cc7ff; --link-hover:#a8dcff; --vocab:#7cc7ff;
@@ -14,6 +15,7 @@
 /* Night：純黑底（OLED 省電、夜間閱讀） */
 html[data-theme="night"] {
   color-scheme:dark;
+  --accent-rgb:79,184,154;
   --bg:#000; --card:#0c0c0c; --field:#050505; --line:#262626;
   --ink:#cfcfcf; --muted:#8a8a8a; --accent:#4fb89a; --accent-ink:#04120d;
   --err:#ff8a80; --warn:#e0b45f; --link:#7cc7ff; --link-hover:#a8dcff; --vocab:#7cc7ff;
@@ -25,6 +27,7 @@ html[data-theme="night"] {
 /* Gray：柔和深灰 */
 html[data-theme="gray"] {
   color-scheme:dark;
+  --accent-rgb:92,196,166;
   --bg:#2b2d31; --card:#36393f; --field:#2b2d31; --line:#4a4e57;
   --ink:#e3e5e8; --muted:#a6abb4; --accent:#5cc4a6; --accent-ink:#0b1a15;
   --err:#ff9a90; --warn:#f0c36d; --link:#8ccfff; --link-hover:#b3e0ff; --vocab:#8ccfff;
@@ -36,6 +39,7 @@ html[data-theme="gray"] {
 /* Light：白底黑字 */
 html[data-theme="light"] {
   color-scheme:light;
+  --accent-rgb:15,118,110;
   --bg:#f1f3f5; --card:#fff; --field:#f8f9fa; --line:#d5dae0;
   --ink:#111418; --muted:#586170; --accent:#0f766e; --accent-ink:#fff;
   --err:#b42318; --warn:#8a5a00; --link:#1d4ed8; --link-hover:#1e40af; --vocab:#1d4ed8;
@@ -47,6 +51,7 @@ html[data-theme="light"] {
 /* Paper：類紙張底色 + 黑字 */
 html[data-theme="paper"] {
   color-scheme:light;
+  --accent-rgb:122,90,46;
   --bg:#e6dfcc; --card:#f4eedd; --field:#faf6ea; --line:#cdc3a8;
   --ink:#161616; --muted:#5a5446; --accent:#7a5a2e; --accent-ink:#fff;
   --err:#a32a1c; --warn:#7a4e00; --link:#1f4f8f; --link-hover:#163a6b; --vocab:#1f4f8f;
@@ -58,6 +63,7 @@ html[data-theme="paper"] {
 /* Sepia：褐色護眼 */
 html[data-theme="sepia"] {
   color-scheme:light;
+  --accent-rgb:154,100,40;
   --bg:#ecdfc2; --card:#f6ecd5; --field:#fbf4e2; --line:#d4c298;
   --ink:#4a3826; --muted:#7d6a52; --accent:#9a6428; --accent-ink:#fff;
   --err:#a32a1c; --warn:#7a4e00; --link:#5b3f9e; --link-hover:#432d78; --vocab:#6a3fa8;
@@ -69,6 +75,7 @@ html[data-theme="sepia"] {
 /* Contrast：高對比（黑底黃字） */
 html[data-theme="contrast"] {
   color-scheme:dark;
+  --accent-rgb:255,230,0;
   --bg:#000; --card:#000; --field:#000; --line:#ffe600;
   --ink:#fff; --muted:#e6e6e6; --accent:#ffe600; --accent-ink:#000;
   --err:#ff7b72; --warn:#ffe600; --link:#6fd8ff; --link-hover:#a8ecff; --vocab:#6fd8ff;
@@ -93,6 +100,6 @@ html[data-hl="off"] mark.vh:not(.cur) { background:none; box-shadow:none; }
 html[data-anim="off"] *, html[data-anim="off"] *::before, html[data-anim="off"] *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
 
 /* 螢幕調暗與暖色（護眼）：蓋在整個畫面上，不擋操作 */
-html::before { content:""; position:fixed; inset:0; background:#000; opacity:var(--dim,0); pointer-events:none; z-index:9998; }
-html::after  { content:""; position:fixed; inset:0; background:#ff9a2e; mix-blend-mode:multiply; opacity:var(--warm,0); pointer-events:none; z-index:9998; }
+html::before { content:""; position:fixed; top:0; right:0; bottom:0; left:0; background:#000; opacity:var(--dim,0); pointer-events:none; z-index:9998; }
+html::after  { content:""; position:fixed; top:0; right:0; bottom:0; left:0; background:#ff9a2e; mix-blend-mode:multiply; opacity:var(--warm,0); pointer-events:none; z-index:9998; }
 @media print { html::before, html::after { display:none; } }

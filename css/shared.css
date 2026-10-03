@@ -36,7 +36,10 @@ button:disabled { opacity:.5; cursor:wait; }
 .pread:hover { background:var(--hover); }
 .doc .text p.reading .pread { background:var(--accent); color:var(--accent-ink); }
 html[data-tts="off"] .pread { display:none; }
-@media (pointer:coarse) { .pread::after { content:""; position:absolute; inset:-8px; } }   /* 手機上加大點擊範圍 */
+/* 朗讀中：目前這一句有底色，正在念的字變色（js/readaloud.js 加上 .speaking） */
+.s.speaking { background:rgba(var(--accent-rgb), .28); border-radius:4px; -webkit-box-decoration-break:clone; box-decoration-break:clone; }
+.w.speaking, a.ulink.speaking { background:var(--accent); color:var(--accent-ink); border-radius:4px; box-shadow:0 0 0 2px var(--accent); }
+@media (pointer:coarse) { .pread::after { content:""; position:absolute; top:-8px; right:-8px; bottom:-8px; left:-8px; } }   /* 手機上加大點擊範圍 */
 @media (hover:hover) { .w:not(.vh):hover { background:var(--hover); } }
 @media (pointer:coarse) { .w { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; } }
 mark.vh { background:var(--mark-bg); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; box-shadow:0 0 0 1px var(--mark-ring) inset; cursor:pointer; }  /* 已加入單字庫的字：底色標示 */
@@ -45,10 +48,10 @@ mark.vh:hover { background:var(--mark-hover); }
 /* 點單字的回饋：約 1 秒的光圈＋底色（不改變字寬，不會讓版面跳動） */
 .w.tap { animation:wordTap 1s ease-out; }
 @keyframes wordTap {
-  0%   { background:color-mix(in srgb, var(--accent) 95%, transparent); color:var(--accent-ink); box-shadow:0 0 0 0 var(--accent); }
-  15%  { background:color-mix(in srgb, var(--accent) 80%, transparent); color:var(--accent-ink); box-shadow:0 0 0 8px color-mix(in srgb, var(--accent) 45%, transparent); }
-  65%  { background:color-mix(in srgb, var(--accent) 45%, transparent); box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent); }
-  100% { box-shadow:0 0 0 0 transparent; }
+  0%   { background:rgba(var(--accent-rgb), 0.95); color:var(--accent-ink); box-shadow:0 0 0 0 var(--accent); }
+  15%  { background:rgba(var(--accent-rgb), 0.8); color:var(--accent-ink); box-shadow:0 0 0 8px rgba(var(--accent-rgb), 0.45); }
+  65%  { background:rgba(var(--accent-rgb), 0.45); box-shadow:0 0 0 4px rgba(var(--accent-rgb), 0.25); }
+  100% { box-shadow:0 0 0 0 rgba(var(--accent-rgb), 0); }
 }
 @media print { .w.tap { animation:none; } }
 
