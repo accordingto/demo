@@ -30,6 +30,9 @@
     <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></symbol>
     <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
   </defs>
 </svg>
@@ -61,62 +64,84 @@
     <header id="topbar">
       <button type="button" class="iconbtn plain" id="navOpen" aria-label="Open menu" aria-controls="sidebar"><svg class="ic"><use href="#i-menu"/></svg></button>
       <div class="tb-title" id="tbTitle">Create</div>
-      <button type="button" class="iconbtn plain gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false"><svg class="ic"><use href="#i-gear"/></svg></button>
+      <!-- 快速圖示：和選單裡的項目一一對應，點一下直接前往 -->
+      <div class="tb-actions" role="toolbar" aria-label="Quick actions">
+        <button type="button" class="iconbtn plain tb-btn" data-view="create" aria-label="Create" title="Create"><svg class="ic"><use href="#i-create"/></svg></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="read" id="tbRead" aria-label="Article" title="Article" disabled><svg class="ic"><use href="#i-book"/></svg></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="library" aria-label="Library" title="Library"><svg class="ic"><use href="#i-library"/></svg><span class="tb-badge" id="tbLibCount">0</span></button>
+        <button type="button" class="iconbtn plain tb-btn" id="tbKey" aria-label="Access code" title="Access code" aria-haspopup="dialog" aria-expanded="false"><svg class="ic"><use href="#i-key"/></svg></button>
+        <button type="button" class="iconbtn plain tb-btn gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings"><svg class="ic"><use href="#i-gear"/></svg></button>
+      </div>
     </header>
+    <div id="codePop" class="popcard hidden" role="dialog" aria-label="Access code">
+      <label for="codeQuick"><svg class="ic"><use href="#i-key"/></svg>Access code</label>
+      <input type="password" id="codeQuick" autocomplete="off" placeholder="Enter once, remembered here">
+      <small>Needed to generate, import and sync your library.</small>
+    </div>
 
     <main class="content">
-      <!-- ① Create：AI 產生／貼上文字／從網址匯入（三個分頁）-->
+      <!-- ① Create：首頁只有「主題 → 產生」；貼上文字、從網址匯入是兩張入口卡，點進去是各自的頁面 -->
       <section id="viewCreate" class="view" data-view="create">
-        <div class="hero">
-          <h1>What would you like to read today?</h1>
-          <p>Let AI write an article for your study group, paste your own text, or import one from a link.</p>
-        </div>
-        <div class="tabs" role="tablist" aria-label="How to create an article">
-          <button type="button" class="tab" role="tab" data-tab="gen" aria-selected="true"><svg class="ic"><use href="#i-create"/></svg><span>Generate</span></button>
-          <button type="button" class="tab" role="tab" data-tab="paste" aria-selected="false"><svg class="ic"><use href="#i-paste"/></svg><span>Paste text</span></button>
-          <button type="button" class="tab" role="tab" data-tab="link" aria-selected="false"><svg class="ic"><use href="#i-link"/></svg><span>From a link</span></button>
+        <div class="home" data-panel="gen">
+          <div class="hero2">
+            <span class="eyebrow"><svg class="ic"><use href="#i-create"/></svg>AI reading club</span>
+            <h1>What do you want to read about?</h1>
+            <p>Type a topic and we’ll write an article at your level.</p>
+          </div>
+
+          <form id="form" class="ask">
+            <div class="askbox">
+              <input type="text" id="topic" maxlength="100" placeholder="e.g. the history of coffee" title="Topic (max 100 characters)" aria-label="Topic" required autocomplete="off">
+              <button type="submit" id="go" class="gen-btn"><span>Generate</span><svg class="ic"><use href="#i-arrow"/></svg></button>
+            </div>
+            <div class="suggest" id="suggest" aria-label="Topic ideas"></div>
+
+            <button type="button" class="optbar" id="optToggle" aria-expanded="false" aria-controls="optPanel">
+              <span class="opt-chips" id="optSummary"></span>
+              <span class="opt-cta">Customize<svg class="ic"><use href="#i-chevron"/></svg></span>
+            </button>
+            <div id="optPanel" class="optpanel hidden">
+              <div class="optgrid">
+                <div class="field"><label for="words">Length</label><div class="spin"><input type="number" id="words" min="100" max="1000" step="1" value="300" title="100 – 1000 words (▲▼ or arrow keys: ±100)" required><span class="spin-btns"><button type="button" data-d="1" tabindex="-1" aria-label="Increase by 100">▲</button><button type="button" data-d="-1" tabindex="-1" aria-label="Decrease by 100">▼</button></span></div></div>
+                <div class="field"><label for="genre">Genre</label>
+                  <select id="genre"><option value="">Any genre</option>
+                    <optgroup label="Informational"><option value="explanation">Explanation</option><option value="science">Science</option><option value="history">History</option><option value="biography">Biography</option><option value="howto">How-to guide</option><option value="travel">Travel</option><option value="news">News style</option></optgroup>
+                    <optgroup label="Narrative"><option value="story">Story</option><option value="fable">Fable</option></optgroup>
+                    <optgroup label="Analytical"><option value="analysis">Analyst briefing (numbered points)</option></optgroup>
+                    <optgroup label="Personal &amp; opinion"><option value="blog">Blog / diary</option><option value="letter">Letter / email</option><option value="opinion">Opinion</option><option value="review">Review</option><option value="speech">Speech</option></optgroup></select></div>
+              </div>
+              <div class="field">
+                <label id="levelLabel">Language level <span class="level-name" id="levelName"></span></label>
+                <div class="chips" role="group" aria-labelledby="levelLabel" id="levelChips"></div>
+                <select id="level" class="sr" tabindex="-1" aria-hidden="true"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select>
+              </div>
+              <div class="toggles">
+                <label class="toggle"><input type="checkbox" id="questions" checked><span class="track"></span><span class="tt">Comprehension questions<small>2 questions</small></span></label>
+                <label class="toggle"><input type="checkbox" id="discussion" checked><span class="track"></span><span class="tt">Discussion questions<small>2 questions</small></span></label>
+              </div>
+            </div>
+            <div id="status" class="msg" role="status"></div>
+          </form>
+
+          <div class="or"><span>or start from something you already have</span></div>
+          <div class="sources">
+            <button type="button" class="source" data-goto-tab="paste"><span class="tile"><svg class="ic"><use href="#i-paste"/></svg></span><span class="st"><strong>Paste text</strong><span>Use any English article you already have</span></span><svg class="ic go"><use href="#i-arrow"/></svg></button>
+            <button type="button" class="source" data-goto-tab="link"><span class="tile"><svg class="ic"><use href="#i-link"/></svg></span><span class="st"><strong>Import from a link</strong><span>We pull the main text out of a web page</span></span><svg class="ic go"><use href="#i-arrow"/></svg></button>
+          </div>
         </div>
 
-        <!-- Generate -->
-        <form id="form" class="card panel" data-panel="gen">
-          <div class="field big">
-            <label for="topic">Topic</label>
-            <input type="text" id="topic" maxlength="100" placeholder="e.g. the history of coffee" title="Topic (max 100 characters)" required>
-          </div>
-          <div class="grid2">
-            <div class="field"><label for="words">Length</label><div class="spin"><input type="number" id="words" min="100" max="1000" step="1" value="300" title="100 – 1000 words (▲▼ or arrow keys: ±100)" required><span class="spin-btns"><button type="button" data-d="1" tabindex="-1" aria-label="Increase by 100">▲</button><button type="button" data-d="-1" tabindex="-1" aria-label="Decrease by 100">▼</button></span></div><small class="help">words (100–1000)</small></div>
-            <div class="field"><label for="genre">Genre</label>
-              <select id="genre"><option value="">Any</option>
-                <optgroup label="Informational"><option value="explanation">Explanation</option><option value="science">Science</option><option value="history">History</option><option value="biography">Biography</option><option value="howto">How-to guide</option><option value="travel">Travel</option><option value="news">News style</option></optgroup>
-                <optgroup label="Narrative"><option value="story">Story</option><option value="fable">Fable</option></optgroup>
-                <optgroup label="Analytical"><option value="analysis">Analyst briefing (numbered points)</option></optgroup>
-                <optgroup label="Personal &amp; opinion"><option value="blog">Blog / diary</option><option value="letter">Letter / email</option><option value="opinion">Opinion</option><option value="review">Review</option><option value="speech">Speech</option></optgroup></select></div>
-          </div>
-          <div class="field">
-            <label id="levelLabel">Language level <span class="level-name" id="levelName"></span></label>
-            <div class="chips" role="group" aria-labelledby="levelLabel" id="levelChips"></div>
-            <select id="level" class="sr" tabindex="-1" aria-hidden="true"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select>
-          </div>
-          <div class="toggles">
-            <label class="toggle"><input type="checkbox" id="questions" checked><span class="track"></span><span class="tt">Comprehension questions<small>2 questions</small></span></label>
-            <label class="toggle"><input type="checkbox" id="discussion" checked><span class="track"></span><span class="tt">Discussion questions<small>2 questions</small></span></label>
-          </div>
-          <button type="submit" id="go" class="primary-lg"><svg class="ic"><use href="#i-create"/></svg><span>Generate article</span></button>
-          <div id="status" class="msg" role="status"></div>
-        </form>
-
-        <!-- Paste text -->
+        <!-- Paste text（子頁面）-->
         <section id="pastePanel" class="card panel hidden" data-panel="paste">
-          <div class="head"><h2>Paste your own text</h2><span class="meta" id="pasteInfo">0 words</span></div>
+          <div class="subhead"><button type="button" class="back" data-goto-tab="gen"><svg class="ic"><use href="#i-back"/></svg><span>Back</span></button><h2>Paste text</h2><span class="meta" id="pasteInfo">0 words</span></div>
           <input type="text" id="pasteTitle" maxlength="120" placeholder="Title (optional)" autocomplete="off">
           <textarea id="pasteBody" placeholder="Paste or type an English article here…" spellcheck="false"></textarea>
-          <div class="pmode"><label for="pasteMode">Paragraphs</label>
-            <select id="pasteMode" title="How to split the pasted text into paragraphs">
-              <option value="auto">Auto-detect</option>
-              <option value="lines">Every line break starts a paragraph</option>
-              <option value="blank">Only blank lines start a paragraph</option>
-            </select></div>
-          <details class="qdetails"><summary>Add your own questions <span class="meta">(optional)</span></summary>
+          <details class="more"><summary>More options</summary>
+            <div class="pmode"><label for="pasteMode">Paragraphs</label>
+              <select id="pasteMode" title="How to split the pasted text into paragraphs">
+                <option value="auto">Auto-detect</option>
+                <option value="lines">Every line break starts a paragraph</option>
+                <option value="blank">Only blank lines start a paragraph</option>
+              </select></div>
             <div class="qrow">
               <div><label for="pasteQ">Comprehension questions <span class="meta">(one per line, max 5)</span></label><textarea id="pasteQ" class="pta" rows="3" spellcheck="false"></textarea></div>
               <div><label for="pasteD">Discussion questions <span class="meta">(one per line, max 5)</span></label><textarea id="pasteD" class="pta" rows="3" spellcheck="false"></textarea></div>
@@ -126,11 +151,12 @@
             <button type="button" id="pasteUse" class="primary-lg"><svg class="ic"><use href="#i-check"/></svg><span>Use this text</span></button>
             <button type="button" id="pasteClear" class="secondary">Clear</button>
           </div>
-          <div id="pasteMsg" class="meta" role="status">Pasted text is not sent to the AI and needs no access code. You can look up words, save it to your library and share it just like a generated article.</div>
+          <div id="pasteMsg" class="meta" role="status">Pasted text is not sent to the AI and needs no access code.</div>
         </section>
 
-        <!-- From a link -->
+        <!-- From a link（子頁面）-->
         <section id="linkPanel" class="panel hidden" data-panel="link">
+          <div class="subhead plain"><button type="button" class="back" data-goto-tab="gen"><svg class="ic"><use href="#i-back"/></svg><span>Back</span></button></div>
           <div class="linkhero card">
             <div class="linkicon" aria-hidden="true"><svg class="ic"><use href="#i-link"/></svg></div>
             <h2>Import an article from a link</h2>
@@ -160,7 +186,7 @@
             <li><b>2</b><div><strong>We find the story</strong><span>Title and main text, cleaned up.</span></div></li>
             <li><b>3</b><div><strong>Read &amp; learn</strong><span>Look up words, listen, share.</span></div></li>
           </ol>
-          <p class="tip"><strong>Can’t import a page?</strong> Some sites need JavaScript, a login or block automatic readers. Copy the text and use the <button type="button" class="linkbtn" data-goto-tab="paste">Paste text</button> tab instead. For personal study only — please respect the site’s copyright.</p>
+          <p class="tip"><strong>Can’t import a page?</strong> Some sites need JavaScript, a login or block automatic readers. Copy the text and use <button type="button" class="linkbtn" data-goto-tab="paste">Paste text</button> instead. For personal study only — please respect the site’s copyright.</p>
         </section>
       </section>
 

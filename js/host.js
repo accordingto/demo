@@ -94,13 +94,13 @@ async function run() {
   };
   const st = view === 'read' ? $('linkMsg') : $('status');   // 在文章畫面按 Regenerate 時，進度顯示在文章下方
   $('go').disabled = $('regen').disabled = true;
-  st.className = 'msg meta'; st.textContent = '⏳ Generating…';
+  st.className = 'msg meta busy'; st.textContent = 'Writing your article…';
   try {
-    current = await generate(payload, (n) => { st.textContent = `⏳ Generating… (${n} characters received)`; });
-    st.textContent = '';
+    current = await generate(payload, (n) => { st.textContent = `Writing your article… (${n.toLocaleString()} characters so far)`; });
+    st.textContent = ''; st.className = 'msg';
     render(current);
   } catch (e) {
-    st.className = 'msg err'; st.textContent = '❌ ' + e.message;
+    st.className = 'msg err'; st.textContent = e.message;
     if (e.message === 'Incorrect access code') { $('code').value = ''; saveSettings(); askForCode(); } // 存的是錯誤的碼就清掉，並打開側邊欄讓你重新輸入
   } finally { $('go').disabled = $('regen').disabled = false; }
 }

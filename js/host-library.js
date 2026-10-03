@@ -49,6 +49,7 @@ function renderLib() {
   const all = libEntries(), local = libLoad();
   const q = libQuery.trim().toLowerCase(), l = q ? all.filter((it) => it.title.toLowerCase().includes(q)) : all;
   $('libCount').textContent = cloud && cloudErr ? '–' : all.length;
+  $('tbLibCount').textContent = all.length; $('tbLibCount').dataset.n = cloud && cloudErr ? 0 : all.length;
   $('libSub').textContent = cloud ? 'Cloud · any device' : 'Saved in this browser';
   $('libTitle').textContent = 'Library';
   $('libSubtitle').textContent = cloud ? 'Cloud library — open it on any device with your access code.' : 'Saved in this browser. Set up cloud storage to open articles on any device.';

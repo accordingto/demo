@@ -7,7 +7,7 @@ function showView(v, { push = true, scroll = true } = {}) {
   if (v === 'read' && (typeof current === 'undefined' || !current)) v = 'create';   // 還沒有文章就沒有 Article 畫面
   if (!['create', 'read', 'library'].includes(v)) v = 'create';
   document.querySelectorAll('.view').forEach((el) => el.classList.toggle('hidden', el.dataset.view !== v));
-  document.querySelectorAll('.nav-item[data-view]').forEach((b) => {
+  document.querySelectorAll('button[data-view]').forEach((b) => {   // 側邊欄項目與上方列的快速圖示
     const on = b.dataset.view === v;
     b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
@@ -21,18 +21,16 @@ function showView(v, { push = true, scroll = true } = {}) {
 }
 
 function showTab(t) {
-  document.querySelectorAll('.tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== t));
 }
 // Article 在側邊欄的標題；有文章後才能點
-function updateNavArticle(title) { $('navArticle').textContent = title || 'No article yet'; $('navRead').disabled = !title; if (view === 'read') $('tbTitle').textContent = title; }
+function updateNavArticle(title) { $('navArticle').textContent = title || 'No article yet'; $('navRead').disabled = $('tbRead').disabled = !title; if (view === 'read') $('tbTitle').textContent = title; }
 
 // ---- 抽屜（< 1280px）----
 const openNav = () => { document.body.classList.add('nav-open'); $('navOpen').setAttribute('aria-expanded', 'true'); };
 function closeNav() { document.body.classList.remove('nav-open'); $('navOpen').setAttribute('aria-expanded', 'false'); }
 
-document.querySelectorAll('.nav-item[data-view]').forEach((b) => b.addEventListener('click', () => showView(b.dataset.view)));
-document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+document.querySelectorAll('button[data-view]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.view === 'create') showTab('gen'); showView(b.dataset.view); closeCodePop(); }));
 document.querySelectorAll('[data-goto-tab]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.gotoTab)));
 $('navOpen').addEventListener('click', openNav);
 $('navClose').addEventListener('click', closeNav);
@@ -40,7 +38,24 @@ $('scrim').addEventListener('click', closeNav);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('nav-open')) closeNav(); });
 window.addEventListener('popstate', () => showView(location.hash.slice(1) || 'create', { push: false }));
 // 需要存取碼時：窄螢幕打開抽屜，並把游標放到存取碼欄位
-function askForCode() { if (matchMedia('(max-width:1279px)').matches) openNav(); setTimeout(() => $('code').focus(), 300); }
+function askForCode() {
+  if (matchMedia('(max-width:1279px)').matches) { closeNav(); $('codeQuick').value = $('code').value; $('codePop').classList.remove('hidden'); $('tbKey').setAttribute('aria-expanded', 'true'); setTimeout(() => $('codeQuick').focus(), 100); }
+  else setTimeout(() => $('code').focus(), 100);
+}
 
 // 設定視窗開啟時（點齒輪），順便收起抽屜
 document.addEventListener('click', (e) => { if (e.target.closest('.gear')) closeNav(); });
+
+// ---- 存取碼快速視窗（上方列的 🔑）：和側邊欄的 #code 同步 ----
+function closeCodePop() { $('codePop').classList.add('hidden'); $('tbKey').setAttribute('aria-expanded', 'false'); }
+$('tbKey').addEventListener('click', () => {
+  const open = $('codePop').classList.contains('hidden');
+  if (!open) return closeCodePop();
+  $('codeQuick').value = $('code').value;
+  $('codePop').classList.remove('hidden'); $('tbKey').setAttribute('aria-expanded', 'true');
+  setTimeout(() => $('codeQuick').focus(), 50);
+});
+for (const ev of ['input', 'change']) $('codeQuick').addEventListener(ev, () => { $('code').value = $('codeQuick').value; $('code').dispatchEvent(new Event(ev, { bubbles: true })); });
+$('codeQuick').addEventListener('keydown', (e) => { if (e.key === 'Enter') closeCodePop(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCodePop(); });
+document.addEventListener('pointerdown', (e) => { if (!$('codePop').classList.contains('hidden') && !$('codePop').contains(e.target) && !$('tbKey').contains(e.target)) closeCodePop(); });
