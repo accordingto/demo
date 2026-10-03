@@ -1,0 +1,24 @@
+// POST /api/extract — 貼上網址，自動擷取網頁裡最重要的文章內容（主持人專用，需存取碼）
+// body: { code, url } → { title, text, words, truncated, host }
+const { fetchPage, FetchError } = require('./_fetch');
+const { extractArticle } = require('./_extract');
+const { safeEqual, clientIp, makeLimiter, readBody, missingEnv } = require('./_util');
+
+const limited = makeLimiter(10);
+
+module.exports = async function handler(req, res) {
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'POST only' }); }
+  if (missingEnv(['HOST_CODE']).length) return res.status(500).json({ error: 'Server is missing HOST_CODE' });
+  const b = readBody(req);
+  if (!safeEqual(b.code ?? '', process.env.HOST_CODE)) return res.status(401).json({ error: 'Incorrect access code' });
+  if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
+  try {
+    const { html, url } = await fetchPage(b.url);
+    const a = extractArticle(html);
+    if (!a) return res.status(422).json({ error: 'Could not find the main article text on this page. It may need JavaScript, a login or a subscription — try copying the text and using “Paste text” instead.' });
+    return res.status(200).json({ title: a.title, text: a.text, words: a.words, truncated: a.truncated, host: new URL(url).hostname.replace(/^www\./, '') });
+  } catch (e) {
+    if (e instanceof FetchError) return res.status(400).json({ error: e.message });
+    return res.status(502).json({ error: 'Could not read that page. Please try again or paste the text instead.' });
+  }
+};

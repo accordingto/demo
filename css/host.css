@@ -47,6 +47,10 @@ a.btn.secondary { color:var(--accent); border:1px solid var(--accent); }
 #pastePanel { padding:14px 16px; }
 #pastePanel .head { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-bottom:8px; }
 #pastePanel h3 { margin:0; font-size:1rem; color:var(--accent); }
+#pastePanel .urlrow { display:flex; gap:8px; margin-bottom:8px; }
+#pastePanel .urlrow input { flex:1; min-width:0; }
+#pastePanel .urlrow button { min-height:36px; padding:0 14px; font-size:.85rem; white-space:nowrap; }
+@media (max-width:639px) { #pastePanel .urlrow { flex-direction:column; } #pastePanel .urlrow button { min-height:44px; } }
 #pasteTitle { margin-bottom:8px; height:36px; font-size:1rem; }
 #pasteBody { width:100%; min-height:220px; resize:vertical; padding:10px 12px; font-family:inherit; font-size:1.05rem; line-height:1.7; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
 #pastePanel .pmode { display:flex; align-items:center; gap:8px; margin-bottom:8px; }

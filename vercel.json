@@ -5,6 +5,9 @@
     },
     "api/define.js": {
       "maxDuration": 30
+    },
+    "api/extract.js": {
+      "maxDuration": 30
     }
   },
   "headers": [

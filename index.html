@@ -42,6 +42,10 @@
       <h3>✍ Paste your own text</h3>
       <span class="meta" id="pasteInfo">0 words</span>
     </div>
+    <div class="urlrow">
+      <input type="url" id="pasteUrl" inputmode="url" placeholder="Or paste an article link (https://…) to import its main text" autocomplete="off" spellcheck="false">
+      <button type="button" id="pasteFetch" class="secondary">Import from link</button>
+    </div>
     <input type="text" id="pasteTitle" maxlength="120" placeholder="Title (optional)" autocomplete="off">
     <div class="pmode"><label for="pasteMode">Paragraphs</label>
       <select id="pasteMode" title="How to split the pasted text into paragraphs">

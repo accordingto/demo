@@ -21,6 +21,9 @@
 
 | 檔案 | 職責 |
 |---|---|
+| `extract.js` | 需存取碼。`fetchPage`（安全抓取）→ `extractArticle`（擷取主要文章）→ 回傳 `{title,text,words,truncated,host}` |
+| `_fetch.js` | 防 SSRF 的抓取：`checkUrl`（協定、埠、帳密、內部主機名）、`isBlockedIp`、`safeLookup`（連線時才檢查實際 IP）、轉址逐次檢查、大小與時間限制 |
+| `_extract.js` | 簡易 Readability：清除雜訊 → 找 `<article>` → 依距離把 `<p>`／長 `<li>` 分群取字數最多的一群 → 補小標題 → 去雜訊與重複 |
 | `generate.js` | 檢查環境變數 → 比對存取碼 → 限流 → `validate` → 呼叫 Groq（串流）→ `parseArticle` → 以 SSE 回傳 `progress`／`result`／`error` |
 | `define.js` | 公開。驗證單字格式 → 限流 → Groq JSON 模式 → 回傳 `{lemma,pos,kk,definition,zh}`（欄位都限制長度） |
 | `library.js` | 需存取碼。`status`（不需碼，回報雲端是否啟用）、`diagnose`、`list`、`get`、`save`、`delete` |

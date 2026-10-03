@@ -236,3 +236,88 @@ test('parseArticle: analysis genre is not re-flowed into paragraphs', () => {
   assert.equal(a.body, '1. Costs are rising. Prices went up.\n\n2. Labour is scarce.\n\n3. Recommendation: plan ahead.');
   assert.equal(a.questions.length, 2);
 });
+
+// ---- 網址擷取文章（api/_extract.js、api/_fetch.js）----
+const { extractArticle } = require('../api/_extract');
+const fetchMod = require('../api/_fetch');
+
+const para = (n) => `<p>${Array.from({ length: n }, (_, i) => `Sentence number ${i + 1} talks about the farming of coffee beans in detail.`).join(' ')}</p>`;
+const PAGE = `<!doctype html><html><head><title>Why Coffee Costs More Now | Daily Example</title>
+<meta property="og:title" content="Why Coffee Costs More Now"><script>var x = "<p>fake paragraph in script</p>";</script><style>p{color:red}</style></head>
+<body><header><h1>Daily Example</h1><nav><ul><li><a href="/">Home</a></li><li><a href="/news">News</a></li></ul></nav></header>
+<div class="side"><p>Subscribe to our newsletter for more stories every single day of the week.</p></div>
+<main><article><h1>Why Coffee Costs More Now</h1><p>By Jane Doe</p>
+${para(5)}<h2>The weather problem</h2>${para(4)}<div class="ad"><p>Advertisement</p></div>${para(4)}
+<ul><li>Short</li><li>Roasters are passing higher costs on to shoppers across many countries.</li></ul>
+</article></main>
+<aside><p>Related stories: ten more coffee articles that you might like to read next week.</p></aside>
+<footer><p>© 2026 Daily Example. All rights reserved.</p></footer></body></html>`;
+
+test('extractArticle: finds the main article, drops chrome, ads and scripts', () => {
+  const a = extractArticle(PAGE);
+  assert.equal(a.title, 'Why Coffee Costs More Now');
+  assert.ok(a.words > 100, 'words ' + a.words);
+  assert.ok(a.text.includes('The weather problem'), 'keeps sub-headings');
+  assert.ok(a.text.includes('• Roasters are passing'), 'keeps long list items');
+  for (const bad of ['fake paragraph', 'Subscribe to our newsletter', 'Advertisement', 'All rights reserved', 'Related stories', 'Home']) assert.ok(!a.text.includes(bad), `must not include: ${bad}`);
+  assert.ok(a.paragraphs.length >= 4);
+  assert.equal(a.truncated, false);
+});
+test('extractArticle: works without <article>, decodes entities, truncates long pages, returns null for thin pages', () => {
+  const html = `<html><body><div id="c"><p>Caf&eacute; owners say it&rsquo;s tough &mdash; ${'word '.repeat(60)}.</p>${para(6)}</div></body></html>`;
+  const a = extractArticle(html);
+  assert.ok(a && a.text.includes('it’s tough —'));
+  const big = `<body>${Array.from({ length: 30 }, (_, k) => para(8).replace('Sentence', 'Block ' + k + ' sentence')).join('')}</body>`;
+  const t = extractArticle(big, { maxWords: 500 });
+  assert.equal(t.truncated, true); assert.ok(t.words <= 500);
+  assert.equal(extractArticle('<html><body><p>Too short.</p></body></html>'), null);
+  assert.equal(extractArticle('<html><body><div id="app"></div><script src="app.js"></script></body></html>'), null);
+});
+
+test('fetch: blocks private / loopback / metadata addresses and odd URLs', () => {
+  for (const ip of ['127.0.0.1', '10.1.2.3', '172.16.0.1', '172.31.255.255', '192.168.1.1', '169.254.169.254', '100.64.0.1', '0.0.0.0', '::1', 'fd00::1', 'fe80::1', '::ffff:127.0.0.1', '224.0.0.1']) assert.ok(fetchMod.isBlockedIp(ip), ip);
+  for (const ip of ['8.8.8.8', '93.184.216.34', '172.32.0.1', '2606:4700:4700::1111']) assert.ok(!fetchMod.isBlockedIp(ip), ip);
+  for (const u of ['ftp://example.com/a', 'file:///etc/passwd', 'http://localhost/x', 'http://127.0.0.1/', 'http://[::1]/', 'http://2130706433/', 'http://0x7f.1/', 'http://169.254.169.254/latest/meta-data', 'http://user:pw@example.com/', 'http://example.com:8080/', 'http://intranet/', 'http://printer.local/', 'not a url', ''])
+    assert.throws(() => fetchMod.checkUrl(u), fetchMod.FetchError, u);
+  assert.equal(fetchMod.checkUrl('https://www.example.com/a?b=1').hostname, 'www.example.com');
+});
+
+test('fetch: end-to-end against a local server (redirect, gzip, errors, size limit)', async () => {
+  const http = require('node:http'), zlib = require('node:zlib');
+  const srv = http.createServer((q, r) => {
+    if (q.url === '/redir') { r.writeHead(302, { Location: '/page' }); return r.end(); }
+    if (q.url === '/page') { const body = zlib.gzipSync(Buffer.from(PAGE)); r.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Encoding': 'gzip' }); return r.end(body); }
+    if (q.url === '/img') { r.writeHead(200, { 'Content-Type': 'image/png' }); return r.end('x'); }
+    if (q.url === '/big') { r.writeHead(200, { 'Content-Type': 'text/html' }); return r.end('a'.repeat(3 * 1024 * 1024)); }
+    if (q.url === '/loop') { r.writeHead(302, { Location: '/loop' }); return r.end(); }
+    if (q.url === '/private') { r.writeHead(302, { Location: 'http://169.254.169.254/latest' }); return r.end(); }
+    r.writeHead(404); r.end();
+  });
+  await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
+  const base = `http://127.0.0.1:${srv.address().port}`;
+  try {
+    // 沒開測試開關：本機位址一律不能抓
+    await assert.rejects(() => fetchMod.fetchPage(base + '/page'), /cannot be fetched|standard web ports/);
+    fetchMod.__test.allowLocal(true);
+    const r = await fetchMod.fetchPage(base + '/redir');            // 轉址 + gzip
+    assert.ok(r.url.endsWith('/page') && r.html.includes('Why Coffee Costs More Now'));
+    assert.equal(extractArticle(r.html).title, 'Why Coffee Costs More Now');
+    await assert.rejects(() => fetchMod.fetchPage(base + '/img'), /not a web page/);
+    await assert.rejects(() => fetchMod.fetchPage(base + '/big'), /too large/);
+    await assert.rejects(() => fetchMod.fetchPage(base + '/loop'), /too many times/);
+    await assert.rejects(() => fetchMod.fetchPage(base + '/nope'), /not found/);
+    await assert.rejects(() => fetchMod.fetchPage(base + '/private'), /cannot be fetched/);   // 轉址到內網位址也要擋
+  } finally { fetchMod.__test.allowLocal(false); srv.close(); }
+});
+
+test('extract handler: needs the right access code, validates the link', async () => {
+  const saved = { ...process.env }; process.env.HOST_CODE = 'secret';
+  try {
+    const ex = require('../api/extract');
+    const R = () => { const r = { code: 200, payload: null }; r.status = (c) => { r.code = c; return r; }; r.json = (o) => { r.payload = o; return r; }; r.setHeader = () => {}; return r; };
+    let r = R(); await ex({ method: 'POST', headers: {}, body: { code: 'nope', url: 'https://example.com' } }, r); assert.equal(r.code, 401);
+    r = R(); await ex({ method: 'POST', headers: { 'x-forwarded-for': '1.1.1.1' }, body: { code: 'secret', url: 'http://169.254.169.254/latest' } }, r);
+    assert.equal(r.code, 400); assert.match(r.payload.error, /cannot be fetched/);
+    r = R(); await ex({ method: 'GET', headers: {} }, r); assert.equal(r.code, 405);
+  } finally { process.env = saved; }
+});

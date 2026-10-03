@@ -4,7 +4,7 @@
 body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif; line-height:1.6; touch-action:manipulation; }
 .layout { max-width:1760px; margin:0 auto; padding:12px; display:grid; gap:12px; grid-template-columns:1fr; align-items:start; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
-input[type=text], input[type=password], input[type=number], select { width:100%; padding:6px 8px; height:34px; font-size:.9rem; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
+input[type=text], input[type=url], input[type=password], input[type=number], select { width:100%; padding:6px 8px; height:34px; font-size:.9rem; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--ink); }
 button { font-family:inherit; font-size:.95rem; padding:8px 16px; min-height:40px; border:0; border-radius:8px; background:var(--accent); color:var(--accent-ink); font-weight:600; cursor:pointer; }
 button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
 button:disabled { opacity:.5; cursor:wait; }
@@ -100,8 +100,8 @@ mark.vh.cur { background:var(--cur-bg); box-shadow:0 0 0 1px var(--cur-ring) ins
 html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 橫放時不要自動放大文字 */
 @media (pointer:coarse), (max-width:639px) {
   /* iOS Safari：輸入框字體小於 16px，點進去會自動放大整個頁面（而且常常不會縮回來） */
-  input[type=text], input[type=password], input[type=number], select, textarea, .pta, #pasteBody, #pasteTitle { font-size:16px; }
-  input[type=text], input[type=password], input[type=number], select { height:44px; }
+  input[type=text], input[type=url], input[type=password], input[type=number], select, textarea, .pta, #pasteBody, #pasteTitle { font-size:16px; }
+  input[type=text], input[type=url], input[type=password], input[type=number], select { height:44px; }
   button { min-height:44px; }
   input[type=checkbox] { width:22px !important; height:22px !important; }
   .editing #bodyText[contenteditable], .editing .qa li, .editing #doc h2[contenteditable] { font-size:max(16px, var(--fs, 18px)); }  /* 編輯時字體也不得小於 16px */
