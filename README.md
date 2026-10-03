@@ -17,7 +17,7 @@
 ### 主持人頁（`index.html`）
 | 功能 | 說明 |
 |---|---|
-| 產生文章 | 字數 100–1000（▲▼ 或方向鍵每次 ±100，預設 300）、主題、CEFR A1–C2、文體（14 種，見下）、理解題 2 題、討論題 2 題；以串流顯示進度 |
+| 產生文章 | 字數 100–1000（▲▼ 或方向鍵每次 ±100，預設 300）、主題、CEFR A1–C2、文體（15 種，見下）、理解題 2 題、討論題 2 題；以串流顯示進度 |
 | 貼上文章 | 「✍ Paste」貼上自己的文章（20–8000 字，不呼叫 AI、不需存取碼），可附題目（每行一題）。**Paragraphs** 選單決定怎麼分段：*Auto-detect*（預設）／*Every line break starts a paragraph*／*Only blank lines start a paragraph*；面板上方會即時顯示字數與段落數（自動模式也顯示判斷結果） |
 | 就地編輯 | 「✍ Edit」直接在畫面上改標題、本文、題目（所見即所得、只接受純文字）；Ctrl/⌘+S 儲存 |
 | 單字表 | 在文章上**連點兩下**單字加入（沒有手動輸入框）；單字卡右上角 × 會先跳出確認才刪除；由 AI 查出詞性、KK 音標、英文解釋、中文翻譯 |
@@ -44,9 +44,12 @@
 |---|---|
 | Informational | Explanation、Science（科普）、History、Biography、How-to guide、Travel、News style |
 | Narrative | Story、Fable（寓言，結尾點出寓意） |
+| Analytical | **Analyst briefing**（分析師條列：以分析師角度分析問題，並用「1. … 2. …」條列回答；每一點是獨立一段，各有播放鍵） |
 | Personal & opinion | Blog / diary、Letter / email、Opinion（社論）、Review、Speech |
 
-另有 *Any*（由 AI 決定）。每種文體都有各自的「起承轉合」段落規劃（`api/_prompt.js` 的 `ARC`），例如 Opinion 是「立場 → 理由 → 回應反方 → 重申與呼籲」，Review 是「第一印象 → 優點 → 缺點 → 總評與適合誰」。**新增文體**：在 `GENRES` 與 `ARC` 各加一筆，並在 `index.html` 的 `#genre` 加選項（單元測試會檢查三者一致）。
+另有 *Any*（由 AI 決定）。
+
+**Analyst briefing** 和其他文體不同：不寫連貫的段落，而是 **編號條列**（點數約每 80 字一點，3–10 點）。每一點先用一句標題句講出重點，再接 1–3 句說明或例子；順序依序是「界定問題 → 關鍵發現或成因 → 風險與取捨 → 結論與建議」。提示詞要求不得捏造精確統計或引用。後端（`normalizeNumbered`）會把編號整理成「一點一段」，AI 沒有編號時會自動補上。每種文體都有各自的「起承轉合」段落規劃（`api/_prompt.js` 的 `ARC`），例如 Opinion 是「立場 → 理由 → 回應反方 → 重申與呼籲」，Review 是「第一印象 → 優點 → 缺點 → 總評與適合誰」。**新增文體**：在 `GENRES` 與 `ARC` 各加一筆，並在 `index.html` 的 `#genre` 加選項（單元測試會檢查三者一致）。
 
 ### 閱讀設定（⚙，兩頁共用）
 點文章標題右上角的齒輪（還沒有文章時，在預覽區右上角也有一個），會浮出設定視窗；每一項都**即時生效**，並記在這個瀏覽器（`localStorage` 的 `rc-prefs`，主持人頁與閱讀頁共用）。Esc、×、再按齒輪或點視窗外面可關閉；**Reset** 回到預設。

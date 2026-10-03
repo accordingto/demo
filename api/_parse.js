@@ -32,6 +32,22 @@ function normalizeParagraphs(body, n) {
   return out.join('\n\n');
 }
 
+// 分析師風格：每個「1. 2. 3.」編號是一段（一點一段）。AI 把編號寫在同一段或連續幾行時重新整理；完全沒編號就自動補上
+function normalizeNumbered(body) {
+  const lines = body.replace(/\r/g, '').split('\n');
+  const blocks = []; let cur = null, numbered = 0;
+  for (const raw of lines) {
+    const l = raw.trim(); if (!l) { cur = null; continue; }
+    const m = /^(\d+)[.)]\s+(.*)$/.exec(l);
+    if (m) { blocks.push(`${m[1]}. ${m[2]}`); cur = blocks.length - 1; numbered++; }
+    else if (cur !== null) blocks[cur] += ' ' + l;               // 同一點的後續行
+    else { blocks.push(l); cur = blocks.length - 1; }            // 編號前的開場白
+  }
+  if (numbered >= 2) return blocks.join('\n\n');
+  const paras = normalizeParagraphs(body, 5).split('\n\n').filter(Boolean);   // 沒有編號 → 每段編號
+  return paras.map((p, i) => `${i + 1}. ${p.replace(/^\d+[.)]\s+/, '')}`).join('\n\n');
+}
+
 // o = validate() 的結果；finish = 串流結束原因（用來說明為什麼沒有文章）
 function parseArticle(text, o, finish) {
   const sec = parseSections(text);
@@ -54,10 +70,10 @@ function parseArticle(text, o, finish) {
   const title = (sec.TITLE || '').split('\n')[0].replace(/^["'“”#*\s]+|["'“”*\s]+$/g, '') || 'Untitled';
   return {
     title,
-    body: normalizeParagraphs(body, paragraphCount(o.words)),
+    body: o.genre === 'analysis' ? normalizeNumbered(body) : normalizeParagraphs(body, paragraphCount(o.words)),
     questions: o.questions ? toList(sec.QUESTIONS).slice(0, 2) : [],   // 各只保留 2 題
     discussion: o.discussion ? toList(sec.DISCUSSION).slice(0, 2) : [],
   };
 }
 
-module.exports = { parseArticle, normalizeParagraphs, parseSections, toList, countWords };
+module.exports = { parseArticle, normalizeParagraphs, normalizeNumbered, parseSections, toList, countWords };

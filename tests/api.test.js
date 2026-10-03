@@ -2,8 +2,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { validate, buildMessages, paragraphCount, arcPlan, GENRES, ARC } = require('../api/_prompt');
-const { parseArticle, normalizeParagraphs, parseSections, toList } = require('../api/_parse');
+const { validate, buildMessages, paragraphCount, pointCount, arcPlan, GENRES, ARC } = require('../api/_prompt');
+const { parseArticle, normalizeParagraphs, normalizeNumbered, parseSections, toList } = require('../api/_parse');
 const { articleTokens, isReasoning, reasoningParams } = require('../api/_model');
 const { safeEqual, makeLimiter, clip } = require('../api/_util');
 const { errorMessage, GroqError } = require('../api/_groq');
@@ -205,4 +205,34 @@ test('css: read-aloud highlight rules exist and no color-mix / inset shorthand i
     assert.ok(!/color-mix\(/.test(read(f)), `${f} uses color-mix (not supported by older iPad Safari)`);
     assert.ok(!/[^-]inset\s*:/.test(read(f)), `${f} uses the inset shorthand`);
   }
+});
+
+// ---- 分析師風格（條列式）----
+test('analysis genre: prompt asks for numbered points, not paragraphs', () => {
+  const [sys, user] = buildMessages(opts({ genre: 'analysis', words: 400, level: 'B2' }));
+  assert.match(sys.content, /NUMBERED LIST/); assert.doesNotMatch(sys.content, /NEVER put each sentence in its own paragraph/);
+  assert.match(sys.content, /=== BODY ===/);   // 輸出格式（分段標記）仍然保留
+  assert.match(user.content, /exactly 5 numbered points \("1\." to "5\."\)/);
+  assert.match(user.content, /Point 1:.*Frame the problem/); assert.match(user.content, /Point 5:.*recommendation/);
+  const normal = buildMessages(opts({ genre: 'story' }))[0].content;
+  assert.match(normal, /NEVER put each sentence in its own paragraph/);
+});
+test('pointCount: about 80 words per point, 3 to 10', () => {
+  assert.equal(pointCount(100), 3); assert.equal(pointCount(400), 5); assert.equal(pointCount(1000), 10);
+});
+test('normalizeNumbered: keeps numbered points as separate blocks', () => {
+  const ok = '1. First point. It explains.\n\n2. Second point.\n\n3. Third.';
+  assert.equal(normalizeNumbered(ok), ok);
+  // 連續行、沒有空行、用 ) 當編號、延續行
+  assert.equal(normalizeNumbered('1) A first.\n2) B second\ncontinues here.\n3) C.'), '1. A first.\n\n2. B second continues here.\n\n3. C.');
+  // 開場白保留成獨立一塊
+  assert.equal(normalizeNumbered('Intro line.\n\n1. A.\n\n2. B.'), 'Intro line.\n\n1. A.\n\n2. B.');
+  // 完全沒編號 → 每段補編號
+  assert.equal(normalizeNumbered('Para one is here.\n\nPara two is here.'), '1. Para one is here.\n\n2. Para two is here.');
+});
+test('parseArticle: analysis genre is not re-flowed into paragraphs', () => {
+  const text = '=== TITLE ===\nWhy Costs Rise\n=== BODY ===\n1. Costs are rising. Prices went up.\n2. Labour is scarce.\n3. Recommendation: plan ahead.\n=== QUESTIONS ===\n1. q1?\n2. q2?\n=== DISCUSSION ===\n1. d1?';
+  const a = parseArticle(text, opts({ genre: 'analysis' }));
+  assert.equal(a.body, '1. Costs are rising. Prices went up.\n\n2. Labour is scarce.\n\n3. Recommendation: plan ahead.');
+  assert.equal(a.questions.length, 2);
 });

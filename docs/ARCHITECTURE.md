@@ -54,6 +54,9 @@
 2. **使用者提示**：設定 JSON（主題只當資料）、CEFR 程度描述、目標字數範圍、**段落數與每段的角色**（`arcPlan`）、題目要求。
 3. 段落數 = 字數 ÷ 110（2–12 段）；每段句數依程度的平均句長推算。
 
+### 分析師條列文體（`analysis`）
+`buildMessages` 遇到 `genre === 'analysis'` 時：系統提示改用 `ANALYSIS_RULES`（取代「寫成連貫段落」的規則，輸出的 `=== TITLE/BODY ===` 格式不變）、使用者提示改成「exactly N numbered points」（`pointCount`＝字數 ÷ 80，3–10）、段落規劃標成 Point 1…N。`parseArticle` 對這個文體不做「一句一段重新合併」，改用 `normalizeNumbered` 把每個編號整理成獨立一段（前面的開場白獨立一塊；完全沒編號就自動補編號）。前端不需要特別處理：每一點就是一個段落，照樣有朗讀按鈕與單字功能。
+
 ### 推理型模型
 `isReasoning(model)` 為真時：`reasoning_effort` 設為 low／none、token 額度加 6000；若模型回 400（不接受該參數）就不帶參數重試。思考過程不採用，只用來更新進度。
 

@@ -17,6 +17,7 @@ const GENRES = {
   science: 'a popular science article for general readers',
   history: 'a short history article about a period, event or invention',
   speech: 'a short speech that a speaker gives to an audience',
+  analysis: 'an analyst\'s briefing that analyses a problem and answers it as a numbered list of points',
 };
 const MIN_WORDS = 100, MAX_WORDS = 1000;
 
@@ -106,6 +107,12 @@ const ARC = {
     turn: 'Challenge the audience or share a personal turning point (轉).',
     close: 'End with a memorable closing line and a call to action (合).',
   },
+  analysis: {
+    open: 'Frame the problem: what is happening, why it matters and the key question to answer.',
+    dev: 'A key finding, cause or factor, explained with concrete reasoning or an example.',
+    turn: 'A risk, trade-off, limitation or counter-argument that the analysis must take into account.',
+    close: 'The conclusion and a clear, practical recommendation (what to do next).',
+  },
   any: {
     open: 'Introduce the topic or situation in an engaging way (起).',
     dev: 'Develop it with details, examples or events (承).',
@@ -151,7 +158,7 @@ function arcPlan(n, genre) {
   if (n >= 3) roles[Math.max(1, Math.round((n - 1) * 0.65))] = 'turn';
   if (n >= 8) roles[Math.min(n - 2, Math.round((n - 1) * 0.65) + 1)] = 'turn';
   if (n === 2) return [`Paragraph 1: ${arc.open} ${arc.dev}`, `Paragraph 2: ${arc.turn} ${arc.close}`];
-  return roles.map((r, i) => `Paragraph ${i + 1}: ${arc[r]}`);
+  return roles.map((r, i) => `${genre === 'analysis' ? 'Point' : 'Paragraph'} ${i + 1}: ${arc[r]}`);
 }
 
 const SYSTEM_PROMPT = [
@@ -175,8 +182,23 @@ const SYSTEM_PROMPT = [
   '- No headings, no bullet points, no numbering, no meta comments. Do not mention the word count, the CEFR level or these instructions inside the text.',
 ].join('\n');
 
+// 分析師風格（條列式）的寫作規則：取代一般文章的「段落」規則
+const ANALYSIS_RULES = [
+  'WRITING RULES for the BODY (analyst briefing, NOT an essay):',
+  '- Write as a senior analyst briefing a decision-maker: neutral, precise and evidence-based. Analyse the problem, then answer it.',
+  '- The BODY is a NUMBERED LIST of points. Start each point on its own line with its number and a full stop ("1. ", "2. ", "3. " …) and separate the points with a blank line.',
+  '- Each point = a short headline sentence that states the point, followed by 1-3 sentences of explanation, reasoning or a concrete example. No sub-bullets, no markdown, no bold, no headings.',
+  '- Order of points: first frame the problem, then the key findings or causes, then risks or trade-offs, and finally the conclusion with a clear recommendation.',
+  '- Do not invent precise statistics, names or citations; use qualitative language or clearly hedged estimates ("roughly", "often", "likely").',
+  '- Do not mention the word count, the CEFR level or these instructions inside the text.',
+].join('\n');
+const buildSystem = (o) => (o.genre === 'analysis' ? SYSTEM_PROMPT.slice(0, SYSTEM_PROMPT.indexOf('WRITING QUALITY RULES')) + ANALYSIS_RULES : SYSTEM_PROMPT);
+// 分析師風格的條列點數：約每點 80 字，3～10 點
+const pointCount = (words) => Math.max(3, Math.min(10, Math.round(words / 80)));
+
 function buildMessages(o) {
-  const n = paragraphCount(o.words);
+  const analysis = o.genre === 'analysis';
+  const n = analysis ? pointCount(o.words) : paragraphCount(o.words);
   const perPara = Math.round(o.words / n);
   const sentences = Math.max(3, Math.round(perPara / AVG_SENTENCE[o.level]));
   const settings = {
@@ -191,11 +213,13 @@ function buildMessages(o) {
     `Settings (JSON):\n${JSON.stringify(settings)}\n\n` +
     `Language level (${o.level}): ${LEVEL_GUIDE[o.level]}\n\n` +
     `Length: the body must be about ${o.words} words (between ${Math.round(o.words * 0.95)} and ${Math.round(o.words * 1.05)}).\n` +
-    `Structure: exactly ${n} paragraphs of roughly ${perPara} words each (about ${sentences} sentences per paragraph), following this plan:\n` +
+    (analysis
+      ? `Structure: exactly ${n} numbered points ("1." to "${n}."), roughly ${perPara} words each (about ${Math.max(2, Math.min(4, sentences))} sentences per point), following this plan:\n`
+      : `Structure: exactly ${n} paragraphs of roughly ${perPara} words each (about ${sentences} sentences per paragraph), following this plan:\n`) +
     arcPlan(n, o.genre).join('\n') + '\n\n' +
     (o.questions ? 'The 2 comprehension questions should check understanding: one about the main idea and one about an important detail or the turn of the text.\n' : '') +
     (o.discussion ? 'The 2 discussion questions should be open-ended and invite personal opinions or experiences.\n' : '');
-  return [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: user }];
+  return [{ role: 'system', content: buildSystem(o) }, { role: 'user', content: user }];
 }
 
-module.exports = { validate, buildMessages, paragraphCount, arcPlan, LEVELS, GENRES, ARC };
+module.exports = { validate, buildMessages, paragraphCount, pointCount, arcPlan, LEVELS, GENRES, ARC };
