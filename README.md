@@ -20,7 +20,7 @@
 | 畫面 | 內容 |
 |---|---|
 | **Create** | 首頁只有一件事：**輸入主題 → Generate**（下方有主題靈感，點一下就填入）。字數、程度、文體、題目這些進階選項收在一條「摘要列」裡（例如 `300 words · B1 · Any genre · 2 + 2 questions`），按 **Customize** 才展開。再往下是兩張入口卡：**Paste text**、**Import from a link**，點進去是各自獨立的頁面（有 Back 鈕）|
-| **Article** | 文章（朗讀、閱讀設定、Edit／Save／Regenerate／Share）與單字表 |
+| **Article** | 文章（標題右上角三顆圖示：朗讀、編輯、閱讀設定；下方 Edit／Save／Regenerate／Share）與單字表 |
 | **Library** | 已存文章的卡片牆，可搜尋；開啟、編輯、複製連結、刪除；備份與雲端設定工具 |
 
 **導覽方式（依螢幕寬度）**
