@@ -65,10 +65,14 @@
     se.classList.add('speaking');
     if (st.w >= 0) se.querySelectorAll('.w, a.ulink')[st.w]?.classList.add('speaking');
   }
-  function scrollToCurrent() {   // 目前這句不在畫面內就捲到中間
+  // 念到畫面下方只剩約三行的空間時，把頁面往上捲，讓正在念的句子移到最上方（避開固定的上方列），接下來的文章就看得到
+  const LINES_LEFT = 3;
+  function scrollToCurrent() {
     const se = sentenceEl(); if (!se) return;
+    const tb = $('topbar'), fixedTop = tb && /^(sticky|fixed)$/.test(getComputedStyle(tb).position) && tb.offsetParent !== null ? tb.getBoundingClientRect().height : 0;
+    const top = fixedTop + 12, cs = getComputedStyle(se), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.6;
     const r = se.getBoundingClientRect();
-    if (r.top < 70 || r.bottom > innerHeight - 30) se.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (r.top < top || innerHeight - r.bottom < LINES_LEFT * lh) window.scrollTo({ top: Math.max(0, scrollY + r.top - top), behavior: 'smooth' });
   }
 
   function speakCurrent() {
