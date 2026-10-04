@@ -12,18 +12,21 @@
   const WORD_RE = /[A-Za-z][A-Za-z’'-]*/g;   // 和 vocab.js 切字的規則相同：每個字對應畫面上一個 span.w（網址念成 link，對應 a.ulink）
   const speechText = (sentence) => sentence.replace(URL_RE, ' link ');
 
-  // 估算語速（語速 1 時每秒念幾個字元），存在瀏覽器裡，換語音時會自動重新校正
+  // 估算語速：「每秒念幾個字元」，依語音＋語速分開記（語速不是線性的：0.5 倍不一定剛好慢一半），存在瀏覽器裡
   const CPS_KEY = 'rc-tts-cps';
-  let cpsVal = 0;
-  const voiceKey = () => { try { return (TTS.info && JSON.stringify(TTS.info().voice)) || ''; } catch { return ''; } };
-  function cps() {
-    if (!cpsVal) { try { cpsVal = +(JSON.parse(localStorage.getItem(CPS_KEY) || '{}')[voiceKey()]) || 0; } catch { /* 沒有就用預設 */ } }
-    return cpsVal || 17;
+  const voiceKey = () => { try { return (TTS.info && TTS.info().voice) || ''; } catch { return ''; } };
+  const readCps = () => { try { return JSON.parse(localStorage.getItem(CPS_KEY) || '{}'); } catch { return {}; } };
+  function cps(rate) {
+    const o = readCps(), k = voiceKey() + '|' + rate;
+    if (o[k]) return o[k];
+    const other = Object.keys(o).find((x) => x.startsWith(voiceKey() + '|'));   // 這個語速沒量過：用同一個語音量過的速度按比例推
+    return other ? o[other] * rate / +other.split('|')[1] : 17 * rate;
   }
-  function calibrate(v) {
-    if (!(v > 4 && v < 60)) return;
-    cpsVal = cpsVal ? cpsVal * 0.5 + v * 0.5 : v;
-    try { const o = JSON.parse(localStorage.getItem(CPS_KEY) || '{}'); o[voiceKey()] = cpsVal; localStorage.setItem(CPS_KEY, JSON.stringify(o)); } catch { /* 無痕模式存不了就算了 */ }
+  function calibrate(v, rate) {   // v：這一句實際的每秒字元數
+    if (!(v > 2 && v < 80)) return;
+    const o = readCps(), k = voiceKey() + '|' + rate;
+    o[k] = o[k] ? o[k] * 0.5 + v * 0.5 : v;
+    try { localStorage.setItem(CPS_KEY, JSON.stringify(o)); } catch { /* 無痕模式存不了就算了 */ }
   }
 
   let st = { status: 'idle', p: 0, s: 0, w: -1 };   // status：idle｜playing｜paused；p／s／w＝目前段落／句子／字
@@ -79,6 +82,7 @@
     const setWord = (i) => { if (my === gen && trackWords && i !== st.w) { st.w = i; highlight(); } };
     const u = TTS.utter(text);
     let gotBoundary = false, timer = 0, t0 = 0;
+    const rate = u.rate || Prefs.get('rate'), speed = cps(rate);   // 這一句開始時的語速與估計速度（念到一半改語速不影響這一句）
     // 優先用瀏覽器回報的字邊界；沒有回報（Chrome 的線上語音、部分 Android 語音）就依「每秒念幾個字元」估算，
     // 並用每一句實際念完的時間持續校正，所以語音比預設快或慢都會慢慢對齊
     u.onboundary = (e) => { gotBoundary = true; clearInterval(timer); const i = starts.findIndex(([a, z]) => e.charIndex >= a && e.charIndex < z); if (i >= 0) setWord(i); };
@@ -90,7 +94,7 @@
         setWord(0);
         timer = setInterval(() => {
           if (my !== gen || gotBoundary) return clearInterval(timer);
-          const pos = (Date.now() - t0) / 1000 * cps() * Prefs.get('rate');   // 目前大約念到第幾個字元
+          const pos = (Date.now() - t0) / 1000 * speed;   // 目前大約念到第幾個字元
           let i = 0; while (i + 1 < starts.length && starts[i + 1][0] <= pos) i++;
           setWord(i);
         }, 50);
@@ -99,7 +103,7 @@
     const done = () => clearInterval(timer);
     u.onend = () => {
       done();
-      if (!gotBoundary && t0 && text.length > 12) calibrate(text.length / ((Date.now() - t0) / 1000) / Prefs.get('rate'));
+      if (!gotBoundary && t0 && text.length > 12) calibrate(text.length / ((Date.now() - t0) / 1000), rate);
       if (my === gen) { st.s++; speakCurrent(); }
     };
     u.onerror = (e) => { done(); if (my === gen && e.error !== 'canceled' && e.error !== 'interrupted') stop(); };
