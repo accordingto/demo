@@ -26,7 +26,7 @@ function cleanArticle(a) {
   };
 }
 const cleanVocab = (v) => (Array.isArray(v) ? v : []).slice(0, 300).map((x) => ({
-  word: str(x?.word, 40), pos: str(x?.pos, 20), definition: str(x?.definition, 300), zh: str(x?.zh, 60), kk: str(x?.kk, 80), lemma: str(x?.lemma, 40),
+  word: str(x?.word, 40), pos: str(x?.pos, 20), definition: str(x?.definition, 300), zh: str(x?.zh, 60), kk: str(x?.kk, 160), lemma: str(x?.lemma, 40),
 })).filter((x) => x.word);
 
 const summary = (it) => ({
