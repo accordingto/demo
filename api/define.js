@@ -15,7 +15,7 @@ const SYSTEM = [
   '"lemma": the base form (e.g. "call" for "called"); same as the word if already a base form or a proper noun.',
   '"pos": the part of speech as used in the context, written as a FULL lowercase word: "noun", "verb", "adjective", "adverb", "preposition", "conjunction", "pronoun", "determiner", "interjection" or "proper noun". For an inflected form, e.g. past tense, use the word class of the base form (e.g. "verb") and mention the form in the definition.',
   'If "word" has several words (an idiom, phrasal verb or collocation), treat it as ONE expression: "lemma" is its base form, "pos" is "phrase" (or "phrasal verb" / "idiom"), and "definition" explains the whole expression as used in the context.',
-  '"kk": American KK (Kenyon & Knott) phonetic transcription of the word as given, inside square brackets, e.g. "[ˈtɛmpərətʃɚ]".',
+  '"kk": American KK (Kenyon & Knott) phonetic transcription of the word as given, inside square brackets, e.g. "[ˈtɛmpərətʃɚ]". For a multi-word expression transcribe EVERY word, separated by spaces, inside one pair of brackets, e.g. "[dɪsˈrʌpt ðə ˈstetəs kwo]".',
   '"definition": ONE short, simple English definition that fits the context (max 20 words). For an inflected form start with e.g. "past tense of call: ...". For a proper noun say what it is if you know, otherwise "a proper name".',
   '"zh": the Traditional Chinese (Taiwan) translation that fits the context, short (max 12 characters).',
 ].join('\n');
@@ -45,7 +45,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       lemma: clip(j.lemma, 40) || word.toLowerCase(),
       pos: clip(j.pos, 20),
-      kk: clip(j.kk, 60),
+      kk: clip(j.kk, 120),
       definition: clip(j.definition, 200),
       zh: clip(j.zh, 40),
     });
