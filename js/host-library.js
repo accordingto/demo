@@ -44,10 +44,23 @@ const libEntries = () => cloud
   : libLoad().map((it) => ({ id: it.id, title: it.article.title, level: it.article.level, words: it.article.wordCount, vocab: (it.vocab || []).length, ts: it.savedAt }));
 
 let libQuery = '';
+let libSort = { key: 'ts', dir: -1 };   // 排序欄位與方向（1 小到大、-1 大到小），記在瀏覽器裡
+try { const s = JSON.parse(localStorage.getItem('rc-lib-sort') || 'null'); if (s && ['title', 'level', 'words', 'vocab', 'ts'].includes(s.key)) libSort = { key: s.key, dir: s.dir === 1 ? 1 : -1 }; } catch { /* 沒有就用預設 */ }
 const fmtDate = (ts) => { try { return new Date(ts).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return ''; } };
+const COLS = [   // [排序鍵, 標題, class]
+  ['title', 'Title', 'c-t'], ['level', 'Level', 'c-level'], ['words', 'Words', 'c-num c-words'], ['vocab', 'Vocab', 'c-num c-vocab'], ['ts', 'Updated', 'c-when'],
+];
+function sortedEntries(list) {
+  const { key, dir } = libSort, val = (it) => (key === 'title' ? it.title.toLowerCase() : key === 'level' ? (it.level || '') : (it[key] || 0));
+  return list.slice().sort((x, y) => {
+    const a = val(x), b = val(y);
+    if (key === 'level' && (!a || !b) && a !== b) return a ? -1 : 1;   // 沒有等級（貼上的文章）一律排最後
+    return (typeof a === 'string' ? a.localeCompare(b) : a - b) * dir || x.title.localeCompare(y.title);
+  });
+}
 function renderLib() {
   const all = libEntries(), local = libLoad();
-  const q = libQuery.trim().toLowerCase(), l = q ? all.filter((it) => it.title.toLowerCase().includes(q)) : all;
+  const q = libQuery.trim().toLowerCase(), l = sortedEntries(q ? all.filter((it) => it.title.toLowerCase().includes(q)) : all);
   $('libCount').textContent = cloud && cloudErr ? '–' : all.length;
   $('tbLibCount').textContent = all.length; $('tbLibCount').dataset.n = cloud && cloudErr ? 0 : all.length;
   $('libSub').textContent = cloud ? 'Cloud · any device' : 'Saved in this browser';
@@ -57,14 +70,26 @@ function renderLib() {
   $('libUpload').classList.toggle('hidden', !(cloud && local.length));
   $('libDiag').classList.toggle('hidden', cloud); // 還沒啟用雲端時，提供「檢查雲端設定」
   $('libUpload').textContent = `Upload ${REL(local.length)} from this browser`;
-  if (cloud && cloudErr) { $('libList').innerHTML = `<li class="empty-state"><strong>Could not load the library</strong>${esc(cloudErr)}</li>`; return; }
-  $('libList').innerHTML = l.length ? l.map((it) =>
-    `<li class="libcard" data-id="${esc(it.id)}"><div class="t">${esc(it.title)}</div>` +
-    `<div class="chips2">${it.level ? `<span class="chip lv">${esc(it.level)}</span>` : '<span class="chip">Pasted</span>'}<span class="chip">${it.words || 0} words</span><span class="chip">${it.vocab} vocab</span></div>` +
-    `<div class="when">${cloud ? 'Updated' : 'Saved'} ${fmtDate(it.ts)}</div>` +
-    '<div class="b"><button type="button" class="grow" data-act="open">Open</button><button type="button" class="secondary" data-act="edit">Edit</button><button type="button" class="secondary" data-act="copy">Copy link</button><button type="button" class="secondary danger" data-act="del" aria-label="Delete">Delete</button></div></li>'
-  ).join('') : (q ? `<li class="empty-state"><strong>No matches</strong>Nothing in your library matches “${esc(libQuery)}”.</li>` : '<li class="empty-state"><strong>No saved articles yet</strong>Create an article and press Save (or just add a word — it saves automatically).</li>');
+  $('libSortSel').value = `${libSort.key}:${libSort.dir}`;
+  if (cloud && cloudErr) { $('libList').innerHTML = `<div class="empty-state"><strong>Could not load the library</strong>${esc(cloudErr)}</div>`; return; }
+  if (!l.length) { $('libList').innerHTML = q ? `<div class="empty-state"><strong>No matches</strong>Nothing in your library matches “${esc(libQuery)}”.</div>` : '<div class="empty-state"><strong>No saved articles yet</strong>Create an article and press Save (or just add a word — it saves automatically).</div>'; return; }
+  const th = COLS.map(([k, label, cls]) => `<th class="${cls}" aria-sort="${libSort.key === k ? (libSort.dir === 1 ? 'ascending' : 'descending') : 'none'}"><button type="button" class="sortbtn${libSort.key === k ? ' on' : ''}" data-sort="${k}" title="Sort by ${label}">${label}<span class="arr" aria-hidden="true">${libSort.key === k ? (libSort.dir === 1 ? '▲' : '▼') : '↕'}</span></button></th>`).join('');
+  const rows = l.map((it) =>
+    `<tr data-id="${esc(it.id)}"><td class="c-t"><div class="t" title="Double-click to open">${esc(it.title)}</div><div class="sub">${it.level ? esc(it.level) + ' · ' : ''}${it.words || 0} words · ${it.vocab} vocab · ${fmtDate(it.ts)}</div></td>` +
+    `<td class="c-level">${it.level ? `<span class="chip lv">${esc(it.level)}</span>` : '<span class="chip">Pasted</span>'}</td>` +
+    `<td class="c-num c-words">${(it.words || 0).toLocaleString()}</td><td class="c-num c-vocab">${it.vocab}</td>` +
+    `<td class="c-when">${fmtDate(it.ts)}</td>` +
+    '<td class="c-act"><div class="acts"><button type="button" class="act primary" data-act="open">Open</button><button type="button" class="act" data-act="edit">Edit</button><button type="button" class="act" data-act="copy">Copy link</button><button type="button" class="act danger" data-act="del" aria-label="Delete">Delete</button></div></td></tr>'
+  ).join('');
+  $('libList').innerHTML = `<table class="libtable"><thead><tr>${th}<th class="c-act"><span class="sr">Actions</span></th></tr></thead><tbody>${rows}</tbody></table>` +
+    `<div class="libfoot">${l.length} article${l.length === 1 ? '' : 's'}${q ? ` matching “${esc(libQuery)}”` : ''} · double-click a title to open it</div>`;
 }
+function setSort(key, dir) {
+  libSort = { key, dir: dir ?? (libSort.key === key ? -libSort.dir : (key === 'title' || key === 'level' ? 1 : -1)) };   // 再按同一欄 = 反向；新的一欄：文字由小到大、數字與日期由大到小
+  try { localStorage.setItem('rc-lib-sort', JSON.stringify(libSort)); } catch { /* 存不了就算了 */ }
+  renderLib();
+}
+$('libSortSel').addEventListener('change', (e) => { const [k, d] = e.target.value.split(':'); setSort(k, +d); });
 $('libSearch').addEventListener('input', (e) => { libQuery = e.target.value; renderLib(); });
 $('code').addEventListener('change', () => { if (cloud) refreshCloud(); });
 
@@ -147,9 +172,19 @@ $('save').addEventListener('click', async () => {
 });
 
 // ---- 清單上的按鈕：開啟 / 編輯 / 複製連結 / 刪除 ----
+let lastTitleTap = { id: '', t: 0 };
 $('libList').addEventListener('click', async (e) => {
+  const sb = e.target.closest('button[data-sort]'); if (sb) return setSort(sb.dataset.sort);
+  const title = e.target.closest('.t');   // 標題連點兩下 = 開啟（自己計時，iPad 的 dblclick 不可靠）
+  if (title) {
+    const tid = title.closest('tr').dataset.id, now = Date.now();
+    if (lastTitleTap.id === tid && now - lastTitleTap.t < 500) { lastTitleTap = { id: '', t: 0 }; getSelection()?.removeAllRanges(); return openFromLibrary(tid, 'open'); }
+    lastTitleTap = { id: tid, t: now }; return;
+  }
   const btn = e.target.closest('button[data-act]'); if (!btn) return;
-  const id = btn.closest('li').dataset.id, act = btn.dataset.act;
+  openFromLibrary(btn.closest('tr').dataset.id, btn.dataset.act, btn);
+});
+async function openFromLibrary(id, act, btn) {
   const afterOpen = () => {
     if (act === 'edit') startEdit();   // 開啟後 render() 已切到 Article 畫面
   };
@@ -162,7 +197,7 @@ $('libList').addEventListener('click', async (e) => {
         afterOpen();
       } else if (act === 'copy') copyText(shortLink(id), btn, 'Copy link');
       else if (act === 'del') {
-        const title = btn.closest('li').querySelector('.t').textContent;
+        const title = document.querySelector(`#libList tr[data-id="${CSS.escape(id)}"] .t`)?.textContent || '';
         if (!confirm(`Delete “${title}” from the cloud library?\nIts share link will stop working for everyone.`)) return;
         await cloudCall({ action: 'delete', id });
         if (currentLibId === id) currentLibId = null;
@@ -178,7 +213,7 @@ $('libList').addEventListener('click', async (e) => {
       libStore(l.filter((x) => x.id !== id)); renderLib();
     }
   } catch (err) { $('libMsg').textContent = '❌ ' + err.message; }
-});
+}
 
 // ---- 雲端設定檢查 / 上傳本機文章 ----
 // 列出伺服器找到的相關環境變數「名稱」與連線測試（需存取碼，不會顯示任何值）
