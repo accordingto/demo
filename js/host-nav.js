@@ -38,10 +38,21 @@ $('navClose').addEventListener('click', closeNav);
 $('scrim').addEventListener('click', closeNav);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('nav-open')) closeNav(); });
 window.addEventListener('popstate', () => showView(location.hash.slice(1) || 'library', { push: false }));
+// ---- 收合側邊欄（桌機）：只留圖示；狀態記在瀏覽器裡 ----
+function setSideMini(on, save = true) {
+  document.body.classList.toggle('side-mini', on);
+  const t = $('sideToggle'); t.setAttribute('aria-expanded', String(!on)); t.title = t.ariaLabel = on ? 'Expand menu' : 'Collapse menu';
+  document.querySelectorAll('#sidebar .nav-item').forEach((b) => { const l = b.querySelector('.nav-label'); if (on && l) b.title = l.firstChild.textContent.trim(); else b.removeAttribute('title'); });   // 只剩圖示時用提示文字說明
+  document.querySelector('.side-foot label').title = on ? 'Access code' : '';
+  if (save) { try { localStorage.setItem('rc-side-mini', on ? '1' : '0'); } catch { /* 存不了就算了 */ } }
+}
+$('sideToggle').addEventListener('click', () => setSideMini(!document.body.classList.contains('side-mini')));
+document.querySelector('.side-foot label').addEventListener('click', () => { if (document.body.classList.contains('side-mini')) { setSideMini(false); setTimeout(() => $('code').focus(), 250); } });   // 收合時點鑰匙：展開並輸入存取碼
+try { if (localStorage.getItem('rc-side-mini') === '1') setSideMini(true, false); } catch { /* 沒有就維持展開 */ }
 // 需要存取碼時：窄螢幕打開抽屜，並把游標放到存取碼欄位
 function askForCode() {
   if (matchMedia('(max-width:1279px)').matches) { closeNav(); $('codeQuick').value = $('code').value; $('codePop').classList.remove('hidden'); $('tbKey').setAttribute('aria-expanded', 'true'); setTimeout(() => $('codeQuick').focus(), 100); }
-  else setTimeout(() => $('code').focus(), 100);
+  else { if (document.body.classList.contains('side-mini')) setSideMini(false); setTimeout(() => $('code').focus(), 100); }
 }
 
 // 設定視窗開啟時（點齒輪），順便收起抽屜

@@ -32,7 +32,7 @@ body.nav-open #scrim { opacity:1; pointer-events:auto; }
 body.nav-open { overflow:hidden; }
 
 @media (min-width:1280px) {
-  .app { display:grid; grid-template-columns:260px minmax(0,1fr); }
+  .app { display:grid; grid-template-columns:var(--side-w, 260px) minmax(0,1fr); transition:grid-template-columns .22s ease; }
   #sidebar { position:sticky; top:0; height:100vh; width:auto; transform:none; visibility:visible; box-shadow:none; z-index:1; }
   #topbar, #scrim, .nav-close { display:none; }
   .content { padding:32px 36px 72px; }
@@ -45,6 +45,26 @@ body.nav-open { overflow:hidden; }
 .nav-close { width:40px; min-height:40px; padding:0; background:transparent; color:var(--muted); border:0; border-radius:10px; place-items:center; }
 .nav-close { display:grid; }
 @media (min-width:1280px) { .nav-close { display:none; } }
+/* 收合側邊欄（只在桌機；窄螢幕本來就是抽屜）：只留圖示，滑過會有提示文字 */
+.side-toggle { display:none; width:36px; min-height:36px; padding:0; place-items:center; color:var(--muted); background:transparent; border:1px solid var(--line); border-radius:10px; }
+.side-toggle:hover { color:var(--accent); border-color:var(--accent); }
+.side-toggle .ic { transition:transform .22s; }
+@media (min-width:1280px) {
+  .side-toggle { display:grid; }
+  .nav-item { position:relative; }
+  body.side-mini { --side-w:76px; }
+  body.side-mini #sidebar { padding-left:10px; padding-right:10px; overflow-x:hidden; }
+  body.side-mini .brand { flex-direction:column; gap:10px; padding:4px 0 12px; }
+  body.side-mini .brand-name, body.side-mini .nav-label, body.side-mini .nav-sep, body.side-mini .side-foot small, body.side-mini .side-foot input { display:none; }
+  body.side-mini .side-toggle .ic { transform:rotate(180deg); }
+  body.side-mini .nav-item { justify-content:center; padding:8px 0; min-height:48px; }
+  body.side-mini .badge { position:absolute; top:2px; right:2px; min-width:18px; padding:0 5px; font-size:.64rem; line-height:16px; }
+  body.side-mini .gear { margin-top:6px; border-top:1px solid var(--line); border-radius:0 0 12px 12px; }
+  body.side-mini .side-foot { padding:0; background:transparent; border:0; }
+  body.side-mini .side-foot label { justify-content:center; width:100%; min-height:48px; border-radius:12px; cursor:pointer; font-size:0; gap:0; }
+  body.side-mini .side-foot label .ic { width:22px; height:22px; }
+  body.side-mini .side-foot label:hover { background:var(--hover); color:var(--accent); }
+}
 .nav { display:flex; flex-direction:column; gap:4px; }
 .nav-item { display:flex; align-items:center; gap:12px; width:100%; min-height:52px; padding:8px 12px; text-align:left; font-weight:600; font-size:.95rem; color:var(--ink); background:transparent; border:1px solid transparent; border-radius:12px; }
 .nav-item:hover { background:var(--hover); }
