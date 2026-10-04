@@ -77,7 +77,7 @@
 各 host 模組之間的函式只在**執行時**互相呼叫；但 `Vocab.init` 一執行就會呼叫 `onChange(syncLib)`，所以放在最後載入的 `host-main.js`。
 
 ### 主持人頁的導覽（`host-nav.js`、`css/app.css`）
-- **三個畫面** `section.view[data-view]`：`create`／`read`／`library`；`showView(v)` 切換（還沒有文章時 `read` 會退回 `create`）並更新側邊欄、上方列標題與網址 `#v`（`pushState`，所以上一頁可用）。**Create 的三個頁面** `[data-panel]`：`gen`（首頁：主題＋產生＋兩張入口卡）／`paste`／`link`（子頁面，有 Back 鈕），由 `showTab(t)` 切換（入口卡與 Back 鈕用 `data-goto-tab`）。
+- **三個畫面** `section.view[data-view]`：`create`／`read`／`library`；`showView(v)` 切換（還沒有文章時 `read` 會退回 `create`）並更新側邊欄、上方列標題與網址 `#v`（`pushState`，所以上一頁可用）。**Create 的三個頁面** `[data-panel]`：`gen`（首頁：主題＋產生＋兩張入口卡）／`paste`／`link`（子頁面，有 Back 鈕），由 `showTab(t)` 切換（選擇卡與 Back 鈕用 `data-goto-tab`）。
 - **上方列的快速圖示**（`.tb-btn`）與側邊欄項目共用 `data-view`，同一個點擊處理；🔑 開啟 `#codePop`（`#codeQuick` 與 `#code` 雙向同步）；⚙ 是 `.gear`（`settings.js` 綁定所有 `.gear`）。
 - **側邊欄與抽屜是同一個元素 `#sidebar`**：≥ 1280px 是 sticky 欄；< 1280px 是 `position:fixed` 抽屜（`body.nav-open` 控制，`#scrim` 為遮罩）。上方列 `#topbar` 只在 < 1280px 顯示。
 - 其他模組呼叫導覽的方式：`render()` → `showView('read')` 並 `updateNavArticle(title)`；`openPaste()` → `showView('create'); showTab('paste')`；缺存取碼時 `askForCode()`（窄螢幕打開抽屜並對焦）。

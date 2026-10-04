@@ -1,4 +1,4 @@
-// 主持人頁的導覽：三個畫面（create／read／library）、Create 的三個分頁（gen／paste／link）、手機與平板的側邊欄抽屜
+// 主持人頁的導覽：三個畫面（create／read／library）、Create 的四個步驟（choose 選擇方式／gen／paste／link）、手機與平板的側邊欄抽屜
 // 需先載入 util.js；host.js 的 current（目前文章）與 host-library.js 的 cloud／refreshCloud 在執行時才使用
 let view = 'create';
 const VIEW_TITLES = { create: 'Create', read: 'Article', library: 'Library' };   // 上方列的標題固定，不隨文章標題變動
@@ -30,7 +30,8 @@ function updateNavArticle(title) { $('navArticle').textContent = title || 'No ar
 const openNav = () => { document.body.classList.add('nav-open'); $('navOpen').setAttribute('aria-expanded', 'true'); };
 function closeNav() { document.body.classList.remove('nav-open'); $('navOpen').setAttribute('aria-expanded', 'false'); }
 
-document.querySelectorAll('button[data-view]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.view === 'create') showTab('gen'); showView(b.dataset.view); closeCodePop(); }));
+document.querySelectorAll('button[data-view]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.view === 'create') showTab('choose');   // 回到 Create 一律從「選擇方式」開始
+     showView(b.dataset.view); closeCodePop(); }));
 document.querySelectorAll('[data-goto-tab]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.gotoTab)));
 $('navOpen').addEventListener('click', openNav);
 $('navClose').addEventListener('click', closeNav);

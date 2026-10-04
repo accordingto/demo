@@ -82,9 +82,24 @@
     <main class="content">
       <!-- ① Create：首頁只有「主題 → 產生」；貼上文字、從網址匯入是兩張入口卡，點進去是各自的頁面 -->
       <section id="viewCreate" class="view" data-view="create">
-        <div class="home" data-panel="gen">
+        <!-- 第一步：先問要用哪一種方式 -->
+        <div class="home choose" data-panel="choose">
           <div class="hero2">
-            <span class="eyebrow"><svg class="ic"><use href="#i-create"/></svg>AI reading club</span>
+            <span class="eyebrow"><svg class="ic"><use href="#i-create"/></svg>New article</span>
+            <h1>How do you want to start?</h1>
+            <p>Pick one — you’ll only see what that option needs.</p>
+          </div>
+          <div class="choices">
+            <button type="button" class="choice" data-goto-tab="paste"><span class="tile"><svg class="ic"><use href="#i-paste"/></svg></span><strong>Paste text</strong><span class="cd">Use any English article you already have.</span><span class="tag">No access code needed</span></button>
+            <button type="button" class="choice" data-goto-tab="link"><span class="tile"><svg class="ic"><use href="#i-link"/></svg></span><strong>From a link</strong><span class="cd">We pull the main text out of a web page.</span><span class="tag">Needs access code</span></button>
+            <button type="button" class="choice" data-goto-tab="gen"><span class="tile"><svg class="ic"><use href="#i-create"/></svg></span><strong>AI generate</strong><span class="cd">Type a topic and we’ll write an article at your level.</span><span class="tag">Needs access code</span></button>
+          </div>
+        </div>
+
+        <!-- AI generate（子頁面）-->
+        <div class="home hidden" data-panel="gen">
+          <div class="subhead plain"><button type="button" class="back" data-goto-tab="choose"><svg class="ic"><use href="#i-back"/></svg><span>Back</span></button></div>
+          <div class="hero2">
             <h1>What do you want to read about?</h1>
             <p>Type a topic and we’ll write an article at your level.</p>
           </div>
@@ -122,17 +137,11 @@
             </div>
             <div id="status" class="msg" role="status"></div>
           </form>
-
-          <div class="or"><span>or start from something you already have</span></div>
-          <div class="sources">
-            <button type="button" class="source" data-goto-tab="paste"><span class="tile"><svg class="ic"><use href="#i-paste"/></svg></span><span class="st"><strong>Paste text</strong><span>Use any English article you already have</span></span><svg class="ic go"><use href="#i-arrow"/></svg></button>
-            <button type="button" class="source" data-goto-tab="link"><span class="tile"><svg class="ic"><use href="#i-link"/></svg></span><span class="st"><strong>Import from a link</strong><span>We pull the main text out of a web page</span></span><svg class="ic go"><use href="#i-arrow"/></svg></button>
-          </div>
         </div>
 
         <!-- Paste text（子頁面）-->
         <section id="pastePanel" class="card panel hidden" data-panel="paste">
-          <div class="subhead"><button type="button" class="back" data-goto-tab="gen"><svg class="ic"><use href="#i-back"/></svg><span>Back</span></button><h2>Paste text</h2><span class="meta" id="pasteInfo">0 words</span></div>
+          <div class="subhead"><button type="button" class="back" data-goto-tab="choose"><svg class="ic"><use href="#i-back"/></svg><span>Back</span></button><h2>Paste text</h2><span class="meta" id="pasteInfo">0 words</span></div>
           <input type="text" id="pasteTitle" maxlength="120" placeholder="Title (optional)" autocomplete="off">
           <textarea id="pasteBody" placeholder="Paste or type an English article here…" spellcheck="false"></textarea>
           <details class="more"><summary>More options</summary>
@@ -156,7 +165,7 @@
 
         <!-- From a link（子頁面）-->
         <section id="linkPanel" class="panel hidden" data-panel="link">
-          <div class="subhead plain"><button type="button" class="back" data-goto-tab="gen"><svg class="ic"><use href="#i-back"/></svg><span>Back</span></button></div>
+          <div class="subhead plain"><button type="button" class="back" data-goto-tab="choose"><svg class="ic"><use href="#i-back"/></svg><span>Back</span></button></div>
           <div class="linkhero card">
             <div class="linkicon" aria-hidden="true"><svg class="ic"><use href="#i-link"/></svg></div>
             <h2>Import an article from a link</h2>
