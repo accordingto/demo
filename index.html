@@ -46,9 +46,9 @@
       <button type="button" class="nav-close" id="navClose" aria-label="Close menu"><svg class="ic"><use href="#i-close"/></svg></button>
     </div>
     <nav class="nav" aria-label="Sections">
-      <button type="button" class="nav-item" data-view="create"><svg class="ic"><use href="#i-create"/></svg><span class="nav-label">Create<small>Generate, paste or import</small></span></button>
-      <button type="button" class="nav-item" data-view="read" id="navRead" disabled><svg class="ic"><use href="#i-book"/></svg><span class="nav-label">Article<small id="navArticle">No article yet</small></span></button>
       <button type="button" class="nav-item" data-view="library" id="libBtn"><svg class="ic"><use href="#i-library"/></svg><span class="nav-label">Library<small id="libSub">Saved articles</small></span><span class="badge" id="libCount">0</span></button>
+      <button type="button" class="nav-item" data-view="read" id="navRead" disabled><svg class="ic"><use href="#i-book"/></svg><span class="nav-label">Article<small id="navArticle">No article yet</small></span></button>
+      <button type="button" class="nav-item" data-view="create"><svg class="ic"><use href="#i-create"/></svg><span class="nav-label">Create<small>Generate, paste or import</small></span></button>
     </nav>
     <div class="nav-sep"></div>
     <button type="button" class="nav-item gear" aria-haspopup="dialog" aria-expanded="false"><svg class="ic"><use href="#i-gear"/></svg><span class="nav-label">Reading settings<small>Theme, font, voice…</small></span></button>
@@ -66,9 +66,9 @@
       <div class="tb-title" id="tbTitle">Create</div>
       <!-- 快速圖示：和選單裡的項目一一對應，點一下直接前往 -->
       <div class="tb-actions" role="toolbar" aria-label="Quick actions">
-        <button type="button" class="iconbtn plain tb-btn" data-view="create" aria-label="Create" title="Create"><svg class="ic"><use href="#i-create"/></svg></button>
-        <button type="button" class="iconbtn plain tb-btn" data-view="read" id="tbRead" aria-label="Article" title="Article" disabled><svg class="ic"><use href="#i-book"/></svg></button>
         <button type="button" class="iconbtn plain tb-btn" data-view="library" aria-label="Library" title="Library"><svg class="ic"><use href="#i-library"/></svg><span class="tb-badge" id="tbLibCount">0</span></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="read" id="tbRead" aria-label="Article" title="Article" disabled><svg class="ic"><use href="#i-book"/></svg></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="create" aria-label="Create" title="Create"><svg class="ic"><use href="#i-create"/></svg></button>
         <button type="button" class="iconbtn plain tb-btn" id="tbKey" aria-label="Access code" title="Access code" aria-haspopup="dialog" aria-expanded="false"><svg class="ic"><use href="#i-key"/></svg></button>
         <button type="button" class="iconbtn plain tb-btn gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings"><svg class="ic"><use href="#i-gear"/></svg></button>
       </div>

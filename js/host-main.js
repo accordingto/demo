@@ -32,5 +32,5 @@ for (const ev of ['input', 'change']) $('form').addEventListener(ev, syncOptSumm
 syncOptSummary();
 
 // 起始畫面：Create（網址是 #library 就直接開文章庫）
-showView(location.hash.slice(1) === 'library' ? 'library' : 'create', { push: false });
+showView(location.hash.slice(1) === 'create' ? 'create' : 'library', { push: false });   // 預設進入 Library
 try { history.replaceState({ v: view }, '', '#' + view); } catch { /* 忽略 */ }

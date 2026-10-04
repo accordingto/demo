@@ -36,7 +36,7 @@ $('navOpen').addEventListener('click', openNav);
 $('navClose').addEventListener('click', closeNav);
 $('scrim').addEventListener('click', closeNav);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('nav-open')) closeNav(); });
-window.addEventListener('popstate', () => showView(location.hash.slice(1) || 'create', { push: false }));
+window.addEventListener('popstate', () => showView(location.hash.slice(1) || 'library', { push: false }));
 // 需要存取碼時：窄螢幕打開抽屜，並把游標放到存取碼欄位
 function askForCode() {
   if (matchMedia('(max-width:1279px)').matches) { closeNav(); $('codeQuick').value = $('code').value; $('codePop').classList.remove('hidden'); $('tbKey').setAttribute('aria-expanded', 'true'); setTimeout(() => $('codeQuick').focus(), 100); }
