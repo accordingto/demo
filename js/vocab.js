@@ -9,10 +9,13 @@
   const posLabel = (p) => { const k = String(p || '').trim().toLowerCase().replace(/\.$/, ''); return k ? `(${POS_FULL[k] || k})` : ''; };
 
   // ---- 點字發音（語音合成的設定與共用部分在 js/tts.js；設定可關閉）----
-  function speak(text, force) {   // force：設定視窗的測試，不管開關
-    if (!TTS.canSpeak || (!force && !Prefs.get('speak'))) return;
+  function speak(text, force, onDone) {   // force：設定視窗的測試，不管開關；onDone：念完（或被打斷）時呼叫。回傳有沒有開始念
+    if (!TTS.canSpeak || (!force && !Prefs.get('speak'))) return false;
     window.ReadAloud?.stop();     // 點字時，正在朗讀的段落先停止
-    TTS.say(TTS.utter(text));
+    const u = TTS.utter(text);
+    if (onDone) u.onend = u.onerror = onDone;
+    TTS.say(u);
+    return true;
   }
 
   const clean = (raw) => raw.toLowerCase().replace(/[’‘]/g, "'").replace(/^[^a-z]+|[^a-z]+$/g, '').replace(/\s+/g, ' ');
@@ -249,12 +252,12 @@
   }
 
   // 點單字卡 → 文章捲到這個字出現的位置（桌機／寬螢幕；窄螢幕的單字表在文章下面，不捲）。同一張卡再點一次 = 跳到下一個出現的位置
-  let jump = { key: '', i: -1 };
-  function jumpTo(v) {
+  let jump = { key: '', i: -1, prev: -1 };   // prev：這次跳之前停在第幾個（連點兩下時要退回去）
+  function jumpTo(v, back) {
     if (floatingMode()) return;
     const marks = marksOf(v); if (!marks.length) return;
-    const key = v.word.toLowerCase();
-    jump = { key, i: jump.key === key ? (jump.i + 1) % marks.length : 0 };
+    const key = v.word.toLowerCase(), same = jump.key === key;
+    jump = back && same ? { key, i: jump.prev >= 0 ? jump.prev : jump.i, prev: -1 } : { key, i: same ? (jump.i + 1) % marks.length : 0, prev: same ? jump.i : -1 };
     const r = marks[jump.i].getBoundingClientRect();
     window.scrollTo({ top: Math.max(0, scrollY + r.top - Math.max(stickyTop() + 12, innerHeight * 0.35)), behavior: 'smooth' });   // 放在畫面上方三分之一處，前後文也看得到
   }
@@ -285,6 +288,14 @@
     pb.addEventListener('mousedown', (e) => e.preventDefault());   // 不要因為按按鈕而取消選取
     pb.addEventListener('click', () => { const t = phraseText; hidePhrase(); getSelection()?.removeAllRanges(); if (t) { closeAll(); addWord(t, true); } });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePhrase(); });
+  }
+
+  // 單字卡連點兩下 → 念出這個字目前指向的那一句（文章中的那個位置），念的時候那一句有底色
+  function speakSentenceOf(v) {
+    const marks = marksOf(v), se = marks[jump.key === v.word.toLowerCase() ? jump.i : 0]?.closest('.s');
+    if (!se) return speak(v.word);
+    const text = se.textContent.replace(/\s+/g, ' ').trim();
+    if (speak(text, false, () => se.classList.remove('speaking'))) se.classList.add('speaking');   // speak() 會先停掉朗讀（並清掉標示），所以念完開頭再加底色
   }
 
   // ---- 事件 ----
@@ -319,7 +330,8 @@
       setTimeout(() => tapEffect(wordIdx), 0);   // 等這次點擊的處理（可能重畫文章）完成後再播放
     });
     bindPhraseSelection();
-    // 點單字表的卡片：發音、展開這張並收起其他張，文章中這個字換成橘色（不移動畫面、不標整句）
+    // 點單字表的卡片：發音、展開這張並收起其他張，文章中這個字換成橘色、文章捲到這個字；連點兩下 → 念這個字所在的句子
+    let tapCard = { key: '', t: 0 };
     $('vocabList').addEventListener('click', (e) => {
       const del = e.target.closest('.del');
       if (del) {
@@ -328,10 +340,13 @@
       }
       const li = e.target.closest('li[data-w]'); const v = li && byKey(li.dataset.w); if (!v) return;
       const retry = li.matches('li.fail, li.partial.open');   // 查詢失敗或缺資訊 → 點一下重查
-      speak(v.word);
+      const dbl = tapCard.key === v.word && Date.now() - tapCard.t < 500;   // 短時間內連點同一張卡 = 連點兩下（自己計時，iPad 的 dblclick 不可靠）
+      tapCard = dbl ? { key: '', t: 0 } : { key: v.word, t: Date.now() };
+      if (!dbl) speak(v.word);
       hidePop(); reveal(v, true); highlight(v);   // reveal(pin) 會收起其他卡片
       renderVocab();
-      jumpTo(v);
+      jumpTo(v, dbl);   // 連點的第一下已經跳到下一個位置了：第二下退回原本停的那一處，並念那一處的句子
+      if (dbl) speakSentenceOf(v);
       if (retry) fillWord(v);
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && active) clearActive(); });   // Esc：清除強調色
