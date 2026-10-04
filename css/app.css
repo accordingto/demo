@@ -273,4 +273,8 @@ body.nav-open { overflow:hidden; }
 .back:hover { border-color:var(--accent); color:var(--accent); }
 .more { margin-top:12px; }
 .more summary { cursor:pointer; font-size:.88rem; font-weight:600; padding:6px 0; color:var(--accent); }
-.home > .subhead.plain { margin-bottom:14px; }
+
+.hero2.inpanel { margin:6px 0 22px; }
+.hero2.inpanel h1 { font-size:clamp(1.5rem, 4vw, 2.1rem); }
+.hero2.inpanel p { font-size:.98rem; }
+.hero2.inpanel::before { display:none; }
