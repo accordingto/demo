@@ -60,7 +60,7 @@ body.nav-open { overflow:hidden; }
   body.side-mini .side-toggle .ic { transform:rotate(180deg); }
   body.side-mini .nav-item { justify-content:center; padding:8px 0; min-height:48px; }
   body.side-mini .badge { position:absolute; top:2px; right:2px; min-width:18px; padding:0 5px; font-size:.64rem; line-height:16px; }
-  body.side-mini .gear { margin-top:6px; border-top:1px solid var(--line); border-radius:0 0 12px 12px; }
+  body.side-mini #sidebar .gear { margin-top:6px; border-top:1px solid var(--line); border-radius:0 0 12px 12px; }
   body.side-mini .side-foot { padding:0; background:transparent; border:0; }
   body.side-mini .side-foot label { justify-content:center; width:100%; min-height:48px; border-radius:12px; cursor:pointer; font-size:0; gap:0; }
   body.side-mini .side-foot label .ic { width:22px; height:22px; }
