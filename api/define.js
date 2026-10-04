@@ -14,6 +14,7 @@ const SYSTEM = [
   '{"lemma": string, "pos": string, "kk": string, "definition": string, "zh": string}',
   '"lemma": the base form (e.g. "call" for "called"); same as the word if already a base form or a proper noun.',
   '"pos": the part of speech as used in the context, written as a FULL lowercase word: "noun", "verb", "adjective", "adverb", "preposition", "conjunction", "pronoun", "determiner", "interjection" or "proper noun". For an inflected form, e.g. past tense, use the word class of the base form (e.g. "verb") and mention the form in the definition.',
+  'If "word" has several words (an idiom, phrasal verb or collocation), treat it as ONE expression: "lemma" is its base form, "pos" is "phrase" (or "phrasal verb" / "idiom"), and "definition" explains the whole expression as used in the context.',
   '"kk": American KK (Kenyon & Knott) phonetic transcription of the word as given, inside square brackets, e.g. "[ˈtɛmpərətʃɚ]".',
   '"definition": ONE short, simple English definition that fits the context (max 20 words). For an inflected form start with e.g. "past tense of call: ...". For a proper noun say what it is if you know, otherwise "a proper name".',
   '"zh": the Traditional Chinese (Taiwan) translation that fits the context, short (max 12 characters).',
@@ -25,7 +26,7 @@ module.exports = async function handler(req, res) {
 
   const body = readBody(req);
   const word = String(body.word ?? '').replace(/\s+/g, ' ').trim();
-  if (!/^[A-Za-z][A-Za-z'’ -]{0,39}$/.test(word)) return res.status(400).json({ error: 'Please enter a single English word (letters only, max 40 characters)' });
+  if (!/^[A-Za-z][A-Za-z'’ -]{0,39}$/.test(word)) return res.status(400).json({ error: 'Please enter an English word or short phrase (letters only, max 40 characters)' });
   const context = String(body.context ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many lookups. Please wait a minute.' });
 

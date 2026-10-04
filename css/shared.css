@@ -124,3 +124,8 @@ html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 橫放時不
 #wordPop .pclose { position:absolute; top:6px; right:6px; width:40px; height:40px; min-height:0; padding:0; background:none; border:0; color:var(--muted); font-size:1.6rem; line-height:1; }
 @keyframes popUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
 @media print { #wordPop { display:none !important; } }
+
+/* 選取文章中的幾個字後浮出的「加入片語」按鈕 */
+#phraseBtn { position:fixed; z-index:9991; min-height:38px; padding:0 16px; border-radius:999px; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); font:inherit; font-weight:700; font-size:.9rem; cursor:pointer; box-shadow:0 8px 22px rgba(var(--accent-rgb), .35); }
+#phraseBtn.hidden { display:none; }
+@media print { #phraseBtn { display:none; } }

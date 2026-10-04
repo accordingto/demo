@@ -22,7 +22,8 @@
     return out;
   }
   const byKey = (k) => items.find((x) => x.word.toLowerCase() === k);   // 以小寫單字找項目
-  const findItem = (w) => items.find((v) => stems(w).includes(v.word.toLowerCase()));
+  const isPhrase = (w) => /\s/.test(w);
+  const findItem = (w) => (isPhrase(w) ? byKey(w) : items.find((v) => stems(w).includes(v.word.toLowerCase())));
 
   // ---- 在主文章上標示：段落 → 句子 span.s → 每個字 span.w（供點擊／雙擊／朗讀標示），已加入的字用底色標示（含變化形）----
   let frozen = false; // 就地編輯期間暫停重畫文章（避免打字時內容被覆蓋）
@@ -54,13 +55,26 @@
     const el = $('bodyText'); if (!el || frozen) return;
     const keys = new Set();
     items.forEach((v) => { keys.add(v.word.toLowerCase()); if (v.lemma) keys.add(v.lemma.toLowerCase()); });
-    const wrap = (t, urls) => {
+    const phrases = items.filter((v) => isPhrase(v.word)).map((v) => ({ key: v.word.toLowerCase(), ws: v.word.toLowerCase().split(' ') }));
+    // 片語：在一個句子的字裡找連續符合的字，回傳 { 字的位置: 片語 }（中間只能隔空白、逗號、引號、連字號）
+    const phraseMap = (toks) => {
+      const map = {}, at = toks.map((t, i) => (i % 2 ? i : -1)).filter((i) => i >= 0);
+      phrases.forEach(({ key, ws }) => {
+        for (let a = 0; a + ws.length <= at.length; a++) {
+          if (ws.every((w, j) => { const t = clean(toks[at[a + j]]); return t === w || stems(t).includes(w); }) &&
+              ws.every((_, j) => j === 0 || /^[\s,;:"“”()-]*$/.test(toks[at[a + j] - 1]))) ws.forEach((_, j) => { map[at[a + j]] = key; });
+        }
+      });
+      return map;
+    };
+    const wrap = (t, urls, pk) => {
       if (!/^[A-Za-z]/.test(t)) return esc(t).replace(/(\d+)/g, (_, i) => linkHtml(urls[+i]));
+      if (pk) return `<mark class="vh w" data-k="${esc(pk)}">${esc(t)}</mark>`;
       return stems(clean(t)).some((k) => keys.has(k)) ? `<mark class="vh w">${esc(t)}</mark>` : `<span class="w">${esc(t)}</span>`;
     };
     el.innerHTML = bodyParas().map((p) => {
       const { urls, sents } = splitParagraph(p);
-      return `<p><button type="button" class="pread"></button>${sents.map((st) => `<span class="s">${st.split(/([A-Za-z][A-Za-z’'-]*)/).map((t) => wrap(t, urls)).join('')}</span>`).join('')}</p>`;
+      return `<p><button type="button" class="pread"></button>${sents.map((st) => { const toks = st.split(/([A-Za-z][A-Za-z’'-]*)/), pm = phrases.length ? phraseMap(toks) : {}; return `<span class="s">${toks.map((t, i) => wrap(t, urls, pm[i])).join('')}</span>`; }).join('')}</p>`;
     }).join('');
     document.dispatchEvent(new Event('bodypainted'));   // 朗讀按鈕（js/readaloud.js）重新標示目前狀態
   }
@@ -73,7 +87,11 @@
   let active = null; // { key: 單字（小寫）, auto: 是否為暫時標示 }
   let autoTimer = 0;
   const keysOf = (v) => new Set([v.word.toLowerCase(), v.lemma ? v.lemma.toLowerCase() : ''].filter(Boolean));
-  const marksOf = (v) => { const ks = keysOf(v); return [...document.querySelectorAll('#bodyText mark.vh')].filter((m) => stems(clean(m.textContent)).some((k) => ks.has(k))); };
+  const marksOf = (v) => {
+    const all = [...document.querySelectorAll('#bodyText mark.vh')];
+    if (isPhrase(v.word)) return all.filter((m) => m.dataset.k === v.word.toLowerCase());
+    const ks = keysOf(v); return all.filter((m) => stems(clean(m.textContent)).some((k) => ks.has(k)));
+  };
   const activeItem = () => (active ? byKey(active.key) : null);
   function applyActive() {
     document.querySelectorAll('#bodyText .cur').forEach((e) => e.classList.remove('cur'));
@@ -175,7 +193,7 @@
       return `<li data-w="${k}" class="${v.failed ? 'fail' : ''} ${partial ? 'partial' : ''} ${open ? 'open' : 'closed'}">${v.locked ? '' : `<button type="button" class="del" data-del="${k}" aria-label="Remove ${esc(v.word)}" title="Remove">×</button>`}` +
         `<div class="v1"><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${open && v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
         `${open ? `<div class="vdet">${detail}</div>` : ''}</li>`;
-    }).join('') : '<li class="empty">No words yet. Double-click a word in the article to add it.</li>';
+    }).join('') : '<li class="empty">No words yet. Double-click a word in the article to add it, or select a few words to add a phrase.</li>';
     applyActive();
     updatePop();
     cfg.onChange(items);
@@ -183,7 +201,7 @@
 
   // 找出文章中含該字的句子，當作查詢的上下文（讓 AI 依語境給出正確意思）
   function sentenceOf(text, word) {
-    const re = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+    const re = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[\\s,;:"“”()-]+') + '\\b', 'i');
     return ((text || '').match(/[^.!?\n]+[.!?]*/g) || []).find((x) => re.test(x))?.trim().slice(0, 300) || '';
   }
   async function fillWord(v, attempt = 1) { // 呼叫後端 /api/define（Groq）：詞性、KK 音標、英文解釋、中文翻譯
@@ -202,8 +220,9 @@
     li.classList.add('on'); li.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); setTimeout(() => li.classList.remove('on'), 1800);
   }
   function addWord(raw, fromText) {
-    const w = clean(raw);
-    if (w.length < 2 || w.length > 40) { $('vmsg').textContent = 'Please select a single word.'; return; }
+    // 一個字，或 2～6 個字的片語（只留字母、撇號、連字號，其他標點換成空白）
+    const w = /\s/.test(raw.trim()) ? clean(raw.replace(/[’‘]/g, "'").replace(/[^A-Za-z'\- ]+/g, ' ')).replace(/ +/g, ' ') : clean(raw);
+    if (w.length < 2 || w.length > 40 || w.split(' ').length > 6) { $('vmsg').textContent = 'Please select a word or a short phrase (up to 6 words).'; return; }
     const exist = findItem(w);
     if (exist) { $('vmsg').textContent = `“${exist.word}” is already in the list.`; if (fromText && floatingMode()) { renderVocab(); showPop(exist); return; } collapseOthers(exist); reveal(exist); renderVocab(); flash(exist); return; }
     const v = { word: w, pos: '', definition: '', zh: '', kk: '', lemma: '', ctx: sentenceOf(cfg.getBody(), w), open: !(fromText && floatingMode()) };
@@ -249,9 +268,9 @@
         return;
       }
       last = { text: key, t: now };
-      speak(word);
       const wordIdx = [...$('bodyText').querySelectorAll('.w')].indexOf(w);
-      const v = w.matches('mark.vh') ? (findItem(key) || items.find((x) => x.lemma && stems(key).includes(x.lemma.toLowerCase()))) : null;
+      const v = w.matches('mark.vh') ? (findItem(key) || items.find((x) => x.lemma && !isPhrase(x.word) && stems(key).includes(x.lemma.toLowerCase())) || (w.dataset.k && byKey(w.dataset.k))) : null;
+      speak(v && isPhrase(v.word) ? v.word : word);   // 點到片語中的字 → 念整個片語
       const closed = closeAll();
       if (v) {
         if (floatingMode()) showPop(v); else reveal(v);
@@ -260,6 +279,31 @@
       } else if (closed) renderVocab();
       setTimeout(() => tapEffect(wordIdx), 0);   // 等這次點擊的處理（可能重畫文章）完成後再播放
     });
+    // 選取文章中的 2～6 個字（滑鼠拖曳、手機／平板長按拖曳）→ 在選取處旁邊浮出「Add phrase」，加入片語
+    const pb = document.createElement('button');
+    pb.type = 'button'; pb.id = 'phraseBtn'; pb.className = 'hidden'; pb.textContent = '+ Add phrase';
+    document.body.appendChild(pb);
+    let phraseText = '', selTimer = 0;
+    const hidePhrase = () => { phraseText = ''; pb.classList.add('hidden'); };
+    function checkSelection() {
+      const sel = getSelection(), body = $('bodyText');
+      if (frozen || !sel || sel.isCollapsed || !sel.rangeCount || !body) return hidePhrase();
+      const r = sel.getRangeAt(0), pa = r.startContainer.parentElement?.closest('#bodyText p'), pz = r.endContainer.parentElement?.closest('#bodyText p');
+      if (!pa || pa !== pz) return hidePhrase();   // 要在同一段文章裡
+      const text = sel.toString().replace(/\s+/g, ' ').trim(), n = (text.match(/[A-Za-z][A-Za-z’'-]*/g) || []).length;
+      if (n < 2 || n > 6 || text.length > 60) return hidePhrase();
+      phraseText = text;
+      const b = r.getBoundingClientRect(), touch = matchMedia('(pointer:coarse)').matches;   // 觸控裝置：放在選取處下方，避開系統的選取選單
+      pb.classList.remove('hidden');
+      const w = pb.offsetWidth, h = pb.offsetHeight;
+      pb.style.left = Math.max(8, Math.min(innerWidth - w - 8, b.left + b.width / 2 - w / 2)) + 'px';
+      pb.style.top = Math.max(8, touch ? b.bottom + 14 : b.top - h - 8) + 'px';
+    }
+    document.addEventListener('selectionchange', () => { clearTimeout(selTimer); selTimer = setTimeout(checkSelection, 250); });
+    window.addEventListener('scroll', hidePhrase, { passive: true });
+    pb.addEventListener('mousedown', (e) => e.preventDefault());   // 不要因為按按鈕而取消選取
+    pb.addEventListener('click', () => { const t = phraseText; hidePhrase(); getSelection()?.removeAllRanges(); if (t) { closeAll(); addWord(t, true); } });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePhrase(); });
     // 點單字表的卡片：發音、展開這張並收起其他張，文章中這個字換成橘色（不移動畫面、不標整句）
     $('vocabList').addEventListener('click', (e) => {
       const del = e.target.closest('.del');
