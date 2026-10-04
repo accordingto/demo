@@ -41,7 +41,7 @@ html[data-tts="off"] .pread { display:none; }
 .w.speaking, a.ulink.speaking { background:var(--accent); color:var(--accent-ink); border-radius:4px; box-shadow:0 0 0 2px var(--accent); }
 @media (pointer:coarse) { .pread::after { content:""; position:absolute; top:-8px; right:-8px; bottom:-8px; left:-8px; } }   /* 手機上加大點擊範圍 */
 @media (hover:hover) { .w:not(.vh):hover { background:var(--hover); } }
-@media (pointer:coarse) { .w { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; } }
+@media (pointer:coarse) { .w { -webkit-touch-callout:none; } }   /* 觸控裝置仍要能長按選字（加入片語）；不要設 user-select:none */
 mark.vh { background:var(--mark-bg); color:inherit; border-radius:4px; padding:1px 3px; margin:0 -1px; box-shadow:0 0 0 1px var(--mark-ring) inset; cursor:pointer; }  /* 已加入單字庫的字：底色標示 */
 mark.vh:hover { background:var(--mark-hover); }
 
