@@ -32,7 +32,12 @@ function normalizePasted(raw, mode = 'auto') {
   const join = (ls) => ls.join(' ');
 
   if (mode === 'lines') return { text: blocks.flat().join('\n\n'), how: 'lines' };
-  if (blocks.length > 1 || mode === 'blank') return { text: blocks.map(join).join('\n\n'), how: 'blank' };   // 有空行：依空行分段，區塊內的換行接成一段
+  if (mode === 'blank') return { text: blocks.map(join).join('\n\n'), how: 'blank' };   // 手動：只有空行才分段，區塊內的換行接成一段
+  if (blocks.length > 1) {   // 自動：有空行。逐區塊判斷——硬換行的區塊接成一段，一行一段的區塊（逐字稿常見）每行各自成段
+    const wrapped = (ls) => ls.length > 1 && (ls.length === 2 ? !ENDS_SENTENCE.test(ls[0]) : looksHardWrapped(ls));
+    const anySplit = blocks.some((ls) => ls.length > 1 && !wrapped(ls));
+    return { text: blocks.map((ls) => (wrapped(ls) ? join(ls) : ls.join('\n\n'))).join('\n\n'), how: anySplit ? 'lines' : 'blank' };
+  }
   const lines = blocks[0] || [];
   if (lines.length < 2) return { text: join(lines), how: 'blank' };
   return looksHardWrapped(lines) ? { text: join(lines), how: 'joined' } : { text: lines.join('\n\n'), how: 'lines' };

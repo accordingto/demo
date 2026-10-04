@@ -327,3 +327,8 @@ test('貼上：每行一段、長短不一的逐字稿在自動模式下每行�
   const r = normalizePasted(lines.join('\n'), 'auto');
   assert.equal(r.text.split(/\n\s*\n/).length, lines.length);
 });
+
+test('貼上：部分有空行、其餘一行一段的逐字稿，每行仍各自成段', () => {
+  const t = 'Here is the transcript:\n\nSo a few years ago, I did something really brave. I ran.\nThe polls told a different story, and it was long.\nBut on Election Day, the polls were right.\n\n[Post]\nChris: Hi.\nReshma: Thank you.';
+  assert.equal(normalizePasted(t, 'auto').text.split(/\n\n/).length, 7);
+});
