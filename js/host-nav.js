@@ -1,7 +1,7 @@
 // 主持人頁的導覽：三個畫面（create／read／library）、Create 的三個分頁（gen／paste／link）、手機與平板的側邊欄抽屜
 // 需先載入 util.js；host.js 的 current（目前文章）與 host-library.js 的 cloud／refreshCloud 在執行時才使用
 let view = 'create';
-const VIEW_TITLES = { create: 'Create', library: 'Library' };
+const VIEW_TITLES = { create: 'Create', read: 'Article', library: 'Library' };   // 上方列的標題固定，不隨文章標題變動
 
 function showView(v, { push = true, scroll = true } = {}) {
   if (v === 'read' && (typeof current === 'undefined' || !current)) v = 'create';   // 還沒有文章就沒有 Article 畫面
@@ -11,7 +11,7 @@ function showView(v, { push = true, scroll = true } = {}) {
     const on = b.dataset.view === v;
     b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
-  $('tbTitle').textContent = VIEW_TITLES[v] || (typeof current !== 'undefined' && current ? current.title : 'Article');
+  $('tbTitle').textContent = VIEW_TITLES[v];
   const changed = v !== view;
   if (changed && push) { try { history.pushState({ v }, '', '#' + v); } catch { /* 忽略 */ } }
   view = v;
@@ -24,7 +24,7 @@ function showTab(t) {
   document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== t));
 }
 // Article 在側邊欄的標題；有文章後才能點
-function updateNavArticle(title) { $('navArticle').textContent = title || 'No article yet'; $('navRead').disabled = $('tbRead').disabled = !title; if (view === 'read') $('tbTitle').textContent = title; }
+function updateNavArticle(title) { $('navArticle').textContent = title || 'No article yet'; $('navRead').disabled = $('tbRead').disabled = !title; }
 
 // ---- 抽屜（< 1280px）----
 const openNav = () => { document.body.classList.add('nav-open'); $('navOpen').setAttribute('aria-expanded', 'true'); };
