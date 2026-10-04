@@ -248,6 +248,18 @@
     return changed;
   }
 
+  // 點單字卡 → 文章捲到這個字出現的位置（桌機／寬螢幕；窄螢幕的單字表在文章下面，不捲）。同一張卡再點一次 = 跳到下一個出現的位置
+  let jump = { key: '', i: -1 };
+  function jumpTo(v) {
+    if (floatingMode()) return;
+    const marks = marksOf(v); if (!marks.length) return;
+    const key = v.word.toLowerCase();
+    jump = { key, i: jump.key === key ? (jump.i + 1) % marks.length : 0 };
+    const m = marks[jump.i], tb = $('topbar'), fixedTop = tb && /^(sticky|fixed)$/.test(getComputedStyle(tb).position) && tb.offsetParent !== null ? tb.getBoundingClientRect().height : 0;
+    const r = m.getBoundingClientRect();
+    window.scrollTo({ top: Math.max(0, scrollY + r.top - Math.max(fixedTop + 12, innerHeight * 0.35)), behavior: 'smooth' });   // 放在畫面上方三分之一處，前後文也看得到
+  }
+
   // ---- 事件 ----
   function bind() {
     // 點文章中的單字：
@@ -316,6 +328,7 @@
       speak(v.word);
       hidePop(); reveal(v, true); highlight(v);   // reveal(pin) 會收起其他卡片
       renderVocab();
+      jumpTo(v);
       if (retry) fillWord(v);
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && active) clearActive(); });   // Esc：清除強調色

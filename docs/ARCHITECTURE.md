@@ -99,7 +99,7 @@
 - **文章繪製**（`paintBody`）：每段 → 單字 `span.w`／已加入的 `mark.vh`；網址先換成佔位符再還原成 `a.ulink`，避免被拆字或被句號切句。
 - **點擊**：自己用時間差（500ms）判斷連點兩下 → 加入單字；單擊 → 發音。
 - **單字卡**：`open`／`pinned`／`loading`／`failed`；`complete(v)` = 英文與中文都有；完整後才開始 5 秒收合倒數；缺資訊會自動重查一次，仍缺則保持展開並提示。
-- **點擊規則**：點文章單字 → `speak` + `closeAll`（收起所有卡片、關浮動卡、清橘色）；若是已加入的字再 `reveal`／`showPop` 並 `highlight(v, auto=true)`（光圈結束時收卡、清色）。點單字卡 → `speak`、`reveal(v, true)`（固定並收起其他）、`highlight(v)`（橘色保留到下一次點擊）。沒有捲動、沒有整句標示。
+- **點擊規則**：點文章單字 → `speak` + `closeAll`（收起所有卡片、關浮動卡、清橘色）；若是已加入的字再 `reveal`／`showPop` 並 `highlight(v, auto=true)`（光圈結束時收卡、清色）。點單字卡 → `speak`、`reveal(v, true)`（固定並收起其他）、`highlight(v)`（橘色保留到下一次點擊）。寬螢幕（單字表在右側）點單字卡會把文章捲到該字出現的位置（放在畫面上方三分之一處），同一張卡再點一次跳到下一個出現的位置；窄螢幕不捲。沒有整句標示。
 - **浮動單字卡**（窄螢幕）：`showPop`／`updatePop`／`hidePop`；與清單卡片共用 `detailOf(v)` 產生內容。
 - `freeze(true)`：編輯期間暫停重畫文章。
 
