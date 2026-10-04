@@ -20,7 +20,6 @@ function loadDraft() { let d = {}; try { d = JSON.parse(localStorage.getItem(PAS
 function setPasteMsg(t, err) { $('pasteMsg').className = err ? 'msg err' : 'meta'; $('pasteMsg').textContent = t; }
 
 // 切到 Create 的「貼上文字」分頁
-function openPaste() { loadDraft(); setPasteMsg(PASTE_NOTE); showView('create'); showTab('paste'); $('pasteBody').focus({ preventScroll: true }); }
 
 $('pasteClear').addEventListener('click', () => { fillPaste({}); $('pasteUrl').value = ''; savePasteDraft(); $('pasteBody').focus(); });
 Object.values(PF).forEach((id) => $(id).addEventListener('input', () => { if (id === 'pasteBody') updatePasteInfo(); savePasteDraft(); }));

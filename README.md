@@ -129,7 +129,7 @@
 │   ├── _extract.js       從 HTML 擷取主要文章（簡易 Readability）
 │   ├── _parse.js         解析 AI 回傳（分段純文字、容錯、段落整理）
 │   ├── _store.js         Upstash Redis REST 儲存層
-│   └── _util.js          存取碼比對、限流、body 讀取等
+│   └── _util.js          存取碼驗證（`checkHostCode`，含猜錯限流）、限流、body 讀取等
 ├── tests/api.test.js     後端單元測試（不需網路與金鑰）
 ├── docs/ARCHITECTURE.md  架構與資料流程
 ├── vercel.json           函式逾時上限
@@ -223,11 +223,26 @@ curl http://localhost:3000/api/define -H 'Content-Type: application/json' \
 3. 自動判斷不符合你的來源時，用 Paragraphs 選單手動指定。選擇會和草稿一起記住，按 Clear 回到 Auto-detect。
 
 ## 安全設計
-- 金鑰、存取碼只在伺服器端環境變數；前端只把使用者輸入的存取碼送到 API，比對時用雜湊 + `timingSafeEqual`。
-- 產生文章與文章庫的清單／寫入都要存取碼；成員只能用「猜不到的 12 字元代碼」讀單篇文章。
-- `/api/define` 不需存取碼（成員要用），以單字格式檢查、每 IP 每分鐘 30 次、小 token 上限防濫用。
+**秘密的保管**
+- `GROQ_API_KEY`、`HOST_CODE`、Upstash 的 token 只在伺服器端環境變數；`.env` 已被 `.gitignore` 排除，repo 與 git 歷史中沒有任何金鑰（`.env.example` 只有空白欄位）。
+- 前端程式碼、API 回應與錯誤訊息都不含金鑰或存取碼；「檢查雲端設定」只回報環境變數的**名稱**與連線結果，不回傳任何值。
+
+**存取碼**
+- 所有需要存取碼的端點（產生、匯入網址、文章庫、檢查雲端設定）共用 `checkHostCode`（`api/_util.js`）：用雜湊 + `timingSafeEqual` 比對；**猜錯**另外限流（每 IP 每分鐘 10 次，超過就連正確的碼也先擋住），避免暴力猜碼。存取碼請設成夠長、難猜的字串。
+- 存取碼會記在你自己瀏覽器的 `localStorage`（為了「輸入一次就記住」）。因此請只在自己的裝置上輸入；在公用電腦上用完請把欄位清空。成員的閱讀頁（`read.html`）沒有存取碼欄位，也不會存。
+
+**資料與權限**
+- 文章庫的清單、寫入、刪除都要存取碼；成員只能用「猜不到的 12 字元代碼」（72 位元隨機）讀單篇文章，id 在後端有格式檢查，不會進到 Redis 指令的其他位置。
+- `/api/define` 不需存取碼（成員要用），以單字格式檢查、每 IP 每分鐘 30 次、小 token 上限防濫用；但它會消耗你的 Groq 額度，若擔心被濫用，請在 Groq 後台設定用量上限。
+- 沒有 CORS 標頭：其他網站的頁面不能用瀏覽器直接呼叫這些 API。
+
+**輸入與輸出**
 - 使用者輸入（主題、單字、語境）都當成「資料」放進 JSON，提示詞明確要求不得遵從其中的指令。
-- 文章中的網址只允許 `http/https`，連結以 `rel="noopener noreferrer"` 在新分頁開啟；所有插入 HTML 的文字都經過跳脫。
+- 代使用者抓網址一律走 `api/_fetch.js`（防 SSRF，見「從網址匯入」）。
+- 所有插入 HTML 的文字都經過 `esc()` 跳脫（含單引號）；文章中的網址只允許 `http/https`，並以 `rel="noopener noreferrer"` 在新分頁開啟；閱讀頁的錯誤訊息一律當純文字顯示。分享連結（`#z.` 或短連結）裡的內容同樣視為不可信。
+- **瀏覽器端的防護**（`vercel.json`）：`Content-Security-Policy`（只允許同源的 script、不允許 inline script，`frame-ancestors 'none'`）、`X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY`、`Referrer-Policy: no-referrer`、`Permissions-Policy`（關閉相機、麥克風、定位）、HSTS。單元測試會檢查頁面沒有 inline script 與事件屬性，避免日後不小心被 CSP 擋掉。
+
+**依賴**：專案沒有任何 npm 相依套件，沒有供應鏈風險；外部連線只有 Groq、Upstash，以及你貼的網址（經 SSRF 防護）。
 
 ## 已知限制
 - **限流**存在函式記憶體：多實例不共享、冷啟動會重置，只能擋一般濫用，不是嚴格限制。

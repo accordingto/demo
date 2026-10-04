@@ -2,7 +2,7 @@
 // action: status | list | get | save | delete
 const crypto = require('crypto');
 const store = require('./_store');
-const { safeEqual, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
+const { checkHostCode, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
 
 const limited = makeLimiter(60);
 const MAX_ITEMS = 500;
@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
 
   // 檢查雲端設定（需存取碼）：只回報「找到哪些相關變數的名稱」與連線測試結果，不回傳任何值或 token
   if (b.action === 'diagnose') {
-    if (!(process.env.HOST_CODE || '').trim() || !safeEqual(b.code ?? '', process.env.HOST_CODE)) return res.status(401).json({ error: 'Incorrect access code' });
+    if (!checkHostCode(req, res, b.code)) return;
     const names = Object.keys(process.env).filter((k) => /KV_|UPSTASH|REDIS|REST_API/i.test(k)).sort();
     const c = store.conf();
     const out = { configured: store.configured(), relatedVariables: names, usingUrlVariable: c.urlKey || null, usingTokenVariable: c.tokenKey || null, urlHost: null, ping: null };
@@ -53,9 +53,8 @@ module.exports = async function handler(req, res) {
   }
 
   if (!store.configured()) return res.status(503).json({ error: 'Cloud storage is not configured', configured: false });
-  if (!(process.env.HOST_CODE || '').trim()) return res.status(500).json({ error: 'Server is missing HOST_CODE' });
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
-  if (!safeEqual(b.code ?? '', process.env.HOST_CODE)) return res.status(401).json({ error: 'Incorrect access code' });
+  if (!checkHostCode(req, res, b.code)) return;
 
   try {
     switch (b.action) {

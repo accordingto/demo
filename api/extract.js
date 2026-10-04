@@ -2,15 +2,14 @@
 // body: { code, url } → { title, text, words, truncated, host }
 const { fetchPage, FetchError } = require('./_fetch');
 const { extractArticle } = require('./_extract');
-const { safeEqual, clientIp, makeLimiter, readBody, missingEnv } = require('./_util');
+const { checkHostCode, clientIp, makeLimiter, readBody } = require('./_util');
 
 const limited = makeLimiter(10);
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'POST only' }); }
-  if (missingEnv(['HOST_CODE']).length) return res.status(500).json({ error: 'Server is missing HOST_CODE' });
   const b = readBody(req);
-  if (!safeEqual(b.code ?? '', process.env.HOST_CODE)) return res.status(401).json({ error: 'Incorrect access code' });
+  if (!checkHostCode(req, res, b.code)) return;
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
   try {
     const { html, url } = await fetchPage(b.url);

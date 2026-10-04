@@ -1,6 +1,6 @@
 // 主持人頁與閱讀頁共用的小工具（需最先載入）
 const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // 窄螢幕（手機、平板直放）：單字表排在文章下面，改用浮動單字卡；與 shared.css 的 1100px 斷點一致
 const narrowQuery = window.matchMedia('(max-width:1099px)');

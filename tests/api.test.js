@@ -332,3 +332,33 @@ test('貼上：部分有空行、其餘一行一段的逐字稿，每行仍各�
   const t = 'Here is the transcript:\n\nSo a few years ago, I did something really brave. I ran.\nThe polls told a different story, and it was long.\nBut on Election Day, the polls were right.\n\n[Post]\nChris: Hi.\nReshma: Thank you.';
   assert.equal(normalizePasted(t, 'auto').text.split(/\n\n/).length, 7);
 });
+
+test('checkHostCode: 猜錯太多次會被擋（防暴力猜存取碼），之後連正確的碼也要等一分鐘', () => withEnv(async () => {
+  const { checkHostCode } = require('../api/_util');
+  const mk = () => { const r = fakeRes(); return r; };
+  const req = { headers: { 'x-forwarded-for': '7.7.7.7' } };
+  for (let i = 0; i < 10; i++) { const r = mk(); assert.equal(checkHostCode(req, r, 'wrong'), false); assert.equal(r.code, 401); }
+  const r = mk(); assert.equal(checkHostCode(req, r, 'secret'), false); assert.equal(r.code, 429);
+  const other = mk(); assert.equal(checkHostCode({ headers: { 'x-forwarded-for': '8.8.8.8' } }, other, 'secret'), true);   // 別的 IP 不受影響
+}));
+
+test('安全：頁面不能有 inline script / 事件屬性（CSP 禁止），且 vercel.json 有安全標頭', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  for (const f of ['index.html', 'read.html']) {
+    const html = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+    assert.ok(!/<script(?![^>]*\bsrc=)[^>]*>/i.test(html), f + ' has an inline <script>');
+    assert.ok(!/\son[a-z]+\s*=/i.test(html.replace(/data-[^=]*=/g, '')), f + ' has an inline event handler');
+  }
+  const headers = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'vercel.json'), 'utf8')).headers[0].headers;
+  const get = (k) => headers.find((h) => h.key === k)?.value;
+  assert.match(get('Content-Security-Policy'), /script-src 'self'(;|$)/);
+  assert.match(get('Content-Security-Policy'), /frame-ancestors 'none'/);
+  assert.equal(get('X-Content-Type-Options'), 'nosniff');
+  assert.equal(get('X-Frame-Options'), 'DENY');
+});
+
+test('esc: 跳脫 & < > " 與單引號', () => {
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'js', 'util.js'), 'utf8');
+  const esc = new Function(src.match(/const esc = [^\n]*/)[0] + '; return esc;')();
+  assert.equal(esc(`<a href="x" onclick='y'>&`), '&lt;a href=&quot;x&quot; onclick=&#39;y&#39;&gt;&amp;');
+});

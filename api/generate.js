@@ -4,7 +4,7 @@ const { articleTokens, modelName } = require('./_model');
 const { groqChat, readStream, errorMessage } = require('./_groq');
 const { validate, buildMessages } = require('./_prompt');
 const { parseArticle, countWords } = require('./_parse');
-const { safeEqual, clientIp, makeLimiter, readBody, missingEnv } = require('./_util');
+const { checkHostCode, clientIp, makeLimiter, readBody, missingEnv } = require('./_util');
 
 const TIMEOUT_MS = 55000; // 需小於 vercel.json 的 maxDuration
 const TOLERANCE = 0.1;    // 實際字數與目標差超過 10% 時，前端會提示
@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
   if (missing.length) return res.status(500).json({ error: `Server is missing environment variables: ${missing.join(', ')} (redeploy after setting them)` });
 
   const body = readBody(req);
-  if (!safeEqual(body.code ?? '', process.env.HOST_CODE)) return res.status(401).json({ error: 'Incorrect access code' });
+  if (!checkHostCode(req, res, body.code)) return;
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
 
   const { error, value: o } = validate(body);

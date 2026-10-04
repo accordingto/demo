@@ -37,8 +37,8 @@ function show(a) {
   Vocab.getItems().filter((v) => !v.locked && !v.definition && !v.zh).forEach((v) => Vocab.fillWord(v)); // 先前沒查完的字重新查
 }
 
-function showError(html) {
-  $('doc').innerHTML = `<div class="err" style="padding:32px 0;text-align:center">${html}</div>`;
+function showError(msg) {   // 訊息一律當純文字（跳脫後，\n 換成換行）
+  $('doc').innerHTML = `<div class="err" style="padding:32px 0;text-align:center">${esc(msg).replace(/\n/g, '<br>')}</div>`;
   $('preview').querySelector('.fsbar').classList.add('hidden');
 }
 
@@ -47,8 +47,8 @@ async function loadCloud(id) {
   $('doc').innerHTML = '<div class="meta" style="padding:32px 0;text-align:center">Loading…</div>';
   const r = await fetch('/api/article?id=' + encodeURIComponent(id));
   const j = await r.json().catch(() => ({}));
-  if (r.status === 404) throw new Error('This article was removed, or the link is incorrect.<br>Please ask the host for a new link.');
-  if (!r.ok) throw new Error(esc(j.error || `Could not load the article (${r.status}).`));
+  if (r.status === 404) throw new Error('This article was removed, or the link is incorrect.\nPlease ask the host for a new link.');
+  if (!r.ok) throw new Error(j.error || `Could not load the article (${r.status}).`);
   const A = j.article || {};
   return { t: A.title, b: A.body, l: A.level || '', q: A.questions || [], d: A.discussion || [], hv: (j.vocab || []).map((v) => [v.word, v.definition, v.zh, v.kk || '', v.pos || '', v.lemma || '']) };
 }
@@ -60,6 +60,6 @@ async function loadCloud(id) {
     a.q = Array.isArray(a.q) ? a.q : []; a.d = Array.isArray(a.d) ? a.d : []; a.hv = Array.isArray(a.hv) ? a.hv : [];
     show(a);
   } catch (e) {
-    showError(e.message && e.message !== 'bad' && articleId ? e.message : 'Article not found. The link may be incomplete or damaged.<br>Please ask the host for a new link.');
+    showError(e.message && e.message !== 'bad' && articleId ? e.message : 'Article not found. The link may be incomplete or damaged.\nPlease ask the host for a new link.');
   }
 })();

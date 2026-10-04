@@ -95,12 +95,8 @@ body.nav-open { overflow:hidden; }
 
 /* 產生表單 */
 .field { display:flex; flex-direction:column; gap:6px; margin-bottom:18px; min-width:0; }
-.field > label, .field > .lbl-like { font-size:.82rem; font-weight:700; color:var(--muted); letter-spacing:.02em; }
-.field.big input { height:54px; font-size:1.1rem; padding:0 16px; border-radius:12px; }
+.field > label { font-size:.82rem; font-weight:700; color:var(--muted); letter-spacing:.02em; }
 .field select, .field .spin input { height:46px; font-size:1rem; border-radius:10px; }
-.help { color:var(--muted); font-size:.74rem; }
-.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-@media (max-width:479px) { .grid2 { grid-template-columns:1fr; gap:0; } }
 .spin { width:100%; }
 .level-name { font-weight:500; color:var(--accent); margin-left:6px; }
 .chips { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:8px; max-width:560px; }
