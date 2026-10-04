@@ -69,11 +69,10 @@ function render(a, vocab = [], libId = null) {
   const meta = `${a.source === 'pasted' ? 'Your text' : `Level ${a.level}`} ・ ${a.wordCount} words${a.source === 'pasted' || !a.targetWords || a.targetWords === a.wordCount ? '' : ` (target ${a.targetWords})`} ・ ~${readMinutes(a.wordCount)} min read`;
   $('doc').innerHTML =
     `<div class="text"><h2>${esc(a.title)}</h2><div class="meta">${meta}</div>` +
-    (a.withinTolerance ? '' : '<div class="msg warn">⚠ The word count is more than 10% off the target. Press “Regenerate” to try again.</div>') +
+    (a.withinTolerance ? '' : '<div class="msg warn">⚠ The word count is more than 10% off the target. Go to Create and generate again to try for a closer length.</div>') +
     '<div id="bodyText" style="margin-top:1em"></div></div>';
   Vocab.repaint();
   $('qa').innerHTML = questionsHtml(a.questions, a.discussion);
-  $('regen').classList.toggle('hidden', a.source === 'pasted');   // 貼上的文章沒有「重新產生」，改用「Edit」
   $('shareBox').classList.add('hidden');
   $('linkMsg').textContent = '';
   updateNavArticle(a.title);
@@ -92,8 +91,8 @@ async function run() {
     code: $('code').value, topic: $('topic').value, words: Number($('words').value), level: $('level').value,
     genre: $('genre').value, questions: $('questions').checked, discussion: $('discussion').checked,
   };
-  const st = view === 'read' ? $('linkMsg') : $('status');   // 在文章畫面按 Regenerate 時，進度顯示在文章下方
-  $('go').disabled = $('regen').disabled = true;
+  const st = $('status');
+  $('go').disabled = true;
   st.className = 'msg meta busy'; st.textContent = 'Writing your article…';
   try {
     current = await generate(payload, (n) => { st.textContent = `Writing your article… (${n.toLocaleString()} characters so far)`; });
@@ -102,10 +101,9 @@ async function run() {
   } catch (e) {
     st.className = 'msg err'; st.textContent = e.message;
     if (e.message === 'Incorrect access code') { $('code').value = ''; saveSettings(); askForCode(); } // 存的是錯誤的碼就清掉，並打開側邊欄讓你重新輸入
-  } finally { $('go').disabled = $('regen').disabled = false; }
+  } finally { $('go').disabled = false; }
 }
 $('form').addEventListener('submit', (e) => { e.preventDefault(); run(); });
-$('regen').addEventListener('click', run);
 
 // ---- 分享連結 ----
 // 雲端：短連結 read.html?a=<id>（內容存在雲端，永遠最新版）

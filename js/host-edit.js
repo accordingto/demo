@@ -59,7 +59,6 @@ function cancelEdit() {
   endEdit(); render(current, keep, libId);
 }
 
-$('editText').addEventListener('click', startEdit);
 $('editIcon').addEventListener('click', startEdit);   // 文章標題右上角的鉛筆圖示
 $('editSave').addEventListener('click', saveEdit);
 $('editCancel').addEventListener('click', cancelEdit);
