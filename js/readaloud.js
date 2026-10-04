@@ -69,8 +69,7 @@
   const LINES_LEFT = 3;
   function scrollToCurrent() {
     const se = sentenceEl(); if (!se) return;
-    const tb = $('topbar'), fixedTop = tb && /^(sticky|fixed)$/.test(getComputedStyle(tb).position) && tb.offsetParent !== null ? tb.getBoundingClientRect().height : 0;
-    const top = fixedTop + 12, cs = getComputedStyle(se), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.6;
+    const top = stickyTop() + 12, cs = getComputedStyle(se), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.6;
     const r = se.getBoundingClientRect();
     if (r.top < top || innerHeight - r.bottom < LINES_LEFT * lh) window.scrollTo({ top: Math.max(0, scrollY + r.top - top), behavior: 'smooth' });
   }

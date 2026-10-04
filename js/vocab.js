@@ -255,9 +255,36 @@
     const marks = marksOf(v); if (!marks.length) return;
     const key = v.word.toLowerCase();
     jump = { key, i: jump.key === key ? (jump.i + 1) % marks.length : 0 };
-    const m = marks[jump.i], tb = $('topbar'), fixedTop = tb && /^(sticky|fixed)$/.test(getComputedStyle(tb).position) && tb.offsetParent !== null ? tb.getBoundingClientRect().height : 0;
-    const r = m.getBoundingClientRect();
-    window.scrollTo({ top: Math.max(0, scrollY + r.top - Math.max(fixedTop + 12, innerHeight * 0.35)), behavior: 'smooth' });   // 放在畫面上方三分之一處，前後文也看得到
+    const r = marks[jump.i].getBoundingClientRect();
+    window.scrollTo({ top: Math.max(0, scrollY + r.top - Math.max(stickyTop() + 12, innerHeight * 0.35)), behavior: 'smooth' });   // 放在畫面上方三分之一處，前後文也看得到
+  }
+
+  function bindPhraseSelection() {
+    // 選取文章中的 2～6 個字（滑鼠拖曳、手機／平板長按拖曳）→ 在選取處旁邊浮出「Add phrase」，加入片語
+    const pb = document.createElement('button');
+    pb.type = 'button'; pb.id = 'phraseBtn'; pb.className = 'hidden'; pb.textContent = '+ Add phrase';
+    document.body.appendChild(pb);
+    let phraseText = '', selTimer = 0;
+    const hidePhrase = () => { phraseText = ''; pb.classList.add('hidden'); };
+    function checkSelection() {
+      const sel = getSelection(), body = $('bodyText');
+      if (frozen || !sel || sel.isCollapsed || !sel.rangeCount || !body) return hidePhrase();
+      const r = sel.getRangeAt(0), pa = r.startContainer.parentElement?.closest('#bodyText p'), pz = r.endContainer.parentElement?.closest('#bodyText p');
+      if (!pa || pa !== pz) return hidePhrase();   // 要在同一段文章裡
+      const text = sel.toString().replace(/\s+/g, ' ').trim(), n = (text.match(/[A-Za-z][A-Za-z’'-]*/g) || []).length;
+      if (n < 2 || n > 6 || text.length > 60) return hidePhrase();
+      phraseText = text;
+      const b = r.getBoundingClientRect(), touch = matchMedia('(pointer:coarse)').matches;   // 觸控裝置：放在選取處下方，避開系統的選取選單
+      pb.classList.remove('hidden');
+      const w = pb.offsetWidth, h = pb.offsetHeight;
+      pb.style.left = Math.max(8, Math.min(innerWidth - w - 8, b.left + b.width / 2 - w / 2)) + 'px';
+      pb.style.top = Math.max(8, touch ? b.bottom + 14 : b.top - h - 8) + 'px';
+    }
+    document.addEventListener('selectionchange', () => { clearTimeout(selTimer); selTimer = setTimeout(checkSelection, 250); });
+    window.addEventListener('scroll', hidePhrase, { passive: true });
+    pb.addEventListener('mousedown', (e) => e.preventDefault());   // 不要因為按按鈕而取消選取
+    pb.addEventListener('click', () => { const t = phraseText; hidePhrase(); getSelection()?.removeAllRanges(); if (t) { closeAll(); addWord(t, true); } });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePhrase(); });
   }
 
   // ---- 事件 ----
@@ -291,31 +318,7 @@
       } else if (closed) renderVocab();
       setTimeout(() => tapEffect(wordIdx), 0);   // 等這次點擊的處理（可能重畫文章）完成後再播放
     });
-    // 選取文章中的 2～6 個字（滑鼠拖曳、手機／平板長按拖曳）→ 在選取處旁邊浮出「Add phrase」，加入片語
-    const pb = document.createElement('button');
-    pb.type = 'button'; pb.id = 'phraseBtn'; pb.className = 'hidden'; pb.textContent = '+ Add phrase';
-    document.body.appendChild(pb);
-    let phraseText = '', selTimer = 0;
-    const hidePhrase = () => { phraseText = ''; pb.classList.add('hidden'); };
-    function checkSelection() {
-      const sel = getSelection(), body = $('bodyText');
-      if (frozen || !sel || sel.isCollapsed || !sel.rangeCount || !body) return hidePhrase();
-      const r = sel.getRangeAt(0), pa = r.startContainer.parentElement?.closest('#bodyText p'), pz = r.endContainer.parentElement?.closest('#bodyText p');
-      if (!pa || pa !== pz) return hidePhrase();   // 要在同一段文章裡
-      const text = sel.toString().replace(/\s+/g, ' ').trim(), n = (text.match(/[A-Za-z][A-Za-z’'-]*/g) || []).length;
-      if (n < 2 || n > 6 || text.length > 60) return hidePhrase();
-      phraseText = text;
-      const b = r.getBoundingClientRect(), touch = matchMedia('(pointer:coarse)').matches;   // 觸控裝置：放在選取處下方，避開系統的選取選單
-      pb.classList.remove('hidden');
-      const w = pb.offsetWidth, h = pb.offsetHeight;
-      pb.style.left = Math.max(8, Math.min(innerWidth - w - 8, b.left + b.width / 2 - w / 2)) + 'px';
-      pb.style.top = Math.max(8, touch ? b.bottom + 14 : b.top - h - 8) + 'px';
-    }
-    document.addEventListener('selectionchange', () => { clearTimeout(selTimer); selTimer = setTimeout(checkSelection, 250); });
-    window.addEventListener('scroll', hidePhrase, { passive: true });
-    pb.addEventListener('mousedown', (e) => e.preventDefault());   // 不要因為按按鈕而取消選取
-    pb.addEventListener('click', () => { const t = phraseText; hidePhrase(); getSelection()?.removeAllRanges(); if (t) { closeAll(); addWord(t, true); } });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePhrase(); });
+    bindPhraseSelection();
     // 點單字表的卡片：發音、展開這張並收起其他張，文章中這個字換成橘色（不移動畫面、不標整句）
     $('vocabList').addEventListener('click', (e) => {
       const del = e.target.closest('.del');

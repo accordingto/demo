@@ -2,6 +2,12 @@
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// 頁面上方固定列（窄螢幕的 #topbar）的高度；捲動到某處時要避開它。沒有固定列就是 0
+function stickyTop() {
+  const tb = $('topbar');
+  return tb && /^(sticky|fixed)$/.test(getComputedStyle(tb).position) && tb.offsetParent !== null ? tb.getBoundingClientRect().height : 0;
+}
+
 // 窄螢幕（手機、平板直放）：單字表排在文章下面，改用浮動單字卡；與 shared.css 的 1100px 斷點一致
 const narrowQuery = window.matchMedia('(max-width:1099px)');
 

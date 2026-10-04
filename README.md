@@ -106,9 +106,9 @@
 │   ├── settings.js       閱讀設定視窗（齒輪）
 │   ├── tts.js            語音合成的共用部分（口音、語速、語音）
 │   ├── readaloud.js      朗讀全文／朗讀單一段落（播放、暫停、繼續）
-│   ├── util.js           共用小工具：$、esc、postJson、題目 HTML、舊式分享連結編解碼
-│   ├── vocab.js          共用：單字表、雙擊加字、文章標示、發音、浮動單字卡（window.Vocab）
-│   ├── host-nav.js       主持人頁導覽：畫面切換（showView）、Create 分頁（showTab）、抽屜
+│   ├── util.js           共用小工具：$、esc、postJson、stickyTop、題目 HTML、舊式分享連結編解碼
+│   ├── vocab.js          共用：單字表、雙擊加字／選取加片語、文章標示、發音、浮動單字卡（window.Vocab）
+│   ├── host-nav.js       主持人頁導覽：畫面切換（showView）、Create 步驟（showTab）、抽屜、側邊欄收合
 │   ├── host.js           主持人頁：設定記憶、產生文章（SSE）、預覽、分享連結
 │   ├── paste-text.js     貼上文字的整理（純函式，有單元測試）：分段判斷
 │   ├── host-paste.js     主持人頁：貼上文章
@@ -132,7 +132,7 @@
 │   └── _util.js          存取碼驗證（`checkHostCode`，含猜錯限流）、限流、body 讀取等
 ├── tests/api.test.js     後端單元測試（不需網路與金鑰）
 ├── docs/ARCHITECTURE.md  架構與資料流程
-├── vercel.json           函式逾時上限
+├── vercel.json           函式逾時上限、安全標頭（CSP 等）
 ├── package.json          `npm test`、`npm run dev`
 └── .env.example          環境變數範本
 ```
