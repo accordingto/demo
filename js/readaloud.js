@@ -134,6 +134,13 @@
       start(i);   // 點某一段的 ▶：從這一段一直念到最後一段
     }
   });
+  // 空白鍵：朗讀中暫停、暫停中繼續（在輸入框、按鈕、連結上維持原本的行為；按鈕本身按空白鍵就會觸發點擊）
+  document.addEventListener('keydown', (e) => {
+    if ((e.key !== ' ' && e.code !== 'Space') || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.defaultPrevented || st.status === 'idle') return;
+    if (e.target.closest && e.target.closest('input, textarea, select, button, a, summary, [contenteditable], [role=button]')) return;
+    e.preventDefault();
+    return st.status === 'playing' ? pause() : resume();
+  });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && st.status !== 'idle') stop(); });
   document.addEventListener('bodypainted', () => { if (st.status !== 'idle' && paras().join('\n') !== signature) stop(); else refresh(); });   // 文章換了或被編輯 → 停止
   window.addEventListener('pagehide', () => TTS.cancel());
