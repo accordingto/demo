@@ -148,7 +148,7 @@ body.nav-open { overflow:hidden; }
 .libtools .searchbox { flex:1; }
 #libSortSel { display:none; height:48px; width:auto; min-width:0; max-width:50%; padding-right:30px; flex:none; border-radius:14px; }
 /* 文章庫：表格（欄位標題可點擊排序）*/
-.libtable-wrap { background:var(--card); border:1px solid var(--line); border-radius:18px; overflow:hidden; box-shadow:0 10px 30px var(--shadow); }
+.libtable-wrap { background:var(--card); border:1px solid var(--line); border-radius:18px; overflow-x:auto; box-shadow:0 10px 30px var(--shadow); }
 .libtable { width:100%; border-collapse:collapse; font-size:.92rem; }
 .libtable th { text-align:left; padding:0 16px; height:46px; background:rgba(var(--accent-rgb), .07); border-bottom:1px solid var(--line); white-space:nowrap; }
 .libtable td { padding:14px 16px; border-bottom:1px solid var(--line); vertical-align:middle; }
@@ -164,7 +164,7 @@ body.nav-open { overflow:hidden; }
 .libtable .c-num { text-align:right; font-variant-numeric:tabular-nums; }
 .libtable th.c-num .sortbtn { justify-content:flex-end; }
 .libtable .c-when { color:var(--muted); white-space:nowrap; font-size:.84rem; }
-.libtable .c-t { width:100%; }
+.libtable .c-t { width:100%; min-width:180px; }
 .libtable .t { font-weight:700; font-size:1rem; line-height:1.35; cursor:pointer; user-select:none; -webkit-user-select:none; }
 .libtable tr:hover .t { color:var(--accent); }
 .libtable .sub { display:none; color:var(--muted); font-size:.78rem; margin-top:4px; }
@@ -178,9 +178,10 @@ body.nav-open { overflow:hidden; }
 .libtable .act.danger:hover { background:rgba(255,255,255,.04); }
 .libfoot { padding:10px 16px; border-top:1px solid var(--line); color:var(--muted); font-size:.76rem; text-align:right; }
 .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
-@media (max-width:820px) { .libtable .c-level, .libtable .c-words, .libtable .c-vocab { display:none; } }
+@media (max-width:1100px) { .libtable .c-level, .libtable .c-vocab { display:none; } }   /* 平板：先藏次要欄位，標題與按鈕才放得下 */
+@media (max-width:900px) { .libtable .c-words { display:none; } }
+@media (max-width:1100px) { #libSortSel { display:block; } }   /* 欄位被藏起來時，用下拉選單排序 */
 @media (max-width:640px) {
-  #libSortSel { display:block; }
   .libtable thead, .libtable .c-when { display:none; }
   .libtable, .libtable tbody, .libtable tr, .libtable td { display:block; width:auto; }
   .libtable tr { padding:12px 14px; border-bottom:1px solid var(--line); }
