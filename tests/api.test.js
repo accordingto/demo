@@ -321,3 +321,9 @@ test('extract handler: needs the right access code, validates the link', async (
     r = R(); await ex({ method: 'GET', headers: {} }, r); assert.equal(r.code, 405);
   } finally { process.env = saved; }
 });
+
+test('貼上：每行一段、長短不一的逐字稿在自動模式下每行成一段', () => {
+  const lines = ['Here is the transcript:', 'So a few years ago, I did something really brave. I ran for Congress, and it was hard.', 'The polls told a different story.', "But on Election Day, the polls were right, and I only got 19% of the vote. Don't do the math.", '[Post-Talk Interview Segment]', 'Chris Anderson: Thank you.', 'Reshma Saujani: Thank you.'];
+  const r = normalizePasted(lines.join('\n'), 'auto');
+  assert.equal(r.text.split(/\n\s*\n/).length, lines.length);
+});
