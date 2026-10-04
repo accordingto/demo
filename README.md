@@ -132,6 +132,7 @@
 │   └── _util.js          存取碼驗證（`checkHostCode`，含猜錯限流）、限流、body 讀取等
 ├── tests/api.test.js     後端單元測試（不需網路與金鑰）
 ├── docs/ARCHITECTURE.md  架構與資料流程
+├── LICENSE               MIT 授權
 ├── vercel.json           函式逾時上限、安全標頭（CSP 等）
 ├── package.json          `npm test`、`npm run dev`
 └── .env.example          環境變數範本
@@ -261,3 +262,9 @@ curl http://localhost:3000/api/define -H 'Content-Type: application/json' \
 | `The AI response was incomplete …` | 錯誤訊息會附上原因與模型名稱；推理型模型可能把 token 用在思考，減少字數或改用非推理型模型 |
 | 圖示是 📚 而不是 ☁ | 雲端沒啟用：按「☁ Check cloud setup」看伺服器找到哪些變數，連結 Upstash 後 Redeploy |
 | 手機點單字沒有發音 | 確認裝置沒有靜音、瀏覽器支援語音合成 |
+
+## 授權
+
+本專案以 [MIT License](LICENSE) 授權，Copyright (c) 2026 WU YU HUNG。
+
+使用「從網址匯入」時，擷取的文章內容版權屬於原網站，僅供個人學習；公開分享前請確認你有權使用該內容。
