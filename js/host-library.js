@@ -121,6 +121,12 @@ function syncLib() {
   }, 400);
 }
 
+// Save 鈕：存好後短暫變成「Saved ✓」
+function flashSaved() {
+  const b = $('save'), label = b.querySelector('span'), use = b.querySelector('use');
+  label.textContent = 'Saved'; use.setAttribute('href', '#i-check'); b.classList.add('done');
+  setTimeout(() => { label.textContent = 'Save'; use.setAttribute('href', '#i-save'); b.classList.remove('done'); }, 2200);
+}
 $('save').addEventListener('click', async () => {
   if (!current) return;
   if (cloud) {
@@ -128,7 +134,7 @@ $('save').addEventListener('click', async () => {
     try {
       const id = await cloudSave(); showLink(shortLink(id));
       $('linkMsg').textContent = `✅ Saved to the cloud library with ${settledVocab().length} vocabulary words. The share link below works on any device; edits you make here (like new words) update it automatically.`;
-      await refreshCloud();
+      await refreshCloud(); flashSaved();
     } catch (e) { $('linkMsg').textContent = '❌ ' + e.message; }
     finally { $('save').disabled = false; }
     return;
@@ -137,6 +143,7 @@ $('save').addEventListener('click', async () => {
   $('linkMsg').textContent = !r.ok ? '❌ Could not save: browser storage is full or blocked. Use “Create share link” instead.'
     : r.created ? `✅ Saved to your library with ${r.vocab.length} vocabulary words. New words you add now are saved automatically (stored in this browser only — export a backup now and then)`
     : `✅ Library entry updated (${r.vocab.length} vocabulary words)`;
+  if (r.ok) flashSaved();
 });
 
 // ---- 清單上的按鈕：開啟 / 編輯 / 複製連結 / 刪除 ----

@@ -103,8 +103,14 @@ body.nav-open { overflow:hidden; }
 .toolbar { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
 .pill { display:inline-flex; align-items:center; gap:8px; min-height:42px; padding:0 16px; font-size:.9rem; font-weight:600; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:999px; }
 .pill:hover { border-color:var(--accent); color:var(--accent); }
-.pill.solid { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
-.pill.solid:hover { color:var(--accent-ink); filter:brightness(1.08); }
+.pill.primary { min-height:48px; padding:0 26px; font-size:1rem; font-weight:700; color:var(--accent-ink); background:var(--accent); border-color:var(--accent); box-shadow:0 8px 22px rgba(var(--accent-rgb), .35); }
+.pill.primary:hover { color:var(--accent-ink); filter:brightness(1.08); transform:translateY(-1px); }
+.pill.primary:active { transform:none; }
+.pill.primary .ic { width:1.25em; height:1.25em; }
+.pill.primary.done { background:transparent; color:var(--accent); box-shadow:none; }   /* 剛存好：短暫顯示 Saved */
+.pill.outline { min-height:48px; color:var(--accent); background:rgba(var(--accent-rgb), .10); border-color:var(--accent); font-weight:700; }
+.pill.outline:hover { background:rgba(var(--accent-rgb), .2); }
+.toolbar { align-items:center; }
 .pill .ic { width:1.1em; height:1.1em; }
 .sharebox { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; padding:10px; background:var(--field); border:1px solid var(--line); border-radius:14px; align-items:center; }
 .sharebox .share { flex:1 1 220px; margin:0; height:40px; font-size:.85rem; }
