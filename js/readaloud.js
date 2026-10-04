@@ -12,6 +12,20 @@
   const WORD_RE = /[A-Za-z][A-Za-z’'-]*/g;   // 和 vocab.js 切字的規則相同：每個字對應畫面上一個 span.w（網址念成 link，對應 a.ulink）
   const speechText = (sentence) => sentence.replace(URL_RE, ' link ');
 
+  // 估算語速（語速 1 時每秒念幾個字元），存在瀏覽器裡，換語音時會自動重新校正
+  const CPS_KEY = 'rc-tts-cps';
+  let cpsVal = 0;
+  const voiceKey = () => { try { return (TTS.info && JSON.stringify(TTS.info().voice)) || ''; } catch { return ''; } };
+  function cps() {
+    if (!cpsVal) { try { cpsVal = +(JSON.parse(localStorage.getItem(CPS_KEY) || '{}')[voiceKey()]) || 0; } catch { /* 沒有就用預設 */ } }
+    return cpsVal || 17;
+  }
+  function calibrate(v) {
+    if (!(v > 4 && v < 60)) return;
+    cpsVal = cpsVal ? cpsVal * 0.5 + v * 0.5 : v;
+    try { const o = JSON.parse(localStorage.getItem(CPS_KEY) || '{}'); o[voiceKey()] = cpsVal; localStorage.setItem(CPS_KEY, JSON.stringify(o)); } catch { /* 無痕模式存不了就算了 */ }
+  }
+
   let st = { status: 'idle', p: 0, s: 0, w: -1 };   // status：idle｜playing｜paused；p／s／w＝目前段落／句子／字
   let keep = null;      // 目前這句的語音物件
   let gen = 0;          // 每次開始、暫停、停止都加一；舊的語音事件看到 gen 不同就忽略
@@ -64,19 +78,30 @@
     const trackWords = starts.length === els.length;   // 字數對不起來就只標示句子
     const setWord = (i) => { if (my === gen && trackWords && i !== st.w) { st.w = i; highlight(); } };
     const u = TTS.utter(text);
-    let gotBoundary = false, timer = 0;
-    // 優先用瀏覽器回報的字邊界；沒有回報（部分 Android 語音）就依語速估算
+    let gotBoundary = false, timer = 0, t0 = 0;
+    // 優先用瀏覽器回報的字邊界；沒有回報（Chrome 的線上語音、部分 Android 語音）就依「每秒念幾個字元」估算，
+    // 並用每一句實際念完的時間持續校正，所以語音比預設快或慢都會慢慢對齊
     u.onboundary = (e) => { gotBoundary = true; clearInterval(timer); const i = starts.findIndex(([a, z]) => e.charIndex >= a && e.charIndex < z); if (i >= 0) setWord(i); };
     u.onstart = () => {
+      t0 = Date.now();
       if (!trackWords) return;
       setTimeout(() => {
         if (gotBoundary || my !== gen) return;
-        let i = 0; setWord(0);
-        timer = setInterval(() => { if (my !== gen || ++i >= starts.length) return clearInterval(timer); setWord(i); }, 60000 / (165 * Prefs.get('rate')));
-      }, 400);
+        setWord(0);
+        timer = setInterval(() => {
+          if (my !== gen || gotBoundary) return clearInterval(timer);
+          const pos = (Date.now() - t0) / 1000 * cps() * Prefs.get('rate');   // 目前大約念到第幾個字元
+          let i = 0; while (i + 1 < starts.length && starts[i + 1][0] <= pos) i++;
+          setWord(i);
+        }, 50);
+      }, 0);
     };
     const done = () => clearInterval(timer);
-    u.onend = () => { done(); if (my === gen) { st.s++; speakCurrent(); } };
+    u.onend = () => {
+      done();
+      if (!gotBoundary && t0 && text.length > 12) calibrate(text.length / ((Date.now() - t0) / 1000) / Prefs.get('rate'));
+      if (my === gen) { st.s++; speakCurrent(); }
+    };
     u.onerror = (e) => { done(); if (my === gen && e.error !== 'canceled' && e.error !== 'interrupted') stop(); };
     keep = u;   // 保留參照：部分瀏覽器會把沒人引用的語音物件回收掉，事件（邊界、結束）就不會觸發
     TTS.say(u);

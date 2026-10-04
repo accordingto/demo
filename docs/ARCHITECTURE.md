@@ -116,7 +116,7 @@
 - `ReadAloud` 是一個小狀態機：`status`（idle／playing／paused）、`p`／`s`／`w`（目前段落／句子／字）；`start(p)` 從第 p 段開始一路念到最後一段（全文 = `start(0)`）。文章被切成句子逐句念（避免部分瀏覽器念太長會被截斷），`gen` 計數器讓被取消的語音事件失效。
 - **暫停 = 取消語音並記住位置，繼續 = 從這一句重新念**；不用 `speechSynthesis.pause()`，因為各平台（特別是 Android）不可靠。
 - 段落按鈕由 `vocab.js` 的 `paintBody` 產生（`<p>` 裡的 `.pread`）；每次重畫文章會送出 `bodypainted` 事件，`ReadAloud` 據此重新標示狀態，若文章內容變了就停止。段落文字來自 `Vocab.paragraphs()`（與畫面分段一致）；網址朗讀成「link」。
-- **逐字標示**：文章畫成 段落 → 句子 `span.s` → 單字 `span.w`（網址是 `a.ulink`）。`Vocab.paragraphSentences()` 與畫面上的 `span.s` 一一對應，`ReadAloud` 逐句朗讀並把目前句子加上 `.speaking`。字的位置優先用語音的 `boundary` 事件（`charIndex`）對到第幾個字；瀏覽器沒回報（部分 Android 語音）就依語速每 60000/(165×速度) 毫秒推進一個字。念出的字數與畫面上的字數對不起來時，只標示句子。
+- **逐字標示**：文章畫成 段落 → 句子 `span.s` → 單字 `span.w`（網址是 `a.ulink`）。`Vocab.paragraphSentences()` 與畫面上的 `span.s` 一一對應，`ReadAloud` 逐句朗讀並把目前句子加上 `.speaking`。字的位置優先用語音的 `boundary` 事件（`charIndex`）對到第幾個字；瀏覽器沒回報（Chrome 的線上語音、部分 Android 語音）就依「每秒念幾個字元」估算位置，並用每句實際念完的時間校正（存在 localStorage 的 `rc-tts-cps`，依語音分開），所以第一句可能略有落差，之後會對齊。念出的字數與畫面上的字數對不起來時，只標示句子。
 - 瀏覽器不支援語音合成時，所有朗讀按鈕自動隱藏。
 
 ### 兩種分享連結
