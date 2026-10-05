@@ -179,7 +179,7 @@ test('paste: empty input', () => { assert.deepEqual(paraN('  \n '), [0, 'blank']
 // ---- CSS：括號不平衡會讓後面所有規則失效（曾經讓浮動單字卡失去樣式）----
 test('css files have balanced braces', () => {
   const fs = require('node:fs');
-  for (const f of ['css/themes.css', 'css/shared.css', 'css/app.css', 'css/host.css', 'css/settings.css']) {
+  for (const f of ['css/themes.css', 'css/shared.css', 'css/app.css', 'css/host.css', 'css/settings.css', 'css/guide.css']) {
     const t = fs.readFileSync(require('node:path').join(__dirname, '..', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     assert.equal(t.split('{').length, t.split('}').length, `${f}: { and } counts differ`);
   }
@@ -205,7 +205,7 @@ test('css: read-aloud highlight rules exist and no color-mix / inset shorthand i
   const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   const shared = read('css/shared.css');
   for (const sel of ['.s.speaking', '.w.speaking']) assert.ok(shared.includes(sel), `${sel} rule missing in shared.css`);
-  for (const f of ['css/themes.css', 'css/shared.css', 'css/app.css', 'css/host.css', 'css/settings.css']) {
+  for (const f of ['css/themes.css', 'css/shared.css', 'css/app.css', 'css/host.css', 'css/settings.css', 'css/guide.css']) {
     assert.ok(!/color-mix\(/.test(read(f)), `${f} uses color-mix (not supported by older iPad Safari)`);
     assert.ok(!/[^-]inset\s*:/.test(read(f)), `${f} uses the inset shorthand`);
   }

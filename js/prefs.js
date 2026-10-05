@@ -4,7 +4,7 @@
   const KEY = 'rc-prefs';
   const reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   const DEFAULTS = {
-    theme: 'dark',            // 色彩主題
+    theme: 'light',           // 色彩主題（預設 Light）
     fs: 18, font: 'sans', lh: 1.8, para: 1, ls: 0, measure: 'full', align: 'left',   // 文字
     hl: true, anim: !reduced, dim: 0, warm: 0,                                      // 顯示
     speak: true, rate: 0.85, accent: 'us',                                          // 發音

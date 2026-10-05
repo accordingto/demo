@@ -1,0 +1,45 @@
+/* 使用說明頁（Guide）：顏色一律用主題變數 */
+.guide { display:flex; flex-direction:column; gap:18px; max-width:980px; }
+.gsec { padding:22px; background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:0 8px 24px var(--shadow); }
+.gsec h2 { margin:0 0 14px; font-size:1.2rem; }
+.gnote { margin:0 0 14px; color:var(--muted); font-size:.92rem; }
+.gsec .gnote:last-child { margin:14px 0 0; }
+.keycap { display:inline-grid; place-items:center; width:34px; height:34px; vertical-align:middle; color:var(--accent); background:rgba(var(--accent-rgb), .12); border:1px solid rgba(var(--accent-rgb), .4); border-radius:10px; }
+.keycap .ic { width:1.2em; height:1.2em; }
+.gsteps, .glegend, .gmenu { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+.gsteps { grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); }
+.gsteps li { display:flex; gap:12px; align-items:flex-start; padding:14px; background:var(--field); border:1px solid var(--line); border-radius:14px; }
+.gsteps b, .glegend b { flex:none; display:grid; place-items:center; width:28px; height:28px; border-radius:50%; color:var(--accent-ink); background:var(--accent); font-size:.85rem; }
+.gsteps strong, .gmenu strong { display:block; }
+.gsteps span, .gmenu span { color:var(--muted); font-size:.9rem; line-height:1.45; }
+.gmenu { grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); }
+.gmenu li { display:flex; gap:12px; align-items:flex-start; }
+.gmenu .keycap { flex:none; }
+.glegend li { display:flex; gap:12px; align-items:flex-start; line-height:1.55; }
+.glegend b { margin-top:2px; }
+.glegend .keycap { width:28px; height:28px; border-radius:8px; margin:0 4px; }
+.gsec .lamp { margin:0 4px 0 2px; }
+/* 示意圖：用真的圖示與樣式組成，不是截圖，所以換主題、換語言都會跟著變 */
+.gdemo { display:grid; grid-template-columns:minmax(0, 1.6fr) minmax(0, 1fr); gap:14px; margin-bottom:16px; padding:18px; background:var(--bg); border:1px dashed var(--line); border-radius:16px; pointer-events:none; user-select:none; -webkit-user-select:none; }
+@media (max-width:700px) { .gdemo { grid-template-columns:1fr; } }
+.gd-card, .gd-vocab { padding:14px 16px; background:var(--card); border:1px solid var(--line); border-radius:14px; }
+.gd-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; font-size:1.05rem; }
+.gd-icons { display:inline-flex; gap:8px; }
+.gd-btn { position:relative; display:inline-grid; place-items:center; width:34px; height:34px; color:var(--accent); border:1px solid var(--accent); border-radius:50%; }
+.gd-btn.small { width:26px; height:26px; margin-right:8px; vertical-align:middle; font-size:.8rem; }
+.gd-card p { margin:0; line-height:2; }
+.gd-tap { position:relative; margin:0 6px; padding:1px 4px; border-radius:6px; box-shadow:0 0 0 3px rgba(var(--accent-rgb), .55); }
+.gd-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:14px; }
+.gd-save, .gd-share { position:relative; display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-weight:700; border-radius:999px; }
+.gd-save { color:var(--accent-ink); background:var(--accent); }
+.gd-share { color:var(--accent); border:1px solid var(--accent); }
+.gd-vocab b { color:var(--accent); }
+.gd-vcard { position:relative; margin-top:10px; padding:10px 12px; background:var(--field); border:1px solid var(--line); border-radius:12px; font-size:.9rem; }
+.gd-vcard strong { color:var(--vocab); font-size:1.05rem; }
+.gd-n { position:absolute; top:-9px; right:-9px; display:grid; place-items:center; width:20px; height:20px; font-style:normal; font-size:.7rem; font-weight:800; color:var(--accent-ink); background:var(--accent); border-radius:50%; box-shadow:0 0 0 2px var(--card); }
+.gd-vcard .gd-n { top:-10px; }
+.gcards { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:12px; }
+.gcards > div { padding:14px; background:var(--field); border:1px solid var(--line); border-radius:14px; }
+.gcards strong { display:block; margin-bottom:4px; color:var(--accent); }
+.gcards span { color:var(--muted); font-size:.9rem; line-height:1.45; }
+@media print { #viewHelp { display:none !important; } }

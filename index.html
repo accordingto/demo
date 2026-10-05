@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/host.css">
 <link rel="stylesheet" href="css/settings.css">
+<link rel="stylesheet" href="css/guide.css">
 <script src="js/prefs.js"></script>
 <script src="js/i18n-zh.js"></script>
 <script src="js/i18n.js"></script>
@@ -23,6 +24,7 @@
     <symbol id="i-library" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4zM3 12l9 4 9-4M3 17l9 4 9-4"/></symbol>
     <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.7a3.5 3.5 0 0 1 0 6.6M18 14.4c2.2.7 3.5 2.6 3.5 5.6"/></symbol>
     <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.4 4 5.5 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.5-4-9s1.4-6.6 4-9z"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.2-2.8 4M12 17.6v.1"/></symbol>
     <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
     <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M14 9l2 2"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
@@ -50,13 +52,15 @@
       <button type="button" class="nav-close" id="navClose" aria-label="Close menu"><svg class="ic"><use href="#i-close"/></svg></button>
     </div>
     <nav class="nav" aria-label="Sections">
-      <button type="button" class="nav-item" data-view="library"><svg class="ic"><use href="#i-library"/></svg><span class="nav-label">Library<small id="libSub">Saved articles</small></span><span class="badge" id="libCount">0</span></button>
-      <button type="button" class="nav-item" data-view="read" id="navRead" disabled><svg class="ic"><use href="#i-book"/></svg><span class="nav-label">Article<small id="navArticle">No article yet</small></span></button>
+      <button type="button" class="nav-item" data-view="help"><svg class="ic"><use href="#i-help"/></svg><span class="nav-label">Guide<small>How this site works</small></span></button>
       <button type="button" class="nav-item" data-view="create"><svg class="ic"><use href="#i-create"/></svg><span class="nav-label">Create<small>Generate, paste or import</small></span></button>
+      <button type="button" class="nav-item" data-view="read" id="navRead" disabled><svg class="ic"><use href="#i-book"/></svg><span class="nav-label">Article<small id="navArticle">No article yet</small></span></button>
+      <button type="button" class="nav-item" data-view="library"><svg class="ic"><use href="#i-library"/></svg><span class="nav-label">Library<small id="libSub">Saved articles</small></span><span class="badge" id="libCount">0</span></button>
       <button type="button" class="nav-item hidden" data-view="users" id="navUsers"><svg class="ic"><use href="#i-users"/></svg><span class="nav-label">Users<small>Passwords, accounts</small></span></button>
     </nav>
     <div class="nav-sep"></div>
     <button type="button" class="nav-item gear" aria-haspopup="dialog" aria-expanded="false"><svg class="ic"><use href="#i-gear"/></svg><span class="nav-label">Reading settings<small>Theme, font, voice…</small></span></button>
+    <label class="side-start"><span class="nav-label">Open the Library first</span><input type="checkbox" id="startLib" role="switch"></label>
     <div class="side-lang" role="group" aria-label="Language">
       <svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg><span class="nav-label">Language</span>
       <span class="langseg"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="zh" aria-pressed="false">中文</button></span>
@@ -73,12 +77,13 @@
   <div class="main">
     <header id="topbar">
       <button type="button" class="iconbtn plain" id="navOpen" aria-label="Open menu" aria-controls="sidebar"><svg class="ic"><use href="#i-menu"/></svg></button>
-      <div class="tb-title" id="tbTitle">Create</div>
+      <div class="tb-title" id="tbTitle">Guide</div>
       <!-- 快速圖示：和選單裡的項目一一對應，點一下直接前往 -->
       <div class="tb-actions" role="toolbar" aria-label="Quick actions">
-        <button type="button" class="iconbtn plain tb-btn" data-view="library" aria-label="Library" title="Library"><svg class="ic"><use href="#i-library"/></svg><span class="tb-badge" id="tbLibCount">0</span></button>
-        <button type="button" class="iconbtn plain tb-btn" data-view="read" id="tbRead" aria-label="Article" title="Article" disabled><svg class="ic"><use href="#i-book"/></svg></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="help" aria-label="Guide" title="Guide"><svg class="ic"><use href="#i-help"/></svg></button>
         <button type="button" class="iconbtn plain tb-btn" data-view="create" aria-label="Create" title="Create"><svg class="ic"><use href="#i-create"/></svg></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="read" id="tbRead" aria-label="Article" title="Article" disabled><svg class="ic"><use href="#i-book"/></svg></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="library" aria-label="Library" title="Library"><svg class="ic"><use href="#i-library"/></svg><span class="tb-badge" id="tbLibCount">0</span></button>
         <button type="button" class="iconbtn plain tb-btn hidden" data-view="users" id="tbUsers" aria-label="Users" title="Users"><svg class="ic"><use href="#i-users"/></svg></button>
         <button type="button" class="iconbtn plain tb-btn" id="tbKey" aria-label="Access code" title="Access code" aria-haspopup="dialog" aria-expanded="false"><svg class="ic"><use href="#i-key"/></svg></button>
         <button type="button" class="iconbtn plain tb-btn gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings"><svg class="ic"><use href="#i-gear"/></svg></button>
@@ -92,8 +97,81 @@
     </div>
 
     <main class="content">
+      <!-- ⓪ Guide：使用說明（預設的首頁）-->
+      <section id="viewHelp" class="view" data-view="help">
+        <div class="page-head"><div><h1>Welcome to Reading Club</h1><p class="sub">Read English articles, tap any word to hear it, and build your own vocabulary list.</p></div></div>
+
+        <div class="guide">
+          <section class="gsec">
+            <h2>Quick start</h2>
+            <ol class="gsteps">
+              <li><b>1</b><div><strong>Create an article</strong><span>Paste your own text, import a web page, or let the AI write one.</span></div></li>
+              <li><b>2</b><div><strong>Read and tap words</strong><span>Click a word to hear it. Double-click to save it to your vocabulary.</span></div></li>
+              <li><b>3</b><div><strong>Save it</strong><span>Press Save to keep the article and its words in your Library.</span></div></li>
+            </ol>
+          </section>
+
+          <section class="gsec">
+            <h2>The menu (left side)</h2>
+            <ul class="gmenu">
+              <li><span class="keycap"><svg class="ic"><use href="#i-help"/></svg></span><div><strong>Guide</strong><span>This page. It opens first, unless you turn on “Open the Library first”.</span></div></li>
+              <li><span class="keycap"><svg class="ic"><use href="#i-create"/></svg></span><div><strong>Create</strong><span>Start a new article: Paste text, From a link, or AI generate (a few per day).</span></div></li>
+              <li><span class="keycap"><svg class="ic"><use href="#i-book"/></svg></span><div><strong>Article</strong><span>The article you are reading. It is grayed out until you open or create one.</span></div></li>
+              <li><span class="keycap"><svg class="ic"><use href="#i-library"/></svg></span><div><strong>Library</strong><span>Your saved articles. Double-click a title to open it, click a column heading to sort.</span></div></li>
+              <li><span class="keycap"><svg class="ic"><use href="#i-users"/></svg></span><div><strong>Users</strong><span>Only the site owner sees this: add users, set passwords, disable or delete accounts.</span></div></li>
+              <li><span class="keycap"><svg class="ic"><use href="#i-gear"/></svg></span><div><strong>Reading settings</strong><span>Theme, text size, font, spacing, voice and speed.</span></div></li>
+              <li><span class="keycap"><svg class="ic"><use href="#i-globe"/></svg></span><div><strong>Language</strong><span>Switch the whole site between English and 中文. The switch above it chooses which page opens first.</span></div></li>
+              <li><span class="keycap"><svg class="ic"><use href="#i-key"/></svg></span><div><strong>Access code</strong><span>Type it and press Enter. A <i class="lamp ok"></i>green light shows who you are; a <i class="lamp bad"></i>red light means you are not signed in.</span></div></li>
+            </ul>
+          </section>
+
+          <section class="gsec">
+            <h2>Reading an article</h2>
+            <p class="gnote">This picture shows an opened article. The numbers match the list below it.</p>
+            <div class="gdemo" aria-hidden="true">
+              <div class="gd-card">
+                <div class="gd-head"><b>A Day at the Market</b>
+                  <span class="gd-icons"><span class="gd-btn"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><i class="gd-n">1</i></span><span class="gd-btn"><svg class="ic"><use href="#i-edit"/></svg><i class="gd-n">2</i></span><span class="gd-btn"><svg class="ic"><use href="#i-gear"/></svg><i class="gd-n">3</i></span></span></div>
+                <p><span class="gd-btn small"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><i class="gd-n">4</i></span>I walked to the <mark class="vh w">market</mark> and <span class="gd-tap">bought<i class="gd-n">5</i></span> some <mark class="vh w">fruit</mark> for lunch.</p>
+                <div class="gd-actions"><span class="gd-save"><svg class="ic"><use href="#i-save"/></svg>Save<i class="gd-n">6</i></span><span class="gd-share"><svg class="ic"><use href="#i-share"/></svg>Share</span></div>
+              </div>
+              <div class="gd-vocab"><b>Vocabulary</b><div class="gd-vcard"><strong>market</strong> <small>[ˈmɑrkɪt]</small><div>(noun) a place where people buy and sell things<i class="gd-n">7</i></div></div></div>
+            </div>
+            <ol class="glegend">
+              <li><b>1</b><span><span class="keycap"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span> <strong>Read aloud</strong> reads the whole article. Click it again (or press the Space bar) to pause and resume.</span></li>
+              <li><b>2</b><span><span class="keycap"><svg class="ic"><use href="#i-edit"/></svg></span> <strong>Edit</strong> turns the article into an editor — see “Edit and save” below.</span></li>
+              <li><b>3</b><span><span class="keycap"><svg class="ic"><use href="#i-gear"/></svg></span> <strong>Settings</strong> opens theme, text size, font, line spacing and voice settings.</span></li>
+              <li><b>4</b><span><span class="keycap"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span> <strong>Paragraph button</strong> reads from this paragraph all the way to the end.</span></li>
+              <li><b>5</b><span><strong>Click a word once</strong> to hear it. It lights up for a moment so you know which word you tapped.</span></li>
+              <li><b>6</b><span><strong>Double-click a word</strong> to add it to your Vocabulary. It turns highlighted everywhere in the article. Select two to six words to add a phrase.</span></li>
+              <li><b>7</b><span><strong>Vocabulary card</strong>: click it to hear the word and jump to it in the text; click again to jump to the next place; double-click to hear the whole sentence. The × removes the word.</span></li>
+            </ol>
+          </section>
+
+          <section class="gsec">
+            <h2>Edit and save</h2>
+            <ol class="gsteps">
+              <li><b>1</b><div><strong>Press the pencil</strong><span><span class="keycap"><svg class="ic"><use href="#i-edit"/></svg></span> at the top right of the article.</span></div></li>
+              <li><b>2</b><div><strong>Change anything</strong><span>Click the title, the text or a question and type.</span></div></li>
+              <li><b>3</b><div><strong>Save changes</strong><span>Press “Save changes” to apply your edits (or Cancel to discard them).</span></div></li>
+              <li><b>4</b><div><strong>Press Save</strong><span><span class="keycap"><svg class="ic"><use href="#i-save"/></svg></span> The green Save button keeps the article and its vocabulary in your Library. New words are also saved automatically.</span></div></li>
+            </ol>
+            <p class="gnote">Press <span class="keycap"><svg class="ic"><use href="#i-share"/></svg></span> <strong>Share</strong> to get a link that anyone can open — they can read and look up words without an access code.</p>
+          </section>
+
+          <section class="gsec">
+            <h2>Creating articles</h2>
+            <div class="gcards">
+              <div><strong>Paste text</strong><span>Paste any English text. It is not sent to the AI. You can also add your own questions.</span></div>
+              <div><strong>From a link</strong><span>Paste a web address and we pull out the main article text. Needs an access code.</span></div>
+              <div><strong>AI generate</strong><span>Type a topic, pick the length (up to 800 words) and level. Each user can generate a few articles per day — the number left is shown on that page.</span></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
       <!-- ① Create：首頁只有「主題 → 產生」；貼上文字、從網址匯入是兩張入口卡，點進去是各自的頁面 -->
-      <section id="viewCreate" class="view" data-view="create">
+      <section id="viewCreate" class="view hidden" data-view="create">
         <!-- 第一步：先問要用哪一種方式 -->
         <div class="home choose" data-panel="choose">
           <div class="hero2">

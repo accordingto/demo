@@ -14,8 +14,8 @@ $('level').addEventListener('change', syncLevelChips);
 syncLevelChips();
 
 // 起始畫面：Create（網址是 #library 就直接開文章庫）
-showView(location.hash.slice(1) === 'create' ? 'create' : 'library', { push: false });   // 預設進入 Library
-try { history.replaceState({ v: view }, '', '#' + view); } catch { /* 忽略 */ }
+{ const h = location.hash.slice(1); showView(['help', 'create', 'library'].includes(h) ? h : startView(), { push: false }); }   // 一開始：說明頁（或 Open the Library first 打開時的文章庫）
+try { history.replaceState({ v: view }, '', location.pathname + location.search + (location.hash === '#' + view ? location.hash : '')); } catch { /* 忽略 */ }   // 第一次進來不寫入 #網址，才不會書籤把「先開哪一頁」的設定蓋掉
 
 // 存取碼的狀態：輸入後（按 Enter 或離開欄位）向後端確認，明確顯示「已登入：名稱」或錯誤原因；並顯示今天 AI 產生還剩幾次（4 / 5）
 // 輸入時不會每按一個鍵就檢查（猜錯會被限流計次），只在輸入完成時檢查一次
