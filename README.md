@@ -147,7 +147,7 @@
 | `GROQ_API_KEY` | ✅ | Groq 金鑰，到 https://console.groq.com/keys 申請（有免費額度） |
 | `AI_MODEL` | ✅ | 模型名稱，例如 `llama-3.3-70b-versatile`。支援推理型模型（`openai/gpt-oss-*`、`qwen3-*`、`deepseek-r1-*`…），程式會自動降低思考量並加大 token 額度 |
 | `HOST_CODE` | ✅ | **擁有者**的存取碼（自訂一組難猜的字串）。擁有者可以用所有功能，包括 AI 產生文章；原本的文章都歸他 |
-| `USER_CODES` | 選用 | 其他使用者：`名稱:存取碼,名稱:存取碼`（例如 `alice:xxxx,bob:yyyy`）。每個人有**自己的文章庫**（看不到也改不到別人的），可以貼上文章、匯入網址、存文章，但**不能用 AI 產生文章**。新增或停用使用者：改這個變數後 Redeploy |
+| `USER_CODES` | 選用 | 其他使用者：`名稱:存取碼,名稱:存取碼`（例如 `alice:xxxx,bob:yyyy`）。每個人有**自己的文章庫**（看不到也改不到別人的），可以貼上文章、匯入網址、存文章，但**不能用 AI 產生文章**。每組存取碼必須**各不相同**（也不能和 `HOST_CODE` 相同），重複的使用者會被停用、無法登入。新增或停用使用者：改這個變數後 Redeploy |
 | `GENERATE_PER_DAY` | 選用 | 每天最多用 AI 產生幾篇（預設 30，需要雲端文章庫才有計數；計數失敗不會擋住使用） |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | 選用 | 雲端文章庫（Upstash Redis）。也接受 `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`，名稱可帶前綴（以結尾比對）；不會使用名稱含 `READ_ONLY` 的唯讀 token |
 

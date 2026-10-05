@@ -43,10 +43,13 @@ function listUsers() {
   const users = [];
   const owner = (process.env.HOST_CODE || '').trim();
   if (owner) users.push({ name: OWNER, code: owner, owner: true });
+  const extra = [];
   for (const part of String(process.env.USER_CODES || '').split(',')) {
     const i = part.indexOf(':'), name = part.slice(0, i).trim().toLowerCase(), code = part.slice(i + 1).trim();
-    if (i > 0 && /^[a-z0-9_-]{1,20}$/.test(name) && name !== OWNER && code && !users.some((x) => x.name === name)) users.push({ name, code, owner: false });
+    if (i > 0 && /^[a-z0-9_-]{1,20}$/.test(name) && name !== OWNER && code && !extra.some((x) => x.name === name)) extra.push({ name, code, owner: false });
   }
+  // 存取碼必須各不相同：和擁有者相同，或兩位使用者相同的，一律停用（否則會登入成別人，看到別人的文章庫）
+  for (const u of extra) if (u.code !== owner && extra.filter((x) => x.code === u.code).length === 1) users.push(u);
   return users;
 }
 

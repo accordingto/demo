@@ -452,3 +452,9 @@ test('generate: 每日上限（GENERATE_PER_DAY）超過就 429', () => withUser
   for (let i = 0; i < 3; i++) { const r = fakeRes(); await gen({ method: 'POST', headers: { 'x-forwarded-for': '10.0.0.' + i }, body: { code: 'secret', ...opts() } }, r); codes.push(r.code); }
   assert.deepEqual(codes, [200, 200, 429]);
 }));
+
+test('users: 存取碼重複的使用者一律停用（和擁有者相同、或兩位使用者相同），避免登入成別人', () => withUsers(async () => {
+  const { listUsers } = require('../api/_util');
+  process.env.USER_CODES = 'alice:same,bob:same,carol:secret,dave:ok';   // HOST_CODE 是 secret
+  assert.deepEqual(listUsers().map((u) => u.name), ['owner', 'dave']);
+}));
