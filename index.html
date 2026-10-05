@@ -238,12 +238,24 @@
           <div><h1 id="libTitle">Library</h1><p class="sub" id="libSubtitle">Saved in this browser</p></div>
           <div class="btns">
             <button type="button" id="libDiag" class="secondary hidden">Check cloud setup</button>
+            <button type="button" id="libUsers" class="secondary hidden">Manage users</button>
             <button type="button" id="libUpload" class="hidden">Upload local articles</button>
             <button type="button" id="libExport" class="secondary">Export backup</button>
             <button type="button" id="libImport" class="secondary">Import backup</button>
             <input type="file" id="libFile" accept="application/json,.json" class="hidden">
           </div>
         </div>
+        <!-- 使用者管理（只有擁有者、雲端模式才看得到）-->
+        <section id="usersPanel" class="card panel hidden" aria-label="Manage users">
+          <div class="subhead"><h2>Users</h2><span class="meta">Each user has their own library. They can paste, import and save articles, but not use AI generate.</span></div>
+          <form id="userForm" class="useradd">
+            <input type="text" id="userName" maxlength="20" placeholder="New user name (letters, numbers, - or _)" autocomplete="off" spellcheck="false" aria-label="New user name">
+            <button type="submit" id="userAdd">Add user</button>
+          </form>
+          <div id="userCode" class="usercode hidden" role="status"></div>
+          <div id="userMsg" class="meta" role="status"></div>
+          <div id="userList"></div>
+        </section>
         <div class="libtools"><label class="searchbox"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input type="search" id="libSearch" placeholder="Search saved articles" autocomplete="off" aria-label="Search saved articles"></label>
         <select id="libSortSel" aria-label="Sort articles"><option value="ts:-1">Newest first</option><option value="ts:1">Oldest first</option><option value="title:1">Title A–Z</option><option value="title:-1">Title Z–A</option><option value="words:-1">Most words</option><option value="words:1">Fewest words</option><option value="vocab:-1">Most vocab</option><option value="level:1">Level</option></select></div>
         <div id="libMsg" class="meta" role="status"></div>
@@ -265,6 +277,7 @@
 <script src="js/host-paste.js"></script>
 <script src="js/host-edit.js"></script>
 <script src="js/host-library.js"></script>
+<script src="js/host-users.js"></script>
 <script src="js/host-main.js"></script>
 </body>
 </html>

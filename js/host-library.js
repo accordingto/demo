@@ -70,6 +70,7 @@ function renderLib() {
   $('libUpload').classList.toggle('hidden', !(cloud && local.length));
   $('libDiag').classList.toggle('hidden', cloud); // 還沒啟用雲端時，提供「檢查雲端設定」
   $('libUpload').textContent = `Upload ${REL(local.length)} from this browser`;
+  if (typeof syncUsersBtn === 'function') syncUsersBtn();   // 擁有者 + 雲端模式才顯示「Manage users」（host-users.js）
   $('libSortSel').value = `${libSort.key}:${libSort.dir}`;
   if (cloud && cloudErr) { $('libList').innerHTML = `<div class="empty-state"><strong>Could not load the library</strong>${esc(cloudErr)}</div>`; return; }
   if (!l.length) { $('libList').innerHTML = q ? `<div class="empty-state"><strong>No matches</strong>Nothing in your library matches “${esc(libQuery)}”.</div>` : '<div class="empty-state"><strong>No saved articles yet</strong>Create an article and press Save (or just add a word — it saves automatically).</div>'; return; }

@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
   if (missing.length) return res.status(500).json({ error: `Server is missing environment variables: ${missing.join(', ')} (redeploy after setting them)` });
 
   const body = readBody(req);
-  const user = checkHostCode(req, res, body.code, { ownerOnly: true });   // AI 產生文章只有擁有者能用
+  const user = await checkHostCode(req, res, body.code, { ownerOnly: true });   // AI 產生文章只有擁有者能用
   if (!user) return;
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
 

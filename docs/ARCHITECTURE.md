@@ -26,7 +26,7 @@
 | `_extract.js` | 簡易 Readability：清除雜訊 → 找 `<article>` → 依距離把 `<p>`／長 `<li>` 分群取字數最多的一群 → 補小標題 → 去雜訊與重複 |
 | `generate.js` | 檢查環境變數 → 比對存取碼（只有擁有者）→ 每日上限 → 限流 → `validate` → 呼叫 Groq（串流）→ `parseArticle` → 以 SSE 回傳 `progress`／`result`／`error` |
 | `define.js` | 公開。驗證單字格式 → 限流 → Groq JSON 模式 → 回傳 `{lemma,pos,kk,definition,zh}`（欄位都限制長度） |
-| `library.js` | 需存取碼。`status`（不需碼，回報雲端是否啟用）、`whoami`（這組碼是誰、能不能產生文章）、`diagnose`（只有擁有者）、`list`、`get`、`save`、`delete`；每位使用者只能存取自己的文章（`mine()`），擁有者包含沒有 owner 欄位的舊文章 |
+| `library.js` | 需存取碼。`status`（不需碼，回報雲端是否啟用）、`whoami`（這組碼是誰、是不是擁有者）、`diagnose`（擁有者）、`users_*`（擁有者：列出／新增／重設／停用／啟用／刪除使用者）、`list`、`get`、`save`、`delete`；每位使用者只能存取自己的文章（`mine()`），擁有者包含沒有 owner 欄位的舊文章 |
 | `article.js` | 公開 GET。以 12 字元代碼讀單篇文章與主持人挑的單字，`Cache-Control: no-store` |
 | `_groq.js` | `groqChat`（送請求；推理型模型的參數被拒絕時不帶參數重試）、`readStream`（解析 SSE，回傳 `{text, finish}`）、`errorMessage` |
 | `_model.js` | `modelName`、`isReasoning`、`reasoningParams`、`articleTokens` |
@@ -71,7 +71,7 @@
 
 ### 載入順序（classic script，共用全域作用域）
 - 共通：`prefs.js` 放在 `<head>`（同步載入，頁面繪製前就套用主題，避免先閃一下預設主題）
-- 主持人頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `host-nav.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-main.js`
+- 主持人頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `host-nav.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-users.js` → `host-main.js`
 - 閱讀頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `reader.js`
 
 各 host 模組之間的函式只在**執行時**互相呼叫；但 `Vocab.init` 一執行就會呼叫 `onChange(syncLib)`，所以放在最後載入的 `host-main.js`。

@@ -9,7 +9,7 @@ const limited = makeLimiter(10);
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'POST only' }); }
   const b = readBody(req);
-  if (!checkHostCode(req, res, b.code)) return;
+  if (!(await checkHostCode(req, res, b.code))) return;
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
   try {
     const { html, url } = await fetchPage(b.url);

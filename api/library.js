@@ -1,8 +1,9 @@
 // POST /api/library — 雲端文章庫（主持人專用，需存取碼）
-// action: status | whoami | list | get | save | delete | diagnose（擁有者）
+// action: status | whoami | list | get | save | delete | diagnose（擁有者）| users_*（擁有者：管理使用者）
 // 每位使用者只看得到、改得到自己的文章（見 mine()）
 const crypto = require('crypto');
 const store = require('./_store');
+const users = require('./_users');
 const { checkHostCode, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
 
 const limited = makeLimiter(60);
@@ -44,13 +45,13 @@ module.exports = async function handler(req, res) {
 
   // 這組存取碼是誰、能做什麼（前端據此決定要不要顯示「AI 產生」）
   if (b.action === 'whoami') {
-    const me = checkHostCode(req, res, b.code); if (!me) return;
-    return res.status(200).json({ user: me.name, canGenerate: me.owner });
+    const me = await checkHostCode(req, res, b.code); if (!me) return;
+    return res.status(200).json({ user: me.name, canGenerate: me.owner, owner: me.owner });
   }
 
   // 檢查雲端設定（需存取碼）：只回報「找到哪些相關變數的名稱」與連線測試結果，不回傳任何值或 token
   if (b.action === 'diagnose') {
-    if (!checkHostCode(req, res, b.code, { ownerOnly: true })) return;
+    if (!(await checkHostCode(req, res, b.code, { ownerOnly: true }))) return;
     const names = Object.keys(process.env).filter((k) => /KV_|UPSTASH|REDIS|REST_API/i.test(k)).sort();
     const c = store.conf();
     const out = { configured: store.configured(), relatedVariables: names, usingUrlVariable: c.urlKey || null, usingTokenVariable: c.tokenKey || null, urlHost: null, ping: null };
@@ -61,7 +62,25 @@ module.exports = async function handler(req, res) {
 
   if (!store.configured()) return res.status(503).json({ error: 'Cloud storage is not configured', configured: false });
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
-  const me = checkHostCode(req, res, b.code); if (!me) return;
+  const me = await checkHostCode(req, res, b.code); if (!me) return;
+
+  // 使用者管理（只有擁有者）：list / add / reset / disable / enable / delete。存取碼只在 add、reset 的回應裡出現一次
+  if (/^users_/.test(String(b.action))) {
+    if (!me.owner) return res.status(403).json({ error: 'This feature is only available to the site owner.' });
+    try {
+      switch (b.action) {
+        case 'users_list': return res.status(200).json({ users: await users.list() });
+        case 'users_add': return res.status(200).json(await users.add(b.name));
+        case 'users_reset': return res.status(200).json(await users.reset(String(b.name)));
+        case 'users_disable': case 'users_enable': await users.setDisabled(String(b.name), b.action === 'users_disable'); return res.status(200).json({ ok: true });
+        case 'users_delete': return res.status(200).json(await users.remove(String(b.name)));
+        default: return res.status(400).json({ error: 'Unknown action' });
+      }
+    } catch (e) {
+      if (e instanceof users.UserError) return res.status(e.status).json({ error: e.message });
+      return res.status(502).json({ error: 'Cloud storage request failed. Please try again.' });
+    }
+  }
   const INDEX = store.INDEX(me.name);
   // 文章屬於誰：沒有 owner 欄位的舊文章都是擁有者的
   const mine = (it) => (it.owner || 'owner') === me.name;
