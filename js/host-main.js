@@ -34,3 +34,13 @@ syncOptSummary();
 // 起始畫面：Create（網址是 #library 就直接開文章庫）
 showView(location.hash.slice(1) === 'create' ? 'create' : 'library', { push: false });   // 預設進入 Library
 try { history.replaceState({ v: view }, '', '#' + view); } catch { /* 忽略 */ }
+
+// 這組存取碼是誰：不能用 AI 產生文章的使用者，Create 的「AI generate」卡片改成不能點（後端另外擋，這裡只是讓人看得懂）
+async function refreshRole() {
+  const code = $('code').value.trim(); let can = true;
+  if (code) { try { can = (await postJson('/api/library', { action: 'whoami', code })).canGenerate !== false; } catch { /* 碼不對或連不上：先當作可以，真正使用時後端會回應 */ } }
+  const card = document.querySelector('.choice[data-goto-tab=gen]');
+  card.disabled = !can; card.querySelector('.tag').textContent = can ? 'Needs access code' : 'Owner only';
+}
+$('code').addEventListener('change', refreshRole);
+refreshRole();

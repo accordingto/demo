@@ -4,11 +4,13 @@ const { articleTokens, modelName } = require('./_model');
 const { groqChat, readStream, errorMessage } = require('./_groq');
 const { validate, buildMessages } = require('./_prompt');
 const { parseArticle, countWords } = require('./_parse');
+const store = require('./_store');
 const { checkHostCode, clientIp, makeLimiter, readBody, missingEnv } = require('./_util');
 
 const TIMEOUT_MS = 55000; // 需小於 vercel.json 的 maxDuration
 const TOLERANCE = 0.1;    // 實際字數與目標差超過 10% 時，前端會提示
 const limited = makeLimiter(5);
+const dailyLimit = () => Math.max(1, Number(process.env.GENERATE_PER_DAY) || 30);   // 每天最多產生幾篇（需要雲端儲存才有計數；失敗時不擋）
 
 const send = (res, event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 
@@ -21,11 +23,16 @@ module.exports = async function handler(req, res) {
   if (missing.length) return res.status(500).json({ error: `Server is missing environment variables: ${missing.join(', ')} (redeploy after setting them)` });
 
   const body = readBody(req);
-  if (!checkHostCode(req, res, body.code)) return;
+  const user = checkHostCode(req, res, body.code, { ownerOnly: true });   // AI 產生文章只有擁有者能用
+  if (!user) return;
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
 
   const { error, value: o } = validate(body);
   if (error) return res.status(400).json({ error });
+  if (store.configured()) {
+    let n = 0; try { n = await store.countToday('gen', user.name); } catch { /* 計數失敗不影響使用 */ }
+    if (n > dailyLimit()) return res.status(429).json({ error: `Daily generation limit reached (${dailyLimit()} per day). Try again tomorrow.` });
+  }
 
   // 串流輸出，避免長文在等待期間被視為無回應
   res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive' });

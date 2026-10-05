@@ -1,5 +1,6 @@
 // POST /api/library — 雲端文章庫（主持人專用，需存取碼）
-// action: status | list | get | save | delete
+// action: status | whoami | list | get | save | delete | diagnose（擁有者）
+// 每位使用者只看得到、改得到自己的文章（見 mine()）
 const crypto = require('crypto');
 const store = require('./_store');
 const { checkHostCode, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
@@ -41,9 +42,15 @@ module.exports = async function handler(req, res) {
   // 用來判斷前端要用雲端還是本機文章庫（不需存取碼）
   if (b.action === 'status') return res.status(200).json({ configured: store.configured() });
 
+  // 這組存取碼是誰、能做什麼（前端據此決定要不要顯示「AI 產生」）
+  if (b.action === 'whoami') {
+    const me = checkHostCode(req, res, b.code); if (!me) return;
+    return res.status(200).json({ user: me.name, canGenerate: me.owner });
+  }
+
   // 檢查雲端設定（需存取碼）：只回報「找到哪些相關變數的名稱」與連線測試結果，不回傳任何值或 token
   if (b.action === 'diagnose') {
-    if (!checkHostCode(req, res, b.code)) return;
+    if (!checkHostCode(req, res, b.code, { ownerOnly: true })) return;
     const names = Object.keys(process.env).filter((k) => /KV_|UPSTASH|REDIS|REST_API/i.test(k)).sort();
     const c = store.conf();
     const out = { configured: store.configured(), relatedVariables: names, usingUrlVariable: c.urlKey || null, usingTokenVariable: c.tokenKey || null, urlHost: null, ping: null };
@@ -54,12 +61,15 @@ module.exports = async function handler(req, res) {
 
   if (!store.configured()) return res.status(503).json({ error: 'Cloud storage is not configured', configured: false });
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
-  if (!checkHostCode(req, res, b.code)) return;
+  const me = checkHostCode(req, res, b.code); if (!me) return;
+  const INDEX = store.INDEX(me.name);
+  // 文章屬於誰：沒有 owner 欄位的舊文章都是擁有者的
+  const mine = (it) => (it.owner || 'owner') === me.name;
 
   try {
     switch (b.action) {
       case 'list': {
-        const ids = await store.cmd('ZREVRANGE', store.INDEX, 0, MAX_ITEMS - 1);
+        const ids = await store.cmd('ZREVRANGE', INDEX, 0, MAX_ITEMS - 1);
         if (!ids.length) return res.status(200).json({ items: [] });
         const raws = await store.cmd('MGET', ...ids.map(store.KEY));
         const items = raws.map((r) => { try { return r ? summary(JSON.parse(r)) : null; } catch { return null; } }).filter(Boolean);
@@ -70,6 +80,7 @@ module.exports = async function handler(req, res) {
         const raw = await store.cmd('GET', store.KEY(b.id));
         if (!raw) return res.status(404).json({ error: 'Article not found' });
         const it = JSON.parse(raw);
+        if (!mine(it)) return res.status(404).json({ error: 'Article not found' });
         return res.status(200).json({ id: it.id, article: it.article, vocab: it.vocab || [], updatedAt: it.updatedAt });
       }
       case 'save': {
@@ -80,22 +91,26 @@ module.exports = async function handler(req, res) {
         let createdAt = now;
         if (id) { // 更新既有文章（保留建立時間）
           const old = await store.cmd('GET', store.KEY(id));
-          if (!old) id = ''; // 已被刪除 → 當成新文章
-          else { try { createdAt = JSON.parse(old).createdAt || now; } catch { /* 忽略 */ } }
+          let prev = null; try { prev = old && JSON.parse(old); } catch { /* 忽略 */ }
+          if (!prev || !mine(prev)) id = ''; // 已被刪除，或不是自己的文章 → 當成新文章，絕不覆蓋別人的
+          else createdAt = prev.createdAt || now;
         }
         if (!id) {
-          if ((await store.cmd('ZCARD', store.INDEX)) >= MAX_ITEMS) return res.status(400).json({ error: `Library is full (${MAX_ITEMS} articles). Delete some first.` });
+          if ((await store.cmd('ZCARD', INDEX)) >= MAX_ITEMS) return res.status(400).json({ error: `Library is full (${MAX_ITEMS} articles). Delete some first.` });
           id = crypto.randomBytes(9).toString('base64url'); // 12 個字元，猜不到
         }
-        const item = { id, createdAt, updatedAt: now, article, vocab };
+        const item = { id, createdAt, updatedAt: now, article, vocab, ...(me.owner ? {} : { owner: me.name }) };
         const json = JSON.stringify(item);
         if (json.length > 250000) return res.status(413).json({ error: 'Article is too large to save' });
-        await store.pipeline([['SET', store.KEY(id), json], ['ZADD', store.INDEX, now, id]]);
+        await store.pipeline([['SET', store.KEY(id), json], ['ZADD', INDEX, now, id]]);
         return res.status(200).json({ id, updatedAt: now });
       }
       case 'delete': {
         if (!ID_RE.test(String(b.id))) return res.status(400).json({ error: 'Invalid id' });
-        await store.pipeline([['DEL', store.KEY(b.id)], ['ZREM', store.INDEX, b.id]]);
+        const raw = await store.cmd('GET', store.KEY(b.id));
+        let it = null; try { it = raw && JSON.parse(raw); } catch { /* 壞掉的資料當成不存在 */ }
+        if (it && !mine(it)) return res.status(404).json({ error: 'Article not found' });   // 不能刪別人的
+        await store.pipeline([['DEL', store.KEY(b.id)], ['ZREM', INDEX, b.id]]);
         return res.status(200).json({ ok: true });
       }
       default:

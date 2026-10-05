@@ -42,6 +42,13 @@ async function pipeline(cmds) {
 }
 
 const KEY = (id) => `rc:a:${id}`;
-const INDEX = 'rc:idx'; // sorted set：member = 文章 id，score = 更新時間
+// 每位使用者各有一個清單（sorted set：member = 文章 id，score = 更新時間）。擁有者沿用舊的 key，原本的文章不用搬
+const INDEX = (user) => (!user || user === 'owner' ? 'rc:idx' : `rc:idx:${user}`);
+// 每日計數（例如產生文章的次數）：加一並回傳目前次數；兩天後自動過期
+async function countToday(name, user) {
+  const key = `rc:n:${name}:${user}:${new Date().toISOString().slice(0, 10)}`;
+  const r = await pipeline([['INCR', key], ['EXPIRE', key, 172800]]);
+  return Number(r[0]) || 0;
+}
 
-module.exports = { configured, conf, cmd, pipeline, KEY, INDEX };
+module.exports = { configured, conf, cmd, pipeline, KEY, INDEX, countToday };

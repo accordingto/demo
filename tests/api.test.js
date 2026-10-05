@@ -337,9 +337,9 @@ test('checkHostCode: 猜錯太多次會被擋（防暴力猜存取碼），之�
   const { checkHostCode } = require('../api/_util');
   const mk = () => { const r = fakeRes(); return r; };
   const req = { headers: { 'x-forwarded-for': '7.7.7.7' } };
-  for (let i = 0; i < 10; i++) { const r = mk(); assert.equal(checkHostCode(req, r, 'wrong'), false); assert.equal(r.code, 401); }
-  const r = mk(); assert.equal(checkHostCode(req, r, 'secret'), false); assert.equal(r.code, 429);
-  const other = mk(); assert.equal(checkHostCode({ headers: { 'x-forwarded-for': '8.8.8.8' } }, other, 'secret'), true);   // 別的 IP 不受影響
+  for (let i = 0; i < 10; i++) { const r = mk(); assert.equal(checkHostCode(req, r, 'wrong'), null); assert.equal(r.code, 401); }
+  const r = mk(); assert.equal(checkHostCode(req, r, 'secret'), null); assert.equal(r.code, 429);
+  const other = mk(); assert.deepEqual(checkHostCode({ headers: { 'x-forwarded-for': '8.8.8.8' } }, other, 'secret'), { name: 'owner', owner: true });   // 別的 IP 不受影響
 }));
 
 test('安全：頁面不能有 inline script / 事件屬性（CSP 禁止），且 vercel.json 有安全標頭', () => {
@@ -362,3 +362,93 @@ test('esc: 跳脫 & < > " 與單引號', () => {
   const esc = new Function(src.match(/const esc = [^\n]*/)[0] + '; return esc;')();
   assert.equal(esc(`<a href="x" onclick='y'>&`), '&lt;a href=&quot;x&quot; onclick=&#39;y&#39;&gt;&amp;');
 });
+
+// ---- 多位使用者：各自的文章庫、AI 產生只有擁有者 ----
+function fakeStore() {   // 記憶體版的 Redis（只實作用到的指令）
+  const kv = new Map(), z = new Map();
+  const zs = (k) => z.get(k) || z.set(k, new Map()).get(k);
+  const run = (c) => {
+    const [op, k, ...a] = c;
+    switch (op) {
+      case 'GET': return kv.has(k) ? kv.get(k) : null;
+      case 'SET': kv.set(k, a[0]); return 'OK';
+      case 'MGET': return [k, ...a].map((x) => (kv.has(x) ? kv.get(x) : null));
+      case 'DEL': kv.delete(k); return 1;
+      case 'ZADD': zs(k).set(a[1], Number(a[0])); return 1;
+      case 'ZREM': zs(k).delete(a[0]); return 1;
+      case 'ZCARD': return zs(k).size;
+      case 'ZREVRANGE': return [...zs(k)].sort((x, y) => y[1] - x[1]).map((x) => x[0]);
+      case 'INCR': kv.set(k, (Number(kv.get(k)) || 0) + 1); return kv.get(k);
+      case 'EXPIRE': return 1;
+      default: throw new Error('unsupported ' + op);
+    }
+  };
+  return { configured: () => true, cmd: async (...c) => run(c), pipeline: async (cs) => cs.map(run), KEY: (id) => `rc:a:${id}`, INDEX: (u) => (!u || u === 'owner' ? 'rc:idx' : `rc:idx:${u}`), countToday: async (n, u) => run(['INCR', `n:${n}:${u}`]), conf: () => ({}) };
+}
+const withUsers = async (fn) => withEnv(async () => {
+  process.env.USER_CODES = 'bob:bobpw, Eve:evepw';
+  const store = require('../api/_store'), orig = { ...store }, fake = fakeStore();
+  Object.assign(store, fake);
+  try { await fn(); } finally { Object.assign(store, orig); }
+});
+const call = async (handler, code, body, ip = '5.5.5.5') => { const r = fakeRes(); await handler({ method: 'POST', headers: { 'x-forwarded-for': ip }, body: { code, ...body } }, r); return r; };
+
+test('users: HOST_CODE 是擁有者，USER_CODES 是其他使用者（名稱轉小寫、不能叫 owner、重複的碼不重複計）', () => withUsers(async () => {
+  const { listUsers } = require('../api/_util');
+  assert.deepEqual(listUsers().map((u) => [u.name, u.owner]), [['owner', true], ['bob', false], ['eve', false]]);
+  process.env.USER_CODES = 'owner:x,bad name:y,:z,bob:1,bob:2';
+  assert.deepEqual(listUsers().map((u) => u.name), ['owner', 'bob']);
+}));
+
+test('users: AI 產生只有擁有者；其他使用者得到 403', () => withUsers(async () => {
+  const gen = require('../api/generate');
+  const bob = await call(gen, 'bobpw', opts());
+  assert.equal(bob.code, 403);
+  const wrong = await call(gen, 'nope', opts(), '6.6.6.6');
+  assert.equal(wrong.code, 401);
+}));
+
+test('users: 每個人只看得到、改得到、刪得到自己的文章；擁有者的舊文章（沒有 owner 欄位）歸擁有者', () => withUsers(async () => {
+  const lib = require('../api/library'), store = require('../api/_store');
+  const art = (t) => ({ title: t, body: 'Hello world. ' + t, level: '', source: 'pasted', wordCount: 3, questions: [], discussion: [] });
+  // 舊資料：沒有 owner 欄位、放在 rc:idx
+  await store.pipeline([['SET', 'rc:a:legacy_old_1', JSON.stringify({ id: 'legacy_old_1', createdAt: 1, updatedAt: 1, article: art('Legacy'), vocab: [] })], ['ZADD', 'rc:idx', 1, 'legacy_old_1']]);
+  const mine = async (code) => (await call(lib, code, { action: 'list' })).payload.items.map((i) => i.title);
+  const saveAs = async (code, t, id) => (await call(lib, code, { action: 'save', article: art(t), id })).payload;
+  const b = await saveAs('bobpw', 'Bob article'), e = await saveAs('evepw', 'Eve article'), o = await saveAs('secret', 'Owner article');
+  assert.deepEqual((await mine('bobpw')), ['Bob article']);
+  assert.deepEqual((await mine('evepw')), ['Eve article']);
+  assert.deepEqual((await mine('secret')).sort(), ['Legacy', 'Owner article']);
+  // 讀、覆蓋、刪除別人的都不行
+  assert.equal((await call(lib, 'bobpw', { action: 'get', id: e.id })).code, 404);
+  assert.equal((await call(lib, 'bobpw', { action: 'get', id: 'legacy_old_1' })).code, 404);
+  const hijack = await saveAs('bobpw', 'Bob overwrites', e.id);   // 帶別人的 id 存檔 → 變成自己的新文章，不會覆蓋
+  assert.notEqual(hijack.id, e.id);
+  assert.equal(JSON.parse(await store.cmd('GET', 'rc:a:' + e.id)).article.title, 'Eve article');
+  assert.equal((await call(lib, 'bobpw', { action: 'delete', id: e.id })).code, 404);
+  assert.ok(await store.cmd('GET', 'rc:a:' + e.id));
+  assert.equal((await call(lib, 'evepw', { action: 'delete', id: e.id })).code, 200);
+  assert.equal(await store.cmd('GET', 'rc:a:' + e.id), null);
+  // 自己的可以讀可以刪
+  assert.equal((await call(lib, 'bobpw', { action: 'get', id: b.id })).payload.article.title, 'Bob article');
+}));
+
+test('users: whoami 回報身分與能不能產生文章；diagnose 只有擁有者；公開的 /api/article 仍可用 id 讀', () => withUsers(async () => {
+  const lib = require('../api/library'), art = require('../api/article'), store = require('../api/_store');
+  assert.deepEqual((await call(lib, 'bobpw', { action: 'whoami' })).payload, { user: 'bob', canGenerate: false });
+  assert.deepEqual((await call(lib, 'secret', { action: 'whoami' })).payload, { user: 'owner', canGenerate: true });
+  assert.equal((await call(lib, 'bobpw', { action: 'diagnose' })).code, 403);
+  const saved = (await call(lib, 'bobpw', { action: 'save', article: { title: 'T', body: 'Some text here.', questions: [], discussion: [] } })).payload;
+  const r = fakeRes(); await art({ method: 'GET', headers: {}, query: { id: saved.id }, url: '/' }, r);
+  assert.equal(r.code, 200); assert.ok(!('owner' in r.payload));   // 成員用短連結讀文章，不會看到擁有者資訊
+}));
+
+test('generate: 每日上限（GENERATE_PER_DAY）超過就 429', () => withUsers(async () => {
+  process.env.GENERATE_PER_DAY = '2';
+  const gen = require('../api/generate');
+  const text = '=== TITLE ===\nT\n=== BODY ===\n' + 'Word '.repeat(300) + '.\n=== QUESTIONS ===\n1. a?\n2. b?\n=== DISCUSSION ===\n1. c?\n2. d?';
+  global.fetch = async () => ({ ok: true, status: 200, body: (async function* () { yield Buffer.from('data: ' + JSON.stringify({ choices: [{ delta: { content: text }, finish_reason: 'stop' }] }) + '\n\ndata: [DONE]\n\n'); })() });
+  const codes = [];
+  for (let i = 0; i < 3; i++) { const r = fakeRes(); await gen({ method: 'POST', headers: { 'x-forwarded-for': '10.0.0.' + i }, body: { code: 'secret', ...opts() } }, r); codes.push(r.code); }
+  assert.deepEqual(codes, [200, 200, 429]);
+}));
