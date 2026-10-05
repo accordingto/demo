@@ -304,10 +304,10 @@ body.nav-open { overflow:hidden; }
 .codestatus .role { font-weight:600; opacity:.8; }
 .side-foot.signed { border-color:var(--lamp-ok); }
 .side-foot.failed { border-color:var(--lamp-bad); }
-/* 上方列的鑰匙、選單收合時的鑰匙：右上角的小燈 */
-#tbKey.signed::after, #tbKey.failed::after, body.side-mini .side-foot.signed label::after, body.side-mini .side-foot.failed label::after { content:""; position:absolute; top:6px; right:6px; width:9px; height:9px; border-radius:50%; }
-#tbKey.signed::after, body.side-mini .side-foot.signed label::after { background:var(--lamp-ok); box-shadow:0 0 6px var(--lamp-ok); }
-#tbKey.failed::after, body.side-mini .side-foot.failed label::after { background:var(--lamp-bad); box-shadow:0 0 6px var(--lamp-bad); }
+/* 選單收合時的鑰匙：右上角的小燈 */
+body.side-mini .side-foot.signed label::after, body.side-mini .side-foot.failed label::after { content:""; position:absolute; top:6px; right:6px; width:9px; height:9px; border-radius:50%; }
+body.side-mini .side-foot.signed label::after { background:var(--lamp-ok); box-shadow:0 0 6px var(--lamp-ok); }
+body.side-mini .side-foot.failed label::after { background:var(--lamp-bad); box-shadow:0 0 6px var(--lamp-bad); }
 @media (min-width:1280px) { body.side-mini .codestatus { display:none; } body.side-mini .side-foot label { position:relative; } }
 
 /* 上方列：登入者名稱（手機／平板；桌機看側邊欄）*/

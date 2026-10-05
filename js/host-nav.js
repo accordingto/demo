@@ -56,7 +56,7 @@ document.querySelector('.side-foot label').addEventListener('click', () => { if 
 try { if (localStorage.getItem('rc-side-mini') === '1') setSideMini(true, false); } catch { /* 沒有就維持展開 */ }
 // 需要存取碼時：窄螢幕打開抽屜，並把游標放到存取碼欄位
 function askForCode() {
-  if (matchMedia('(max-width:1279px)').matches) { closeNav(); $('codeQuick').value = $('code').value; $('codePop').classList.remove('hidden'); $('tbKey').setAttribute('aria-expanded', 'true'); setTimeout(() => $('codeQuick').focus(), 100); }
+  if (matchMedia('(max-width:1279px)').matches) { closeNav(); $('codeQuick').value = $('code').value; $('codePop').classList.remove('hidden'); $('tbUser').setAttribute('aria-expanded', 'true'); setTimeout(() => $('codeQuick').focus(), 100); }
   else { if (document.body.classList.contains('side-mini')) setSideMini(false); setTimeout(() => $('code').focus(), 100); }
 }
 
@@ -64,15 +64,15 @@ function askForCode() {
 document.addEventListener('click', (e) => { if (e.target.closest('.gear')) closeNav(); });
 
 // ---- 存取碼快速視窗（上方列的 🔑）：和側邊欄的 #code 同步 ----
-function closeCodePop() { $('codePop').classList.add('hidden'); $('tbKey').setAttribute('aria-expanded', 'false'); }
-$('tbKey').addEventListener('click', () => {
+function closeCodePop() { $('codePop').classList.add('hidden'); $('tbUser').setAttribute('aria-expanded', 'false'); }
+$('tbUser').addEventListener('click', () => {
   const open = $('codePop').classList.contains('hidden');
   if (!open) return closeCodePop();
   $('codeQuick').value = $('code').value;
-  $('codePop').classList.remove('hidden'); $('tbKey').setAttribute('aria-expanded', 'true');
+  $('codePop').classList.remove('hidden'); $('tbUser').setAttribute('aria-expanded', 'true');
   setTimeout(() => $('codeQuick').focus(), 50);
 });
 for (const ev of ['input', 'change']) $('codeQuick').addEventListener(ev, () => { $('code').value = $('codeQuick').value; $('code').dispatchEvent(new Event(ev, { bubbles: true })); });
 $('codeQuick').addEventListener('keydown', (e) => { if (e.key === 'Enter') { $('codeQuick').dispatchEvent(new Event('change')); closeCodePop(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCodePop(); });
-document.addEventListener('pointerdown', (e) => { if (!$('codePop').classList.contains('hidden') && !$('codePop').contains(e.target) && !$('tbKey').contains(e.target)) closeCodePop(); });
+document.addEventListener('pointerdown', (e) => { if (!$('codePop').classList.contains('hidden') && !$('codePop').contains(e.target) && !$('tbUser').contains(e.target)) closeCodePop(); });

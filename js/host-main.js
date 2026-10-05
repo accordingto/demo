@@ -28,7 +28,7 @@ function setCodeStatus(kind, user, owner, msg) {
   // 上方列（手機／平板）：燈號＋登入者名稱，點一下開啟存取碼視窗
   $('tbUser').innerHTML = kind === 'ok' ? `<i class="lamp ok" aria-hidden="true"></i><span class="who">${esc(user)}</span>`
     : kind === 'busy' ? '<i class="lamp off" aria-hidden="true"></i>' : '<i class="lamp bad" aria-hidden="true"></i><span class="nosign">Not signed in</span>';
-  for (const el of [$('tbKey'), ...document.querySelectorAll('.side-foot')]) { el.classList.toggle('signed', kind === 'ok'); el.classList.toggle('failed', kind === 'bad' || kind === 'none'); }
+  for (const el of document.querySelectorAll('.side-foot')) { el.classList.toggle('signed', kind === 'ok'); el.classList.toggle('failed', kind === 'bad' || kind === 'none'); }
 }
 async function refreshRole() {
   const code = $('code').value.trim(), seq = ++roleSeq; let owner = false, gen = null;
@@ -50,7 +50,6 @@ async function refreshRole() {
     $('go').disabled = gen.remaining === 0;
   } else $('go').disabled = false;
 }
-$('tbUser').addEventListener('click', () => $('tbKey').click());
 $('code').addEventListener('change', refreshRole);
 $('code').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('code').dispatchEvent(new Event('change')); } });   // Enter = 輸入完成
 refreshRole();
