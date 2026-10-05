@@ -4,7 +4,7 @@
 const crypto = require('crypto');
 const store = require('./_store');
 const users = require('./_users');
-const { checkHostCode, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
+const { generateLimit, checkHostCode, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
 
 const limited = makeLimiter(60);
 const MAX_ITEMS = 500;
@@ -46,7 +46,12 @@ module.exports = async function handler(req, res) {
   // 這組存取碼是誰、是不是擁有者（前端據此決定要不要顯示「Manage users」）
   if (b.action === 'whoami') {
     const me = await checkHostCode(req, res, b.code); if (!me) return;
-    return res.status(200).json({ user: me.name, owner: me.owner });
+    let generate = null;   // 今天 AI 產生用了幾次（沒有雲端儲存就沒有計數）
+    if (store.configured()) {
+      const limit = generateLimit(me);
+      try { const used = Math.min(limit, Number(await store.cmd('GET', store.todayKey('gen', me.name))) || 0); generate = { used, limit, remaining: limit - used }; } catch { /* 讀不到就不顯示 */ }
+    }
+    return res.status(200).json({ user: me.name, owner: me.owner, generate });
   }
 
   // 檢查雲端設定（需存取碼）：只回報「找到哪些相關變數的名稱」與連線測試結果，不回傳任何值或 token

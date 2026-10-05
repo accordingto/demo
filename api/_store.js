@@ -46,11 +46,12 @@ const KEY = (id) => `rc:a:${id}`;
 const INDEX = (user) => (!user || user === 'owner' ? 'rc:idx' : `rc:idx:${user}`);
 // 每日計數（例如產生文章的次數）：加一並回傳 { n: 目前次數, key }；兩天後自動過期。「一天」依 LIMIT_TZ 時區（預設台北）的日期換日
 const today = () => { try { return new Date().toLocaleDateString('en-CA', { timeZone: process.env.LIMIT_TZ || 'Asia/Taipei' }); } catch { return new Date().toISOString().slice(0, 10); } };
+const todayKey = (name, user) => `rc:n:${name}:${user}:${today()}`;
 async function countToday(name, user) {
-  const key = `rc:n:${name}:${user}:${today()}`;
+  const key = todayKey(name, user);
   const r = await pipeline([['INCR', key], ['EXPIRE', key, 172800]]);
   return { n: Number(r[0]) || 0, key };
 }
 const uncount = (key) => cmd('DECR', key);   // 失敗時把這一次還給使用者
 
-module.exports = { configured, conf, cmd, pipeline, KEY, INDEX, countToday, uncount };
+module.exports = { configured, conf, cmd, pipeline, KEY, INDEX, todayKey, countToday, uncount };

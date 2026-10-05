@@ -5,13 +5,11 @@ const { groqChat, readStream, errorMessage } = require('./_groq');
 const { validate, buildMessages } = require('./_prompt');
 const { parseArticle, countWords } = require('./_parse');
 const store = require('./_store');
-const { checkHostCode, clientIp, makeLimiter, readBody, missingEnv } = require('./_util');
+const { generateLimit, checkHostCode, clientIp, makeLimiter, readBody, missingEnv } = require('./_util');
 
 const TIMEOUT_MS = 55000; // 需小於 vercel.json 的 maxDuration
 const TOLERANCE = 0.1;    // 實際字數與目標差超過 10% 時，前端會提示
 const limited = makeLimiter(5);
-// 每天最多用 AI 產生幾篇：一般使用者預設 3（USER_GENERATE_PER_DAY），擁有者預設 30（GENERATE_PER_DAY）。需要雲端儲存才有計數；計數失敗時不擋
-const dailyLimit = (user) => Math.max(1, Number(process.env[user.owner ? 'GENERATE_PER_DAY' : 'USER_GENERATE_PER_DAY']) || (user.owner ? 30 : 3));
 
 const send = (res, event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 
@@ -33,7 +31,10 @@ module.exports = async function handler(req, res) {
   let counted = null;
   if (store.configured()) {
     try { counted = await store.countToday('gen', user.name); } catch { /* 計數失敗不影響使用 */ }
-    if (counted && counted.n > dailyLimit(user)) return res.status(429).json({ error: `Daily AI generation limit reached (${dailyLimit(user)} per day). Please try again tomorrow.` });
+    if (counted && counted.n > generateLimit(user)) {
+      store.uncount(counted.key).catch(() => {});   // 被擋下的這一次不算
+      return res.status(429).json({ error: `Daily AI generation limit reached (${generateLimit(user)} per day). Please try again tomorrow.` });
+    }
   }
 
   // 串流輸出，避免長文在等待期間被視為無回應

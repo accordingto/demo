@@ -285,3 +285,9 @@ body.nav-open { overflow:hidden; }
 .useradd input { flex:1 1 180px; min-width:0; }
 #usersPanel .libtable { border:1px solid var(--line); border-radius:14px; overflow:hidden; }
 #usersPanel .libtable th { font-size:.72rem; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+
+/* 今天 AI 產生還剩幾次 */
+.genusage { margin-top:12px; padding:8px 14px; border-radius:999px; text-align:center; font-size:.88rem; color:var(--muted); background:var(--field); border:1px solid var(--line); }
+.genusage b { color:var(--accent); font-size:1rem; }
+.genusage.out { color:var(--err); border-color:var(--err); }
+.genusage.out b { color:var(--err); }

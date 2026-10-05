@@ -101,7 +101,7 @@ async function run() {
   } catch (e) {
     st.className = 'msg err'; st.textContent = e.message;
     if (e.message === 'Incorrect access code') { $('code').value = ''; saveSettings(); askForCode(); } // 存的是錯誤的碼就清掉，並打開側邊欄讓你重新輸入
-  } finally { $('go').disabled = false; }
+  } finally { $('go').disabled = false; if (typeof refreshRole === 'function') refreshRole(); }   // 重新讀今天還剩幾次（失敗不算）
 }
 $('form').addEventListener('submit', (e) => { e.preventDefault(); run(); });
 

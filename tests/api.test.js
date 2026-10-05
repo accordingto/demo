@@ -389,7 +389,7 @@ function fakeStore() {   // 記憶體版的 Redis（只實作用到的指令）
       default: throw new Error('unsupported ' + op);
     }
   };
-  return { configured: () => true, cmd: async (...c) => run(c), pipeline: async (cs) => cs.map(run), KEY: (id) => `rc:a:${id}`, INDEX: (u) => (!u || u === 'owner' ? 'rc:idx' : `rc:idx:${u}`), countToday: async (n, u) => ({ n: run(['INCR', `n:${n}:${u}`]), key: `n:${n}:${u}` }), uncount: async (k) => run(['INCR', k, -1]), conf: () => ({}) };
+  return { configured: () => true, cmd: async (...c) => run(c), pipeline: async (cs) => cs.map(run), KEY: (id) => `rc:a:${id}`, INDEX: (u) => (!u || u === 'owner' ? 'rc:idx' : `rc:idx:${u}`), todayKey: (n, u) => `n:${n}:${u}`, countToday: async (n, u) => ({ n: run(['INCR', `n:${n}:${u}`]), key: `n:${n}:${u}` }), uncount: async (k) => run(['INCR', k, -1]), conf: () => ({}) };
 }
 const withUsers = async (fn) => withEnv(async () => {
   const store = require('../api/_store'), orig = { ...store }, fake = fakeStore();
@@ -464,23 +464,27 @@ test('users：舊版（隨機存取碼、SHA-256）建立的使用者仍可登�
 const genOnce = async (code, ip) => { const r = fakeRes(); await require('../api/generate')({ method: 'POST', headers: { 'x-forwarded-for': ip }, body: { code, ...opts() } }, r); return r; };
 const okGroq = () => { const text = '=== TITLE ===\nT\n=== BODY ===\n' + 'Word '.repeat(300) + '.\n=== QUESTIONS ===\n1. a?\n2. b?\n=== DISCUSSION ===\n1. c?\n2. d?'; global.fetch = async () => ({ ok: true, status: 200, body: (async function* () { yield Buffer.from('data: ' + JSON.stringify({ choices: [{ delta: { content: text }, finish_reason: 'stop' }] }) + '\n\ndata: [DONE]\n\n'); })() }); };
 
-test('users: 一般使用者也能用 AI 產生，但每天只有 3 次（可用 USER_GENERATE_PER_DAY 調整）；擁有者的額度分開算', () => withUsers(async () => {
-  const c = await makeUsers(['bob', 'eve']); okGroq();
-  const codes = []; for (let i = 0; i < 4; i++) codes.push((await genOnce(c.bob, '10.1.0.' + i)).code);
-  assert.deepEqual(codes, [200, 200, 200, 429]);
+test('users: 一般使用者也能用 AI 產生，但每天只有 5 次（可用 USER_GENERATE_PER_DAY 調整）；擁有者的額度分開算；whoami 回報還剩幾次', () => withUsers(async () => {
+  const c = await makeUsers(['bob', 'eve']), lib = require('../api/library'); okGroq();
+  assert.deepEqual((await call(lib, c.bob, { action: 'whoami' }, '9.9.0.1')).payload.generate, { used: 0, limit: 5, remaining: 5 });
+  const codes = []; for (let i = 0; i < 6; i++) codes.push((await genOnce(c.bob, '10.1.0.' + i)).code);
+  assert.deepEqual(codes, [200, 200, 200, 200, 200, 429]);
+  assert.deepEqual((await call(lib, c.bob, { action: 'whoami' }, '9.9.0.2')).payload.generate, { used: 5, limit: 5, remaining: 0 });   // 被擋下的那次不算
   assert.equal((await genOnce(c.eve, '10.2.0.1')).code, 200);        // 每個人各算各的
   assert.equal((await genOnce('secret', '10.3.0.1')).code, 200);      // 擁有者另外算（預設 30）
+  assert.deepEqual((await call(lib, 'secret', { action: 'whoami' }, '9.9.0.3')).payload.generate, { used: 1, limit: 30, remaining: 29 });
   process.env.USER_GENERATE_PER_DAY = '1';
   const eve2 = await genOnce(c.eve, '10.2.0.2'); assert.equal(eve2.code, 429); assert.match(eve2.payload.error, /1 per day/);
 }));
 
 test('users: 產生失敗不算一次（還給使用者）', () => withUsers(async () => {
-  const c = await makeUsers(['bob']);
+  const c = await makeUsers(['bob']), lib = require('../api/library');
   global.fetch = async () => ({ ok: false, status: 500, text: async () => '{}' });
-  for (let i = 0; i < 5; i++) { const r = await genOnce(c.bob, '10.4.0.' + i); assert.match(r.chunks.join(''), /event: error/); }   // 失敗 5 次，都不算
+  for (let i = 0; i < 7; i++) { const r = await genOnce(c.bob, '10.4.0.' + i); assert.match(r.chunks.join(''), /event: error/); }   // 失敗 7 次，都不算
+  assert.equal((await call(lib, c.bob, { action: 'whoami' }, '9.9.0.4')).payload.generate.used, 0);
   okGroq();
-  const codes = []; for (let i = 0; i < 4; i++) codes.push((await genOnce(c.bob, '10.5.0.' + i)).code);
-  assert.deepEqual(codes, [200, 200, 200, 429]);
+  const codes = []; for (let i = 0; i < 6; i++) codes.push((await genOnce(c.bob, '10.5.0.' + i)).code);
+  assert.deepEqual(codes, [200, 200, 200, 200, 200, 429]);
 }));
 
 test('users: 每個人只看得到、改得到、刪得到自己的文章；擁有者的舊文章（沒有 owner 欄位）歸擁有者', () => withUsers(async () => {
@@ -510,8 +514,8 @@ test('users: 每個人只看得到、改得到、刪得到自己的文章；擁�
 
 test('users: whoami 回報身分；diagnose 只有擁有者；公開的 /api/article 仍可用 id 讀', () => withUsers(async () => {
   const lib = require('../api/library'), art = require('../api/article'), c = await makeUsers(['bob']);
-  assert.deepEqual((await call(lib, c.bob, { action: 'whoami' })).payload, { user: 'bob', owner: false });
-  assert.deepEqual((await call(lib, 'secret', { action: 'whoami' })).payload, { user: 'owner', owner: true });
+  assert.deepEqual((await call(lib, c.bob, { action: 'whoami' })).payload, { user: 'bob', owner: false, generate: { used: 0, limit: 5, remaining: 5 } });
+  assert.deepEqual((await call(lib, 'secret', { action: 'whoami' })).payload, { user: 'owner', owner: true, generate: { used: 0, limit: 30, remaining: 30 } });
   assert.equal((await call(lib, c.bob, { action: 'diagnose' })).code, 403);
   const saved = (await call(lib, c.bob, { action: 'save', article: { title: 'T', body: 'Some text here.', questions: [], discussion: [] } })).payload;
   const r = fakeRes(); await art({ method: 'GET', headers: {}, query: { id: saved.id }, url: '/' }, r);

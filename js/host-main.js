@@ -35,11 +35,18 @@ syncOptSummary();
 showView(location.hash.slice(1) === 'create' ? 'create' : 'library', { push: false });   // 預設進入 Library
 try { history.replaceState({ v: view }, '', '#' + view); } catch { /* 忽略 */ }
 
-// 這組存取碼是不是擁有者：擁有者才有「Manage users」（host-users.js）
+// 這組存取碼是誰：擁有者才有「Manage users」（host-users.js）；並顯示今天 AI 產生還剩幾次（4 / 5）
 async function refreshRole() {
-  const code = $('code').value.trim(); let owner = false;
-  if (code) { try { owner = !!(await postJson('/api/library', { action: 'whoami', code })).owner; } catch { /* 碼不對或連不上：當作不是擁有者 */ } }
+  const code = $('code').value.trim(); let owner = false, gen = null;
+  if (code) { try { const j = await postJson('/api/library', { action: 'whoami', code }); owner = !!j.owner; gen = j.generate; } catch { /* 碼不對或連不上：當作不是擁有者、不顯示次數 */ } }
   setOwner(owner);
+  const box = $('genUsage');
+  box.classList.toggle('hidden', !gen);
+  if (gen) {
+    box.classList.toggle('out', gen.remaining === 0);
+    box.innerHTML = `<b>${gen.remaining} / ${gen.limit}</b> AI articles left today` + (gen.remaining === 0 ? ' — resets at midnight (Taipei time)' : '');
+    $('go').disabled = gen.remaining === 0;
+  } else $('go').disabled = false;
 }
 $('code').addEventListener('change', refreshRole);
 refreshRole();

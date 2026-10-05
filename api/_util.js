@@ -61,4 +61,7 @@ async function checkHostCode(req, res, code, { ownerOnly = false } = {}) {
   return user;
 }
 
-module.exports = { safeEqual, checkHostCode, OWNER, clientIp, makeLimiter, readBody, clip, ID_RE, missingEnv };
+// 每天最多用 AI 產生幾篇：一般使用者預設 5（USER_GENERATE_PER_DAY），擁有者預設 30（GENERATE_PER_DAY）
+const generateLimit = (user) => Math.max(1, Number(process.env[user.owner ? 'GENERATE_PER_DAY' : 'USER_GENERATE_PER_DAY']) || (user.owner ? 30 : 5));
+
+module.exports = { generateLimit, safeEqual, checkHostCode, OWNER, clientIp, makeLimiter, readBody, clip, ID_RE, missingEnv };
