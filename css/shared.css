@@ -129,3 +129,10 @@ html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 橫放時不
 #phraseBtn { position:fixed; z-index:9991; min-height:38px; padding:0 16px; border-radius:999px; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); font:inherit; font-weight:700; font-size:.9rem; cursor:pointer; box-shadow:0 8px 22px rgba(var(--accent-rgb), .35); }
 #phraseBtn.hidden { display:none; }
 @media print { #phraseBtn { display:none; } }
+
+/* 語言切換（EN｜中文）：主持人頁在側邊欄，閱讀頁在上方標題列右邊 */
+.langseg { display:inline-flex; padding:2px; gap:2px; background:var(--field); border:1px solid var(--line); border-radius:999px; }
+.langseg button { min-height:28px; min-width:44px; padding:0 10px; font-size:.78rem; font-weight:700; color:var(--muted); background:transparent; border:0; border-radius:999px; cursor:pointer; box-shadow:none; }
+.langseg button.on { color:var(--accent-ink); background:var(--accent); }
+.rlang { margin-left:auto; }
+@media print { .langseg { display:none; } }

@@ -71,6 +71,7 @@
 
 ### 載入順序（classic script，共用全域作用域）
 - 共通：`prefs.js` 放在 `<head>`（同步載入，頁面繪製前就套用主題，避免先閃一下預設主題）
+- **介面語言**：`i18n-zh.js`＋`i18n.js` 放在兩頁的 `<head>`（`prefs.js` 之後）。英文是原文；切到中文時用 `exact`（整段相同）與 `patterns`（帶數字的句型）對照翻譯文字節點與 `placeholder`／`title`／`aria-label`，MutationObserver 負責之後動態產生的內容，並包住 `alert`／`confirm`／`prompt`；換回英文時還原。使用者內容（文章、標題、單字、使用者名稱）在 `SKIP` 清單內不翻。切換鈕是任何帶 `data-lang` 的按鈕，狀態存 `rc-lang`，並送出 `langchange` 事件（文章庫據此重畫日期）。
 - 主持人頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `host-nav.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-users.js` → `host-main.js`
 - 閱讀頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `reader.js`
 

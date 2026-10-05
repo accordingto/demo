@@ -46,7 +46,7 @@ const libEntries = () => cloud
 let libQuery = '';
 let libSort = { key: 'ts', dir: -1 };   // 排序欄位與方向（1 小到大、-1 大到小），記在瀏覽器裡
 try { const s = JSON.parse(localStorage.getItem('rc-lib-sort') || 'null'); if (s && ['title', 'level', 'words', 'vocab', 'ts'].includes(s.key)) libSort = { key: s.key, dir: s.dir === 1 ? 1 : -1 }; } catch { /* 沒有就用預設 */ }
-const fmtDate = (ts) => { try { return new Date(ts).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return ''; } };
+const fmtDate = (ts) => { try { return new Date(ts).toLocaleDateString(I18N.locale(), { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return ''; } };
 const COLS = [   // [排序鍵, 標題, class]
   ['title', 'Title', 'c-t'], ['level', 'Level', 'c-level'], ['words', 'Words', 'c-num c-words'], ['vocab', 'Vocab', 'c-num c-vocab'], ['ts', 'Updated', 'c-when'],
 ];
@@ -276,6 +276,7 @@ $('libFile').addEventListener('change', async () => {
 
 // 啟動：後端已設定雲端儲存 → 改用雲端文章庫
 renderLib();
+document.addEventListener('langchange', () => { renderLib(); if (typeof loadUsers === 'function' && view === 'users') loadUsers(); });   // 日期格式跟著語言
 postJson('/api/library', { action: 'status' }).then((j) => { cloud = !!j.configured; }, () => { cloud = false; }).then(() => {
   renderLib();
   if (cloud && $('code').value.trim()) refreshCloud();

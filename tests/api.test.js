@@ -531,3 +531,14 @@ test('generate: 擁有者的每日上限可用 GENERATE_PER_DAY 調整', () => w
   const codes = []; for (let i = 0; i < 3; i++) codes.push((await genOnce('secret', '10.6.0.' + i)).code);
   assert.deepEqual(codes, [200, 200, 429]);
 }));
+
+test('i18n：繁體中文對照表可載入，patterns 都是有效的正規表示式、翻譯結果不是空的', () => {
+  const win = {}; new Function('window', require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'js', 'i18n-zh.js'), 'utf8'))(win);
+  const Z = win.I18N_ZH;
+  assert.ok(Object.keys(Z.exact).length > 250);
+  for (const [k, v] of Object.entries(Z.exact)) assert.ok(typeof v === 'string' && v.length > 0, k);
+  for (const [re, rep] of Z.patterns) assert.ok(re instanceof RegExp && (typeof rep === 'string' || typeof rep === 'function'));
+  const tr = (s) => { for (const [re, rep] of Z.patterns) { const m = re.exec(s); if (m) return typeof rep === 'function' ? rep(...m, tr) : s.replace(re, rep); } return Z.exact[s] ?? s; };
+  assert.equal(tr('300 words'), '300 字'); assert.equal(tr('Added “bob”.'), '已加入「bob」。'); assert.equal(tr('Incorrect access code'), '存取碼不正確');
+  assert.equal(tr('Delete “x” and 3 articles? This cannot be undone.'), '要刪除「x」和他的 3 篇文章嗎？這個動作無法復原。');
+});
