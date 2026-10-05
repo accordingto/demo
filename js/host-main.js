@@ -17,11 +17,28 @@ syncLevelChips();
 showView(location.hash.slice(1) === 'create' ? 'create' : 'library', { push: false });   // 預設進入 Library
 try { history.replaceState({ v: view }, '', '#' + view); } catch { /* 忽略 */ }
 
-// 這組存取碼是誰：擁有者才有「Manage users」（host-users.js）；並顯示今天 AI 產生還剩幾次（4 / 5）
+// 存取碼的狀態：輸入後（按 Enter 或離開欄位）向後端確認，明確顯示「已登入：名稱」或錯誤原因；並顯示今天 AI 產生還剩幾次（4 / 5）
+// 輸入時不會每按一個鍵就檢查（猜錯會被限流計次），只在輸入完成時檢查一次
+let roleSeq = 0;
+function setCodeStatus(kind, user, owner, msg) {
+  const lamp = (c) => `<i class="lamp ${c}" aria-hidden="true"></i>`;   // 綠燈＝成功、紅燈＝失敗、灰燈＝檢查中
+  const html = kind === 'ok' ? `${lamp('ok')}✓ Signed in as <b class="who">${esc(user)}</b>${owner ? ' <span class="role">(owner)</span>' : ''}`
+    : kind === 'bad' ? `${lamp('bad')}✗ ${esc(msg)}` : kind === 'busy' ? `${lamp('off')}Checking…` : '';
+  document.querySelectorAll('.codestatus').forEach((el) => { el.className = 'codestatus ' + kind; el.innerHTML = html; });
+  for (const el of [$('tbKey'), ...document.querySelectorAll('.side-foot')]) { el.classList.toggle('signed', kind === 'ok'); el.classList.toggle('failed', kind === 'bad'); }
+}
 async function refreshRole() {
-  const code = $('code').value.trim(); let owner = false, gen = null;
-  if (code) { try { const j = await postJson('/api/library', { action: 'whoami', code }); owner = !!j.owner; gen = j.generate; } catch { /* 碼不對或連不上：當作不是擁有者、不顯示次數 */ } }
-  setOwner(owner);
+  const code = $('code').value.trim(), seq = ++roleSeq; let owner = false, gen = null;
+  if (!code) setCodeStatus('none');
+  else {
+    setCodeStatus('busy');
+    try {
+      const j = await postJson('/api/library', { action: 'whoami', code });
+      if (seq !== roleSeq) return;   // 又輸入了新的碼，這次的結果作廢
+      owner = !!j.owner; gen = j.generate; setCodeStatus('ok', j.user, owner);
+    } catch (e) { if (seq !== roleSeq) return; setCodeStatus('bad', null, false, e.message); }
+  }
+  setOwner(owner);   // 擁有者才有「Users」（host-users.js）
   const box = $('genUsage');
   box.classList.toggle('hidden', !gen);
   if (gen) {
@@ -31,4 +48,5 @@ async function refreshRole() {
   } else $('go').disabled = false;
 }
 $('code').addEventListener('change', refreshRole);
+$('code').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('code').dispatchEvent(new Event('change')); } });   // Enter = 輸入完成
 refreshRole();

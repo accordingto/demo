@@ -70,6 +70,6 @@ $('tbKey').addEventListener('click', () => {
   setTimeout(() => $('codeQuick').focus(), 50);
 });
 for (const ev of ['input', 'change']) $('codeQuick').addEventListener(ev, () => { $('code').value = $('codeQuick').value; $('code').dispatchEvent(new Event(ev, { bubbles: true })); });
-$('codeQuick').addEventListener('keydown', (e) => { if (e.key === 'Enter') closeCodePop(); });
+$('codeQuick').addEventListener('keydown', (e) => { if (e.key === 'Enter') { $('codeQuick').dispatchEvent(new Event('change')); closeCodePop(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCodePop(); });
 document.addEventListener('pointerdown', (e) => { if (!$('codePop').classList.contains('hidden') && !$('codePop').contains(e.target) && !$('tbKey').contains(e.target)) closeCodePop(); });

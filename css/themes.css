@@ -1,5 +1,8 @@
 /* 色彩主題與閱讀偏好（兩頁共用）。主題 = html[data-theme]；閱讀偏好由 js/prefs.js 寫成 html 上的 CSS 變數 */
 
+/* 狀態燈號：綠＝登入成功、紅＝失敗（所有主題共用，亮色背景上也看得清楚）*/
+:root { --lamp-ok:#22b45a; --lamp-bad:#e5483b; --lamp-off:#8a93a0; }
+
 /* 預設 = Dark */
 :root, html[data-theme="dark"] {
   color-scheme:dark;

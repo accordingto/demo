@@ -291,3 +291,23 @@ body.nav-open { overflow:hidden; }
   body.side-mini .langseg { flex-direction:column; border-radius:14px; }
   body.side-mini .langseg button { min-width:40px; padding:0 4px; }
 }
+
+/* 存取碼狀態：燈號（綠＝已登入、紅＝失敗、灰＝檢查中）＋文字（含使用者名稱／錯誤原因）*/
+.lamp { display:inline-block; width:10px; height:10px; margin-right:7px; border-radius:50%; vertical-align:-1px; background:var(--lamp-off); }
+.lamp.ok { background:var(--lamp-ok); box-shadow:0 0 0 3px rgba(34,180,90,.25), 0 0 8px var(--lamp-ok); }
+.lamp.bad { background:var(--lamp-bad); box-shadow:0 0 0 3px rgba(229,72,59,.25), 0 0 8px var(--lamp-bad); }
+.lamp.off { animation:lampPulse 1s ease-in-out infinite; }
+@keyframes lampPulse { 50% { opacity:.35; } }
+.codestatus { font-size:.8rem; font-weight:600; line-height:1.35; color:var(--muted); }
+.codestatus:empty { display:none; }
+.codestatus.ok { color:var(--lamp-ok); }
+.codestatus.bad { color:var(--lamp-bad); }
+.codestatus .who { font-weight:800; }
+.codestatus .role { font-weight:600; opacity:.8; }
+.side-foot.signed { border-color:var(--lamp-ok); }
+.side-foot.failed { border-color:var(--lamp-bad); }
+/* 上方列的鑰匙、選單收合時的鑰匙：右上角的小燈 */
+#tbKey.signed::after, #tbKey.failed::after, body.side-mini .side-foot.signed label::after, body.side-mini .side-foot.failed label::after { content:""; position:absolute; top:6px; right:6px; width:9px; height:9px; border-radius:50%; }
+#tbKey.signed::after, body.side-mini .side-foot.signed label::after { background:var(--lamp-ok); box-shadow:0 0 6px var(--lamp-ok); }
+#tbKey.failed::after, body.side-mini .side-foot.failed label::after { background:var(--lamp-bad); box-shadow:0 0 6px var(--lamp-bad); }
+@media (min-width:1280px) { body.side-mini .codestatus { display:none; } body.side-mini .side-foot label { position:relative; } }
