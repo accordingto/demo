@@ -17,8 +17,8 @@ function loadSettings() {
     SAVED.forEach((id) => { if (id in o) { const el = $(id); if (el.type === 'checkbox') el.checked = !!o[id]; else el.value = o[id]; } });
   } catch { /* 忽略 */ }
 }
-// 字數：100–1000，▲▼（或方向鍵、滑鼠滾輪不處理）每次 ±100，並對齊到整百
-const MIN_WORDS = 100, MAX_WORDS = 1000, WORDS_STEP = 100;
+// 字數：100–800，▲▼（或方向鍵、滑鼠滾輪不處理）每次 ±100，並對齊到整百
+const MIN_WORDS = 100, MAX_WORDS = 800, WORDS_STEP = 100;
 function stepWords(dir) {
   const v = Number($('words').value) || 300;
   const next = dir > 0 ? (Math.floor(v / WORDS_STEP) + 1) * WORDS_STEP : (Math.ceil(v / WORDS_STEP) - 1) * WORDS_STEP;

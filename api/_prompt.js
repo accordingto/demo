@@ -19,7 +19,7 @@ const GENRES = {
   speech: 'a short speech that a speaker gives to an audience',
   analysis: 'an analyst\'s briefing that analyses a problem and answers it as a numbered list of points',
 };
-const MIN_WORDS = 100, MAX_WORDS = 1000;
+const MIN_WORDS = 100, MAX_WORDS = 800;
 
 // 各文體的「起承轉合」寫法
 const ARC = {
