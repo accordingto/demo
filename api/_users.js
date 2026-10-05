@@ -7,6 +7,7 @@
 const crypto = require('crypto');
 const { promisify } = require('util');
 const store = require('./_store');
+const { WELCOME } = require('./_welcome');
 
 const scrypt = promisify(crypto.scrypt);
 const USERS = 'rc:users';
@@ -61,12 +62,20 @@ async function checkPassword(password, { except, ownerCode } = {}) {
   return pw;
 }
 
+// 新使用者的文章庫先放一篇歡迎文章（B1、約 300 字、標好 5 個單字）
+async function seedWelcome(name) {
+  const id = crypto.randomBytes(9).toString('base64url'), now = Date.now();
+  const item = { id, createdAt: now, updatedAt: now, article: WELCOME.article, vocab: WELCOME.vocab, owner: name };
+  await store.pipeline([['SET', store.KEY(id), JSON.stringify(item)], ['ZADD', store.INDEX(name), now, id]]);
+}
+
 async function add(name, password, opts) {
   name = String(name ?? '').trim().toLowerCase();
   if (!NAME_RE.test(name) || RESERVED.includes(name)) throw new UserError('Use 1–20 letters, numbers, “-” or “_” for the name (not “owner”).', 400);
   if (await get(name)) throw new UserError(`“${name}” already exists.`, 409);
   const pw = await checkPassword(password, opts);
   await put({ name, createdAt: Date.now(), disabled: false, ...(await hashPassword(pw)) });
+  await seedWelcome(name).catch(() => { /* 歡迎文章放不進去也不影響帳號建立 */ });
   return { name };
 }
 

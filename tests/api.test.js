@@ -424,7 +424,7 @@ test('users 管理：新增（密碼由擁有者設定、資料庫只存加鹽�
   assert.equal((await call(lib, 'owner-long-password', { action: 'users_add', name: 'zed', password: 'owner-long-password' }, '1.1.1.1')).code, 400);   // 不能和擁有者的碼相同
   assert.equal((await call(lib, c.bob, { action: 'users_list' })).code, 403);                                      // 一般使用者不能管理
   const l = (await call(lib, 'owner-long-password', { action: 'users_list' }, '1.1.1.1')).payload.users;
-  assert.deepEqual(l.map((u) => [u.name, u.disabled, u.articles]), [['bob', false, 0]]);
+  assert.deepEqual(l.map((u) => [u.name, u.disabled, u.articles]), [['bob', false, 1]]);   // 新使用者先有一篇歡迎文章
 }));
 
 test('users 管理：改密碼、停用／啟用、刪除（連文章一起刪）', () => withUsers(async () => {
@@ -432,13 +432,13 @@ test('users 管理：改密碼、停用／啟用、刪除（連文章一起刪�
   const c = await makeUsers(['bob', 'eve']), ow = (b) => call(lib, 'secret', b, '1.1.1.1');
   const art = { title: 'Bob article', body: 'Hello there world.', questions: [], discussion: [] };
   const saved = (await call(lib, c.bob, { action: 'save', article: art })).payload;
-  assert.equal((await ow({ action: 'users_list' })).payload.users[0].articles, 1);
+  assert.equal((await ow({ action: 'users_list' })).payload.users[0].articles, 2);   // 歡迎文章＋Bob 存的
   // 改密碼：舊密碼立刻失效，新密碼可用，文章還在；不能改成別人的密碼，改成自己目前的可以
   assert.equal((await ow({ action: 'users_password', name: 'bob', password: c.eve })).code, 409);
   assert.equal((await ow({ action: 'users_password', name: 'bob', password: 'short' })).code, 400);
   assert.equal((await ow({ action: 'users_password', name: 'bob', password: 'bob-new-password' })).code, 200);
   assert.equal((await call(lib, c.bob, { action: 'list' }, '2.2.2.2')).code, 401);
-  assert.equal((await call(lib, 'bob-new-password', { action: 'list' })).payload.items.length, 1);
+  assert.equal((await call(lib, 'bob-new-password', { action: 'list' })).payload.items.length, 2);
   assert.equal((await ow({ action: 'users_password', name: 'bob', password: 'bob-new-password' })).code, 200);
   assert.equal((await ow({ action: 'users_password', name: 'nobody', password: 'long-enough-pw' })).code, 404);
   // 停用：不能登入；啟用後恢復；文章都還在
@@ -447,7 +447,7 @@ test('users 管理：改密碼、停用／啟用、刪除（連文章一起刪�
   await ow({ action: 'users_enable', name: 'bob' });
   assert.equal((await call(lib, 'bob-new-password', { action: 'list' })).code, 200);
   // 刪除：帳號、文章全部消失；別人不受影響
-  assert.deepEqual((await ow({ action: 'users_delete', name: 'bob' })).payload, { deletedArticles: 1 });
+  assert.deepEqual((await ow({ action: 'users_delete', name: 'bob' })).payload, { deletedArticles: 2 });
   assert.equal(await store.cmd('GET', 'rc:a:' + saved.id), null);
   assert.equal((await call(lib, 'bob-new-password', { action: 'list' }, '3.3.3.3')).code, 401);
   assert.deepEqual((await ow({ action: 'users_list' })).payload.users.map((u) => u.name), ['eve']);
@@ -499,8 +499,8 @@ test('users: 每個人只看得到、改得到、刪得到自己的文章；擁�
   const mine = async (code) => (await call(lib, code, { action: 'list' })).payload.items.map((i) => i.title);
   const saveAs = async (code, t, id) => (await call(lib, code, { action: 'save', article: art(t), id })).payload;
   const b = await saveAs(c.bob, 'Bob article'), e = await saveAs(c.eve, 'Eve article'), o = await saveAs('secret', 'Owner article');
-  assert.deepEqual((await mine(c.bob)), ['Bob article']);
-  assert.deepEqual((await mine(c.eve)), ['Eve article']);
+  assert.deepEqual((await mine(c.bob)).sort(), ['Bob article', 'Welcome to Reading Club!']);
+  assert.deepEqual((await mine(c.eve)).sort(), ['Eve article', 'Welcome to Reading Club!']);
   assert.deepEqual((await mine('secret')).sort(), ['Legacy', 'Owner article']);
   // 讀、覆蓋、刪除別人的都不行
   assert.equal((await call(lib, c.bob, { action: 'get', id: e.id })).code, 404);
@@ -542,3 +542,15 @@ test('i18n：繁體中文對照表可載入，patterns 都是有效的正規表�
   assert.equal(tr('300 words'), '300 字'); assert.equal(tr('Added “bob”.'), '已加入「bob」。'); assert.equal(tr('Incorrect access code'), '存取碼不正確');
   assert.equal(tr('Delete “x” and 3 articles? This cannot be undone.'), '要刪除「x」和他的 3 篇文章嗎？這個動作無法復原。');
 });
+
+test('新使用者的文章庫先有一篇歡迎文章：B1、約 300 字、標好 5 個單字（都出現在文章裡）；每人各一篇、擁有者沒有', () => withUsers(async () => {
+  const lib = require('../api/library'), c = await makeUsers(['bob', 'eve']);
+  const items = (await call(lib, c.bob, { action: 'list' })).payload.items;
+  assert.equal(items.length, 1); assert.equal(items[0].title, 'Welcome to Reading Club!'); assert.equal(items[0].level, 'B1'); assert.equal(items[0].vocabCount, 5);
+  const got = (await call(lib, c.bob, { action: 'get', id: items[0].id })).payload;
+  assert.ok(Math.abs(got.article.wordCount - 300) <= 10, 'words ' + got.article.wordCount);
+  assert.equal(got.article.body.split(/\n\n/).length, 4);
+  for (const v of got.vocab) { assert.match(got.article.body, new RegExp('\\b' + v.word + '\\b', 'i'), v.word); assert.ok(v.definition && v.zh && v.kk && v.pos, v.word); }
+  assert.notEqual((await call(lib, c.eve, { action: 'list' })).payload.items[0].id, items[0].id);   // 各人有自己的一份
+  assert.equal((await call(lib, 'secret', { action: 'list' })).payload.items.length, 0);             // 擁有者沒有
+}));
