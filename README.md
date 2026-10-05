@@ -83,7 +83,7 @@
 - 預設主題改為 **Light**（已經自己選過主題的人不受影響）。
 
 ### 存取碼的狀態燈號
-在 **Access code** 欄位輸入後（按 Enter 或離開欄位），會向後端確認一次並明確顯示結果：**綠燈＋「✓ Signed in as 名稱」**（擁有者會多一個 `(owner)`），或**紅燈＋錯誤原因**（例如 Incorrect access code、This account has been disabled.、Too many incorrect attempts…）；確認中是閃爍的灰燈；**還沒輸入存取碼時是紅燈＋「Not signed in」**。手機／平板的上方列鑰匙圖示、選單收合時的鑰匙圖示，右上角也有同樣的綠／紅小燈。輸入時不會每按一個鍵就檢查（猜錯會被限流計次）。
+在 **Access code** 欄位輸入後（按 Enter 或離開欄位），會向後端確認一次並明確顯示結果：**綠燈＋「✓ Signed in as 名稱」**（擁有者會多一個 `(owner)`），或**紅燈＋錯誤原因**（例如 Incorrect access code、This account has been disabled.、Too many incorrect attempts…）；確認中是閃爍的灰燈；**還沒輸入存取碼時是紅燈＋「Not signed in」**。手機／平板的**上方列也會顯示登入者名稱**（標題右邊：綠燈＋名稱，沒登入是紅燈＋「Not signed in」，點一下開啟存取碼視窗；手機寬度名稱會縮短、沒登入只顯示紅燈）；上方列鑰匙圖示、選單收合時的鑰匙圖示，右上角也有同樣的綠／紅小燈。輸入時不會每按一個鍵就檢查（猜錯會被限流計次）。
 
 ### 介面語言（English／中文）
 - 預設英文。左邊選單下方（存取碼上面）有 **語言／Language** 切換鈕 `EN｜中文`；選單收合成圖示時變成直立的兩顆小按鈕。成員閱讀頁（`read.html`）在上方標題列右邊也有同樣的切換鈕。

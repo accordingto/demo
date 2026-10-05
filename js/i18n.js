@@ -5,7 +5,7 @@
 (function () {
   const KEY = 'rc-lang', Z = window.I18N_ZH || { exact: {}, patterns: [] };
   const ATTRS = ['placeholder', 'title', 'aria-label'];
-  const SKIP = '#bodyText, #qa li, .text h2, .t, .v1 b, .kk, .lem, .qtext, [contenteditable], textarea, code, #ipTitle, #ipExcerpt, #ipHost, script, style';
+  const SKIP = '#bodyText, #qa li, .text h2, .t, .v1 b, .kk, .lem, .who, .qtext, [contenteditable], textarea, code, #ipTitle, #ipExcerpt, #ipHost, script, style';
   let lang = 'en';
   try { if (localStorage.getItem(KEY) === 'zh') lang = 'zh'; } catch { /* 沒有就用英文 */ }
 
