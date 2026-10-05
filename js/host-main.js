@@ -35,13 +35,11 @@ syncOptSummary();
 showView(location.hash.slice(1) === 'create' ? 'create' : 'library', { push: false });   // 預設進入 Library
 try { history.replaceState({ v: view }, '', '#' + view); } catch { /* 忽略 */ }
 
-// 這組存取碼是誰：不能用 AI 產生文章的使用者，Create 的「AI generate」卡片改成不能點（後端另外擋，這裡只是讓人看得懂）
+// 這組存取碼是不是擁有者：擁有者才有「Manage users」（host-users.js）
 async function refreshRole() {
-  const code = $('code').value.trim(); let can = true, owner = false;
-  if (code) { try { const j = await postJson('/api/library', { action: 'whoami', code }); can = j.canGenerate !== false; owner = !!j.owner; } catch { /* 碼不對或連不上：先當作可以，真正使用時後端會回應 */ } }
-  setOwner(owner);   // 擁有者才有「Manage users」（host-users.js）
-  const card = document.querySelector('.choice[data-goto-tab=gen]');
-  card.disabled = !can; card.querySelector('.tag').textContent = can ? 'Needs access code' : 'Owner only';
+  const code = $('code').value.trim(); let owner = false;
+  if (code) { try { owner = !!(await postJson('/api/library', { action: 'whoami', code })).owner; } catch { /* 碼不對或連不上：當作不是擁有者 */ } }
+  setOwner(owner);
 }
 $('code').addEventListener('change', refreshRole);
 refreshRole();

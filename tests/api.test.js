@@ -384,12 +384,12 @@ function fakeStore() {   // 記憶體版的 Redis（只實作用到的指令）
       case 'HGET': return hs(k).has(a[0]) ? hs(k).get(a[0]) : null;
       case 'HDEL': hs(k).delete(a[0]); return 1;
       case 'HGETALL': return [...hs(k)].flat();
-      case 'INCR': kv.set(k, (Number(kv.get(k)) || 0) + 1); return kv.get(k);
+      case 'INCR': kv.set(k, (Number(kv.get(k)) || 0) + (a[0] === -1 ? -1 : 1)); return kv.get(k);
       case 'EXPIRE': return 1;
       default: throw new Error('unsupported ' + op);
     }
   };
-  return { configured: () => true, cmd: async (...c) => run(c), pipeline: async (cs) => cs.map(run), KEY: (id) => `rc:a:${id}`, INDEX: (u) => (!u || u === 'owner' ? 'rc:idx' : `rc:idx:${u}`), countToday: async (n, u) => run(['INCR', `n:${n}:${u}`]), conf: () => ({}) };
+  return { configured: () => true, cmd: async (...c) => run(c), pipeline: async (cs) => cs.map(run), KEY: (id) => `rc:a:${id}`, INDEX: (u) => (!u || u === 'owner' ? 'rc:idx' : `rc:idx:${u}`), countToday: async (n, u) => ({ n: run(['INCR', `n:${n}:${u}`]), key: `n:${n}:${u}` }), uncount: async (k) => run(['INCR', k, -1]), conf: () => ({}) };
 }
 const withUsers = async (fn) => withEnv(async () => {
   const store = require('../api/_store'), orig = { ...store }, fake = fakeStore();
@@ -441,12 +441,26 @@ test('users 管理：重設存取碼、停用／啟用、刪除（連文章一�
   assert.equal((await ow({ action: 'users_delete', name: 'bob' })).code, 404);
 }));
 
-test('users: AI 產生只有擁有者；其他使用者得到 403', () => withUsers(async () => {
-  const gen = require('../api/generate'), c = await makeUsers(['bob']);
-  const bob = await call(gen, c.bob, opts());
-  assert.equal(bob.code, 403);
-  const wrong = await call(gen, 'nope', opts(), '6.6.6.6');
-  assert.equal(wrong.code, 401);
+const genOnce = async (code, ip) => { const r = fakeRes(); await require('../api/generate')({ method: 'POST', headers: { 'x-forwarded-for': ip }, body: { code, ...opts() } }, r); return r; };
+const okGroq = () => { const text = '=== TITLE ===\nT\n=== BODY ===\n' + 'Word '.repeat(300) + '.\n=== QUESTIONS ===\n1. a?\n2. b?\n=== DISCUSSION ===\n1. c?\n2. d?'; global.fetch = async () => ({ ok: true, status: 200, body: (async function* () { yield Buffer.from('data: ' + JSON.stringify({ choices: [{ delta: { content: text }, finish_reason: 'stop' }] }) + '\n\ndata: [DONE]\n\n'); })() }); };
+
+test('users: 一般使用者也能用 AI 產生，但每天只有 3 次（可用 USER_GENERATE_PER_DAY 調整）；擁有者的額度分開算', () => withUsers(async () => {
+  const c = await makeUsers(['bob', 'eve']); okGroq();
+  const codes = []; for (let i = 0; i < 4; i++) codes.push((await genOnce(c.bob, '10.1.0.' + i)).code);
+  assert.deepEqual(codes, [200, 200, 200, 429]);
+  assert.equal((await genOnce(c.eve, '10.2.0.1')).code, 200);        // 每個人各算各的
+  assert.equal((await genOnce('secret', '10.3.0.1')).code, 200);      // 擁有者另外算（預設 30）
+  process.env.USER_GENERATE_PER_DAY = '1';
+  const eve2 = await genOnce(c.eve, '10.2.0.2'); assert.equal(eve2.code, 429); assert.match(eve2.payload.error, /1 per day/);
+}));
+
+test('users: 產生失敗不算一次（還給使用者）', () => withUsers(async () => {
+  const c = await makeUsers(['bob']);
+  global.fetch = async () => ({ ok: false, status: 500, text: async () => '{}' });
+  for (let i = 0; i < 5; i++) { const r = await genOnce(c.bob, '10.4.0.' + i); assert.match(r.chunks.join(''), /event: error/); }   // 失敗 5 次，都不算
+  okGroq();
+  const codes = []; for (let i = 0; i < 4; i++) codes.push((await genOnce(c.bob, '10.5.0.' + i)).code);
+  assert.deepEqual(codes, [200, 200, 200, 429]);
 }));
 
 test('users: 每個人只看得到、改得到、刪得到自己的文章；擁有者的舊文章（沒有 owner 欄位）歸擁有者', () => withUsers(async () => {
@@ -474,23 +488,18 @@ test('users: 每個人只看得到、改得到、刪得到自己的文章；擁�
   assert.equal((await call(lib, c.bob, { action: 'get', id: b.id })).payload.article.title, 'Bob article');
 }));
 
-test('users: whoami 回報身分與能不能產生文章；diagnose 只有擁有者；公開的 /api/article 仍可用 id 讀', () => withUsers(async () => {
+test('users: whoami 回報身分；diagnose 只有擁有者；公開的 /api/article 仍可用 id 讀', () => withUsers(async () => {
   const lib = require('../api/library'), art = require('../api/article'), c = await makeUsers(['bob']);
-  assert.deepEqual((await call(lib, c.bob, { action: 'whoami' })).payload, { user: 'bob', canGenerate: false, owner: false });
-  assert.deepEqual((await call(lib, 'secret', { action: 'whoami' })).payload, { user: 'owner', canGenerate: true, owner: true });
+  assert.deepEqual((await call(lib, c.bob, { action: 'whoami' })).payload, { user: 'bob', owner: false });
+  assert.deepEqual((await call(lib, 'secret', { action: 'whoami' })).payload, { user: 'owner', owner: true });
   assert.equal((await call(lib, c.bob, { action: 'diagnose' })).code, 403);
   const saved = (await call(lib, c.bob, { action: 'save', article: { title: 'T', body: 'Some text here.', questions: [], discussion: [] } })).payload;
   const r = fakeRes(); await art({ method: 'GET', headers: {}, query: { id: saved.id }, url: '/' }, r);
   assert.equal(r.code, 200); assert.ok(!('owner' in r.payload));   // 成員用短連結讀文章，不會看到擁有者資訊
 }));
 
-test('generate: 每日上限（GENERATE_PER_DAY）超過就 429', () => withUsers(async () => {
-  process.env.GENERATE_PER_DAY = '2';
-  const gen = require('../api/generate');
-  const text = '=== TITLE ===\nT\n=== BODY ===\n' + 'Word '.repeat(300) + '.\n=== QUESTIONS ===\n1. a?\n2. b?\n=== DISCUSSION ===\n1. c?\n2. d?';
-  global.fetch = async () => ({ ok: true, status: 200, body: (async function* () { yield Buffer.from('data: ' + JSON.stringify({ choices: [{ delta: { content: text }, finish_reason: 'stop' }] }) + '\n\ndata: [DONE]\n\n'); })() });
-  const codes = [];
-  for (let i = 0; i < 3; i++) { const r = fakeRes(); await gen({ method: 'POST', headers: { 'x-forwarded-for': '10.0.0.' + i }, body: { code: 'secret', ...opts() } }, r); codes.push(r.code); }
+test('generate: 擁有者的每日上限可用 GENERATE_PER_DAY 調整', () => withUsers(async () => {
+  process.env.GENERATE_PER_DAY = '2'; okGroq();
+  const codes = []; for (let i = 0; i < 3; i++) codes.push((await genOnce('secret', '10.6.0.' + i)).code);
   assert.deepEqual(codes, [200, 200, 429]);
 }));
-

@@ -92,7 +92,7 @@
           <div class="choices">
             <button type="button" class="choice" data-goto-tab="paste"><span class="tile"><svg class="ic"><use href="#i-paste"/></svg></span><strong>Paste text</strong><span class="cd">Use any English article you already have.</span><span class="tag">No access code needed</span></button>
             <button type="button" class="choice" data-goto-tab="link"><span class="tile"><svg class="ic"><use href="#i-link"/></svg></span><strong>From a link</strong><span class="cd">We pull the main text out of a web page.</span><span class="tag">Needs access code</span></button>
-            <button type="button" class="choice" data-goto-tab="gen"><span class="tile"><svg class="ic"><use href="#i-create"/></svg></span><strong>AI generate</strong><span class="cd">Type a topic and we’ll write an article at your level.</span><span class="tag">Needs access code</span></button>
+            <button type="button" class="choice" data-goto-tab="gen"><span class="tile"><svg class="ic"><use href="#i-create"/></svg></span><strong>AI generate</strong><span class="cd">Type a topic and we’ll write an article at your level.</span><span class="tag">Needs access code · limited per day</span></button>
           </div>
         </div>
 
@@ -247,7 +247,7 @@
         </div>
         <!-- 使用者管理（只有擁有者、雲端模式才看得到）-->
         <section id="usersPanel" class="card panel hidden" aria-label="Manage users">
-          <div class="subhead"><h2>Users</h2><span class="meta">Each user has their own library. They can paste, import and save articles, but not use AI generate.</span></div>
+          <div class="subhead"><h2>Users</h2><span class="meta">Each user has their own library. They can use everything except Manage users; AI generate is limited per day.</span></div>
           <form id="userForm" class="useradd">
             <input type="text" id="userName" maxlength="20" placeholder="New user name (letters, numbers, - or _)" autocomplete="off" spellcheck="false" aria-label="New user name">
             <button type="submit" id="userAdd">Add user</button>

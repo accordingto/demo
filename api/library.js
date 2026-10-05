@@ -43,10 +43,10 @@ module.exports = async function handler(req, res) {
   // 用來判斷前端要用雲端還是本機文章庫（不需存取碼）
   if (b.action === 'status') return res.status(200).json({ configured: store.configured() });
 
-  // 這組存取碼是誰、能做什麼（前端據此決定要不要顯示「AI 產生」）
+  // 這組存取碼是誰、是不是擁有者（前端據此決定要不要顯示「Manage users」）
   if (b.action === 'whoami') {
     const me = await checkHostCode(req, res, b.code); if (!me) return;
-    return res.status(200).json({ user: me.name, canGenerate: me.owner, owner: me.owner });
+    return res.status(200).json({ user: me.name, owner: me.owner });
   }
 
   // 檢查雲端設定（需存取碼）：只回報「找到哪些相關變數的名稱」與連線測試結果，不回傳任何值或 token
