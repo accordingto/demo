@@ -23,9 +23,9 @@ let roleSeq = 0;
 function setCodeStatus(kind, user, owner, msg) {
   const lamp = (c) => `<i class="lamp ${c}" aria-hidden="true"></i>`;   // 綠燈＝成功、紅燈＝失敗、灰燈＝檢查中
   const html = kind === 'ok' ? `${lamp('ok')}✓ Signed in as <b class="who">${esc(user)}</b>${owner ? ' <span class="role">(owner)</span>' : ''}`
-    : kind === 'bad' ? `${lamp('bad')}✗ ${esc(msg)}` : kind === 'busy' ? `${lamp('off')}Checking…` : '';
+    : kind === 'bad' ? `${lamp('bad')}✗ ${esc(msg)}` : kind === 'busy' ? `${lamp('off')}Checking…` : `${lamp('bad')}Not signed in`;   // 還沒輸入存取碼 = 尚未登入 = 紅燈
   document.querySelectorAll('.codestatus').forEach((el) => { el.className = 'codestatus ' + kind; el.innerHTML = html; });
-  for (const el of [$('tbKey'), ...document.querySelectorAll('.side-foot')]) { el.classList.toggle('signed', kind === 'ok'); el.classList.toggle('failed', kind === 'bad'); }
+  for (const el of [$('tbKey'), ...document.querySelectorAll('.side-foot')]) { el.classList.toggle('signed', kind === 'ok'); el.classList.toggle('failed', kind === 'bad' || kind === 'none'); }
 }
 async function refreshRole() {
   const code = $('code').value.trim(), seq = ++roleSeq; let owner = false, gen = null;

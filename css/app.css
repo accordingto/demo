@@ -299,9 +299,9 @@ body.nav-open { overflow:hidden; }
 .lamp.off { animation:lampPulse 1s ease-in-out infinite; }
 @keyframes lampPulse { 50% { opacity:.35; } }
 .codestatus { font-size:.8rem; font-weight:600; line-height:1.35; color:var(--muted); }
-.codestatus:empty { display:none; }
 .codestatus.ok { color:var(--lamp-ok); }
 .codestatus.bad { color:var(--lamp-bad); }
+.codestatus.none { color:var(--lamp-bad); }
 .codestatus .who { font-weight:800; }
 .codestatus .role { font-weight:600; opacity:.8; }
 .side-foot.signed { border-color:var(--lamp-ok); }

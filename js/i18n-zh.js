@@ -9,7 +9,7 @@ window.I18N_ZH = {
     'Article': '文章', 'No article yet': '還沒有文章', 'Create': '新增', 'Generate, paste or import': '產生、貼上或匯入',
     'Users': '使用者', 'Passwords, accounts': '密碼與帳號', 'Reading settings': '閱讀設定', 'Theme, font, voice…': '主題、字型、發音…',
     'Access code': '存取碼', 'Enter once, remembered here': '輸入一次，這裡會記住', 'Needed to generate, import and sync your library.': '產生文章、匯入網址與同步文章庫時需要。',
-    'Language': '語言', '✓ Signed in as': '✓ 已登入：', '(owner)': '（擁有者）', 'Checking…': '檢查中…',
+    'Language': '語言', '✓ Signed in as': '✓ 已登入：', '(owner)': '（擁有者）', 'Not signed in': '尚未登入', 'Checking…': '檢查中…',
     // ---- Create ----
     'New article': '新文章', 'How do you want to start?': '你想從哪裡開始？', 'Pick one — you’ll only see what that option needs.': '選一個，只會顯示該方式需要的內容。',
     'Paste text': '貼上文字', 'Use any English article you already have.': '貼上你手邊任何一篇英文文章。', 'No access code needed': '不需要存取碼',
