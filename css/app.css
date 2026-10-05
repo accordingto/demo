@@ -281,10 +281,7 @@ body.nav-open { overflow:hidden; }
 
 /* 使用者管理 */
 #usersPanel { margin-bottom:16px; }
-.useradd { display:flex; gap:10px; margin-bottom:12px; }
-.useradd input { flex:1; min-width:0; }
-.usercode { margin:0 0 12px; padding:14px 16px; border:1px solid var(--accent); border-radius:14px; background:rgba(var(--accent-rgb), .1); }
-.usercode .codeline { display:flex; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap; }
-.usercode code { font-size:1.05rem; padding:6px 12px; border-radius:10px; background:var(--field); border:1px solid var(--line); user-select:all; -webkit-user-select:all; word-break:break-all; }
+.useradd { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+.useradd input { flex:1 1 180px; min-width:0; }
 #usersPanel .libtable { border:1px solid var(--line); border-radius:14px; overflow:hidden; }
 #usersPanel .libtable th { font-size:.72rem; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700; }

@@ -247,12 +247,13 @@
         </div>
         <!-- 使用者管理（只有擁有者、雲端模式才看得到）-->
         <section id="usersPanel" class="card panel hidden" aria-label="Manage users">
-          <div class="subhead"><h2>Users</h2><span class="meta">Each user has their own library. They can use everything except Manage users; AI generate is limited per day.</span></div>
+          <div class="subhead"><h2>Users</h2><span class="meta">Each user has their own library. You set each user’s password (they type it into “Access code”). Everything except Manage users is open to them; AI generate is limited per day.</span></div>
           <form id="userForm" class="useradd">
-            <input type="text" id="userName" maxlength="20" placeholder="New user name (letters, numbers, - or _)" autocomplete="off" spellcheck="false" aria-label="New user name">
+            <input type="text" id="userName" maxlength="20" placeholder="User name (letters, numbers, - or _)" autocomplete="off" spellcheck="false" aria-label="New user name">
+            <input type="text" id="userPass" maxlength="100" placeholder="Password (at least 8 characters)" autocomplete="off" spellcheck="false" aria-label="Password for the new user">
+            <button type="button" id="userGen" class="secondary" title="Fill in a random password">Generate</button>
             <button type="submit" id="userAdd">Add user</button>
           </form>
-          <div id="userCode" class="usercode hidden" role="status"></div>
           <div id="userMsg" class="meta" role="status"></div>
           <div id="userList"></div>
         </section>

@@ -64,14 +64,14 @@ module.exports = async function handler(req, res) {
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
   const me = await checkHostCode(req, res, b.code); if (!me) return;
 
-  // 使用者管理（只有擁有者）：list / add / reset / disable / enable / delete。存取碼只在 add、reset 的回應裡出現一次
+  // 使用者管理（只有擁有者）：list / add（名稱＋密碼）/ password（改密碼）/ disable / enable / delete
   if (/^users_/.test(String(b.action))) {
     if (!me.owner) return res.status(403).json({ error: 'This feature is only available to the site owner.' });
     try {
       switch (b.action) {
         case 'users_list': return res.status(200).json({ users: await users.list() });
-        case 'users_add': return res.status(200).json(await users.add(b.name));
-        case 'users_reset': return res.status(200).json(await users.reset(String(b.name)));
+        case 'users_add': return res.status(200).json(await users.add(b.name, b.password, { ownerCode: process.env.HOST_CODE }));
+        case 'users_password': return res.status(200).json(await users.setPassword(String(b.name), b.password, { ownerCode: process.env.HOST_CODE }));
         case 'users_disable': case 'users_enable': await users.setDisabled(String(b.name), b.action === 'users_disable'); return res.status(200).json({ ok: true });
         case 'users_delete': return res.status(200).json(await users.remove(String(b.name)));
         default: return res.status(400).json({ error: 'Unknown action' });

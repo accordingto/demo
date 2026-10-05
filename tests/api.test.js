@@ -398,47 +398,67 @@ const withUsers = async (fn) => withEnv(async () => {
 });
 const call = async (handler, code, body, ip = '5.5.5.5') => { const r = fakeRes(); await handler({ method: 'POST', headers: { 'x-forwarded-for': ip }, body: { code, ...body } }, r); return r; };
 
-// 用管理介面的 API 建立使用者，回傳 { 名稱: 存取碼 }
+// 用管理介面的 API 建立使用者（密碼由擁有者設定），回傳 { 名稱: 密碼 }
+const pw = (n) => `${n}-password-1`;
 const makeUsers = async (names = ['bob', 'eve']) => {
   const lib = require('../api/library'), out = {};
-  for (const n of names) { const r = await call(lib, 'secret', { action: 'users_add', name: n }, '1.1.1.1'); assert.equal(r.code, 200, JSON.stringify(r.payload)); out[n] = r.payload.code; }
+  for (const n of names) { const r = await call(lib, 'secret', { action: 'users_add', name: n, password: pw(n) }, '1.1.1.1'); assert.equal(r.code, 200, JSON.stringify(r.payload)); out[n] = pw(n); }
   return out;
 };
 
-test('users 管理：新增（系統產生存取碼、資料庫只存雜湊）、重複、名稱規則、只有擁有者能管理', () => withUsers(async () => {
+test('users 管理：新增（密碼由擁有者設定、資料庫只存加鹽雜湊）、名稱與密碼規則、只有擁有者能管理', () => withUsers(async () => {
   const lib = require('../api/library'), store = require('../api/_store');
-  const c = await makeUsers(['bob']);
-  assert.match(c.bob, /^[A-Za-z0-9_-]{24}$/);
-  assert.ok(!JSON.stringify([...(await store.cmd('HGETALL', 'rc:users')), ...(await store.cmd('HGETALL', 'rc:codes'))]).includes(c.bob));   // 沒有明文
-  assert.equal((await call(lib, 'secret', { action: 'users_add', name: 'Bob' }, '1.1.1.1')).code, 409);          // 名稱不分大小寫，不能重複
-  for (const bad of ['', 'owner', 'a b', 'x'.repeat(21), 'é']) assert.equal((await call(lib, 'secret', { action: 'users_add', name: bad }, '1.1.1.1')).code, 400, bad);
-  assert.equal((await call(lib, c.bob, { action: 'users_list' })).code, 403);                                   // 一般使用者不能管理
-  const l = (await call(lib, 'secret', { action: 'users_list' }, '1.1.1.1')).payload.users;
+  const c = await makeUsers(['bob']), ow = (b) => call(lib, 'secret', b, '1.1.1.1');
+  assert.equal((await call(lib, c.bob, { action: 'whoami' })).payload.user, 'bob');                                 // 用設定的密碼登入
+  assert.ok(!JSON.stringify(await store.cmd('HGETALL', 'rc:users')).includes(c.bob));                              // 沒有明文
+  assert.equal((await ow({ action: 'users_add', name: 'Bob', password: 'another-password' })).code, 409);          // 名稱不分大小寫，不能重複
+  for (const bad of ['', 'owner', 'a b', 'x'.repeat(21), 'é']) assert.equal((await ow({ action: 'users_add', name: bad, password: 'good-password' })).code, 400, bad);
+  for (const bad of ['', 'short', ' '.repeat(12), 'x'.repeat(101)]) assert.equal((await ow({ action: 'users_add', name: 'zed', password: bad })).code, 400, 'pw ' + bad.length);
+  assert.equal((await ow({ action: 'users_add', name: 'zed', password: 'secret' })).code, 400);                    // 太短
+  assert.equal((await ow({ action: 'users_add', name: 'zed', password: c.bob })).code, 409);                       // 和別人相同（登入只靠密碼，不能重複）
+  process.env.HOST_CODE = 'owner-long-password';
+  assert.equal((await call(lib, 'owner-long-password', { action: 'users_add', name: 'zed', password: 'owner-long-password' }, '1.1.1.1')).code, 400);   // 不能和擁有者的碼相同
+  assert.equal((await call(lib, c.bob, { action: 'users_list' })).code, 403);                                      // 一般使用者不能管理
+  const l = (await call(lib, 'owner-long-password', { action: 'users_list' }, '1.1.1.1')).payload.users;
   assert.deepEqual(l.map((u) => [u.name, u.disabled, u.articles]), [['bob', false, 0]]);
 }));
 
-test('users 管理：重設存取碼、停用／啟用、刪除（連文章一起刪）', () => withUsers(async () => {
+test('users 管理：改密碼、停用／啟用、刪除（連文章一起刪）', () => withUsers(async () => {
   const lib = require('../api/library'), store = require('../api/_store');
-  const c = await makeUsers(['bob']), ow = (b) => call(lib, 'secret', b, '1.1.1.1');
+  const c = await makeUsers(['bob', 'eve']), ow = (b) => call(lib, 'secret', b, '1.1.1.1');
   const art = { title: 'Bob article', body: 'Hello there world.', questions: [], discussion: [] };
   const saved = (await call(lib, c.bob, { action: 'save', article: art })).payload;
   assert.equal((await ow({ action: 'users_list' })).payload.users[0].articles, 1);
-  // 重設：舊碼立刻失效，新碼可用，文章還在
-  const r = (await ow({ action: 'users_reset', name: 'bob' })).payload;
-  assert.notEqual(r.code, c.bob);
+  // 改密碼：舊密碼立刻失效，新密碼可用，文章還在；不能改成別人的密碼，改成自己目前的可以
+  assert.equal((await ow({ action: 'users_password', name: 'bob', password: c.eve })).code, 409);
+  assert.equal((await ow({ action: 'users_password', name: 'bob', password: 'short' })).code, 400);
+  assert.equal((await ow({ action: 'users_password', name: 'bob', password: 'bob-new-password' })).code, 200);
   assert.equal((await call(lib, c.bob, { action: 'list' }, '2.2.2.2')).code, 401);
-  assert.equal((await call(lib, r.code, { action: 'list' })).payload.items.length, 1);
+  assert.equal((await call(lib, 'bob-new-password', { action: 'list' })).payload.items.length, 1);
+  assert.equal((await ow({ action: 'users_password', name: 'bob', password: 'bob-new-password' })).code, 200);
+  assert.equal((await ow({ action: 'users_password', name: 'nobody', password: 'long-enough-pw' })).code, 404);
   // 停用：不能登入；啟用後恢復；文章都還在
   await ow({ action: 'users_disable', name: 'bob' });
-  assert.equal((await call(lib, r.code, { action: 'list' })).code, 403);
+  assert.equal((await call(lib, 'bob-new-password', { action: 'list' })).code, 403);
   await ow({ action: 'users_enable', name: 'bob' });
-  assert.equal((await call(lib, r.code, { action: 'list' })).code, 200);
-  // 刪除：帳號、碼、文章全部消失
+  assert.equal((await call(lib, 'bob-new-password', { action: 'list' })).code, 200);
+  // 刪除：帳號、文章全部消失；別人不受影響
   assert.deepEqual((await ow({ action: 'users_delete', name: 'bob' })).payload, { deletedArticles: 1 });
   assert.equal(await store.cmd('GET', 'rc:a:' + saved.id), null);
-  assert.equal((await call(lib, r.code, { action: 'list' }, '3.3.3.3')).code, 401);
-  assert.equal((await ow({ action: 'users_list' })).payload.users.length, 0);
+  assert.equal((await call(lib, 'bob-new-password', { action: 'list' }, '3.3.3.3')).code, 401);
+  assert.deepEqual((await ow({ action: 'users_list' })).payload.users.map((u) => u.name), ['eve']);
   assert.equal((await ow({ action: 'users_delete', name: 'bob' })).code, 404);
+}));
+
+test('users：舊版（隨機存取碼、SHA-256）建立的使用者仍可登入，改密碼後換成 scrypt', () => withUsers(async () => {
+  const lib = require('../api/library'), store = require('../api/_store'), crypto = require('node:crypto');
+  const legacy = 'LegacyRandomCode24chars_x';
+  await store.cmd('HSET', 'rc:users', 'old', JSON.stringify({ name: 'old', createdAt: 1, disabled: false, codeHash: crypto.createHash('sha256').update(legacy).digest('hex') }));
+  assert.equal((await call(lib, legacy, { action: 'whoami' })).payload.user, 'old');
+  assert.equal((await call(lib, 'secret', { action: 'users_password', name: 'old', password: 'brand-new-password' }, '1.1.1.1')).code, 200);
+  assert.equal((await call(lib, legacy, { action: 'whoami' }, '4.4.4.4')).code, 401);
+  assert.equal((await call(lib, 'brand-new-password', { action: 'whoami' })).payload.user, 'old');
+  assert.ok(!('codeHash' in JSON.parse(await store.cmd('HGET', 'rc:users', 'old'))));
 }));
 
 const genOnce = async (code, ip) => { const r = fakeRes(); await require('../api/generate')({ method: 'POST', headers: { 'x-forwarded-for': ip }, body: { code, ...opts() } }, r); return r; };
