@@ -13,12 +13,6 @@ $('levelChips').addEventListener('click', (e) => { const b = e.target.closest('.
 $('level').addEventListener('change', syncLevelChips);
 syncLevelChips();
 
-// 主題靈感：點一下填進主題欄（每次隨機挑 5 個）
-const IDEAS = ['the history of coffee', 'why we dream', 'how vaccines work', 'a day in Tokyo', 'electric cars', 'how bees communicate', 'the future of AI', 'friendship across cultures', 'the science of sleep', 'street food around the world'];
-$('suggest').innerHTML = IDEAS.sort(() => Math.random() - 0.5).slice(0, 5).map((t) => `<button type="button" class="sg">${esc(t)}</button>`).join('');
-$('suggest').addEventListener('click', (e) => { const b = e.target.closest('.sg'); if (!b) return; $('topic').value = b.textContent; $('topic').dispatchEvent(new Event('input', { bubbles: true })); $('topic').focus(); });
-
-
 // 起始畫面：Create（網址是 #library 就直接開文章庫）
 showView(location.hash.slice(1) === 'create' ? 'create' : 'library', { push: false });   // 預設進入 Library
 try { history.replaceState({ v: view }, '', '#' + view); } catch { /* 忽略 */ }

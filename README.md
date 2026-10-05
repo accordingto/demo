@@ -19,7 +19,7 @@
 
 | 畫面 | 內容 |
 |---|---|
-| **Create** | 一開始只問一個問題：**How do you want to start?**，三張大卡片擇一：**Paste text**（不需存取碼）、**From a link**、**AI generate**。選好之後才出現該方式需要的介面（每個頁面左上都有 Back 鈕回到選擇）。AI generate 頁只有「輸入主題 → Generate」（下方有主題靈感，點一下就填入），字數、程度、文體、題目這些選項直接顯示在下方（不用展開）。從別的畫面回到 Create 一律從選擇卡片開始 |
+| **Create** | 一開始只問一個問題：**How do you want to start?**，三張大卡片擇一：**Paste text**（不需存取碼）、**From a link**、**AI generate**。選好之後才出現該方式需要的介面（每個頁面左上都有 Back 鈕回到選擇）。AI generate 頁只有「輸入主題 → Generate」，字數、程度、文體、題目這些選項直接顯示在下方（不用展開）。從別的畫面回到 Create 一律從選擇卡片開始 |
 | **Article** | 文章（標題右上角三顆圖示：朗讀、編輯、閱讀設定；下方 **Save**（醒目的主按鈕，存好後會短暫變成「Saved ✓」）與 Share）與單字表 |
 | **Library** | 已存文章的卡片牆，可搜尋；開啟、編輯、複製連結、刪除；備份與雲端設定工具 |
 
