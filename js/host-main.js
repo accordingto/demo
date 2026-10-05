@@ -18,18 +18,6 @@ const IDEAS = ['the history of coffee', 'why we dream', 'how vaccines work', 'a 
 $('suggest').innerHTML = IDEAS.sort(() => Math.random() - 0.5).slice(0, 5).map((t) => `<button type="button" class="sg">${esc(t)}</button>`).join('');
 $('suggest').addEventListener('click', (e) => { const b = e.target.closest('.sg'); if (!b) return; $('topic').value = b.textContent; $('topic').dispatchEvent(new Event('input', { bubbles: true })); $('topic').focus(); });
 
-// 進階選項：預設收起，只顯示目前設定的摘要（字數、程度、文體、題目）
-function syncOptSummary() {
-  const g = $('genre'), q = $('questions').checked, d = $('discussion').checked;
-  const parts = [`${$('words').value} words`, $('level').value, g.value ? g.options[g.selectedIndex].text : 'Any genre', q && d ? '2 + 2 questions' : q || d ? '2 questions' : 'No questions'];
-  $('optSummary').innerHTML = parts.map((p) => `<span class="oc">${esc(p)}</span>`).join('');
-}
-$('optToggle').addEventListener('click', () => {
-  const open = $('optPanel').classList.toggle('hidden') === false;
-  $('optToggle').setAttribute('aria-expanded', String(open));
-});
-for (const ev of ['input', 'change']) $('form').addEventListener(ev, syncOptSummary);
-syncOptSummary();
 
 // 起始畫面：Create（網址是 #library 就直接開文章庫）
 showView(location.hash.slice(1) === 'create' ? 'create' : 'library', { push: false });   // 預設進入 Library

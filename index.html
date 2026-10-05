@@ -114,11 +114,7 @@
             </div>
             <div class="suggest" id="suggest" aria-label="Topic ideas"></div>
 
-            <button type="button" class="optbar" id="optToggle" aria-expanded="false" aria-controls="optPanel">
-              <span class="opt-chips" id="optSummary"></span>
-              <span class="opt-cta">Customize<svg class="ic"><use href="#i-chevron"/></svg></span>
-            </button>
-            <div id="optPanel" class="optpanel hidden">
+            <div id="optPanel" class="optpanel">
               <div class="optgrid">
                 <div class="field"><label for="words">Length</label><div class="spin"><input type="number" id="words" min="100" max="800" step="1" value="300" title="100 – 800 words (▲▼ or arrow keys: ±100)" required><span class="spin-btns"><button type="button" data-d="1" tabindex="-1" aria-label="Increase by 100">▲</button><button type="button" data-d="-1" tabindex="-1" aria-label="Decrease by 100">▼</button></span></div></div>
                 <div class="field"><label for="genre">Genre</label>

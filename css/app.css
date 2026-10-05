@@ -233,14 +233,7 @@ body.nav-open { overflow:hidden; }
 .sg { min-height:34px; padding:0 14px; font-size:.84rem; font-weight:500; color:var(--muted); background:transparent; border:1px solid var(--line); border-radius:999px; }
 .sg:hover { color:var(--accent); border-color:var(--accent); background:rgba(var(--accent-rgb), .08); }
 
-.optbar { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; margin-top:14px; padding:10px 14px; min-height:48px; text-align:left; font-weight:500; color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:14px; }
-.optbar:hover { border-color:var(--accent); }
-.opt-chips { display:flex; flex-wrap:wrap; gap:6px; min-width:0; }
-.oc { padding:2px 10px; font-size:.78rem; font-weight:600; color:var(--muted); background:var(--field); border:1px solid var(--line); border-radius:999px; white-space:nowrap; }
-.opt-cta { flex:none; display:inline-flex; align-items:center; gap:4px; font-size:.82rem; font-weight:700; color:var(--accent); }
-.opt-cta .ic { transition:transform .2s; }
-.optbar[aria-expanded="true"] .opt-cta .ic { transform:rotate(180deg); }
-.optpanel { margin-top:8px; padding:18px; background:var(--card); border:1px solid var(--line); border-radius:14px; animation:vdetIn .2s ease-out; }
+.optpanel { margin-top:16px; padding:18px; background:var(--card); border:1px solid var(--line); border-radius:14px; }
 .optgrid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 @media (max-width:479px) { .optgrid { grid-template-columns:1fr; gap:0; } }
 .optpanel .field { margin-bottom:16px; }
