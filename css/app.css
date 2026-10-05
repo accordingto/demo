@@ -194,7 +194,7 @@ body.nav-open { overflow:hidden; }
 .danger { color:var(--err) !important; border-color:var(--err) !important; }
 
 /* 印刷：只留文章 */
-@media print { #sidebar, #topbar, #scrim, #codePop, #viewCreate, #viewLibrary { display:none !important; } .app { display:block; } .content { padding:0; max-width:none; } }
+@media print { #sidebar, #topbar, #scrim, #codePop, #viewCreate, #viewLibrary, #viewUsers { display:none !important; } .app { display:block; } .content { padding:0; max-width:none; } }
 
 /* 從網址匯入的版面：不要外層的內距，手機上輸入框與按鈕分兩行 */
 #linkPanel.panel { padding:0; }
@@ -280,11 +280,10 @@ body.nav-open { overflow:hidden; }
 .hero2.inpanel::before { display:none; }
 
 /* 使用者管理 */
-#usersPanel { margin-bottom:16px; }
 .useradd { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
 .useradd input { flex:1 1 180px; min-width:0; }
-#usersPanel .libtable { border:1px solid var(--line); border-radius:14px; overflow:hidden; }
-#usersPanel .libtable th { font-size:.72rem; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+#viewUsers .libtable { border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+#viewUsers .libtable th { font-size:.72rem; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700; }
 
 /* 今天 AI 產生還剩幾次 */
 .genusage { margin-top:12px; padding:8px 14px; border-radius:999px; text-align:center; font-size:.88rem; color:var(--muted); background:var(--field); border:1px solid var(--line); }

@@ -1,11 +1,11 @@
-// 主持人頁：使用者管理（只有擁有者、雲端模式才看得到）。需先載入 host-library.js（cloudCall、cloud、fmtDate）、host.js（copyText）
+// 主持人頁：使用者管理（選單裡獨立的 Users 畫面，只有擁有者、雲端模式才看得到）。需先載入 host-library.js（cloudCall、cloud、fmtDate）、host.js（copyText）
 // 密碼由擁有者設定（也可以按 Generate 產生一組隨機的）；資料庫只存加鹽雜湊，所以設定後就看不到了
 let isOwner = false;
 
-function syncUsersBtn() {   // 擁有者 + 雲端模式才有「Manage users」
+function syncUsersBtn() {   // 擁有者 + 雲端模式才有 Users（側邊欄選項與上方列圖示）
   const on = isOwner && cloud;
-  $('libUsers').classList.toggle('hidden', !on);
-  if (!on) $('usersPanel').classList.add('hidden');
+  $('navUsers').classList.toggle('hidden', !on); $('tbUsers').classList.toggle('hidden', !on);
+  if (!on && view === 'users') showView('library');
 }
 function setOwner(v) { isOwner = !!v; syncUsersBtn(); }
 
@@ -24,11 +24,6 @@ async function loadUsers() {
       : '<div class="empty-state"><strong>No users yet</strong>Add one above, then send them the access code that appears.</div>';
   } catch (e) { userMsg('❌ ' + e.message, true); }
 }
-
-$('libUsers').addEventListener('click', () => {
-  const p = $('usersPanel'); p.classList.toggle('hidden');
-  if (!p.classList.contains('hidden')) { userMsg(''); loadUsers(); }
-});
 
 $('userForm').addEventListener('submit', async (e) => {
   e.preventDefault();
