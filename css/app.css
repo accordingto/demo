@@ -184,7 +184,7 @@ body.nav-open { overflow:hidden; }
   .libtable .sub { display:block; }
   .libtable .c-act { margin-top:10px; width:auto; }
 }
-.chip { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; font-size:.74rem; font-weight:600; color:var(--muted); background:var(--field); border:1px solid var(--line); border-radius:999px; }
+.chip { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; padding:2px 10px; font-size:.74rem; font-weight:600; color:var(--muted); background:var(--field); border:1px solid var(--line); border-radius:999px; }
 .chip.lv { color:var(--accent); border-color:rgba(var(--accent-rgb), .4); background:rgba(var(--accent-rgb), .1); }
 .chip.warn { color:var(--warn); border-color:var(--warn); }
 .empty-state { grid-column:1/-1; text-align:center; padding:48px 16px; color:var(--muted); border:1px dashed var(--line); border-radius:16px; }
