@@ -56,11 +56,10 @@ body.nav-open { overflow:hidden; }
   body.side-mini .content { max-width:1760px; }   /* 收合後把騰出的空間還給內容（文章、單字表） */
   body.side-mini #sidebar { padding-left:10px; padding-right:10px; overflow-x:hidden; }
   body.side-mini .brand { flex-direction:column; gap:10px; padding:4px 0 12px; }
-  body.side-mini .brand-name, body.side-mini .nav-label, body.side-mini .nav-sep, body.side-mini .side-foot small, body.side-mini .side-foot input { display:none; }
+  body.side-mini .brand-name, body.side-mini .nav-label, body.side-mini .side-foot small, body.side-mini .side-foot input { display:none; }
   body.side-mini .side-toggle .ic { transform:rotate(180deg); }
   body.side-mini .nav-item { justify-content:center; padding:8px 0; min-height:48px; }
   body.side-mini .badge { position:absolute; top:2px; right:2px; min-width:18px; padding:0 5px; font-size:.64rem; line-height:16px; }
-  body.side-mini #sidebar .gear { margin-top:6px; border-top:1px solid var(--line); border-radius:0 0 12px 12px; }
   body.side-mini .side-foot { padding:0; background:transparent; border:0; }
   body.side-mini .side-foot label { justify-content:center; width:100%; min-height:48px; border-radius:12px; cursor:pointer; font-size:0; gap:0; }
   body.side-mini .side-foot label .ic { width:22px; height:22px; }
@@ -76,7 +75,6 @@ body.nav-open { overflow:hidden; }
 .nav-label small { font-weight:400; font-size:.74rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .nav-item.active .nav-label small { color:inherit; opacity:.8; }
 .badge { min-width:24px; padding:1px 8px; border-radius:999px; font-size:.75rem; font-weight:700; text-align:center; background:var(--field); color:var(--muted); border:1px solid var(--line); }
-.nav-sep { height:1px; background:var(--line); margin:10px 6px; }
 .side-foot { margin-top:0; padding:12px; background:var(--field); border:1px solid var(--line); border-radius:12px; display:flex; flex-direction:column; gap:6px; }
 .side-foot label { display:flex; align-items:center; gap:6px; font-size:.78rem; font-weight:700; color:var(--muted); }
 .side-foot small { font-size:.72rem; color:var(--muted); line-height:1.35; }
@@ -282,16 +280,12 @@ body.nav-open { overflow:hidden; }
 .genusage.out b { color:var(--err); }
 
 /* 側邊欄的語言切換 */
-.side-start { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:auto; padding:6px 12px; cursor:pointer; }
-.side-start .nav-label { font-size:.85rem; font-weight:600; color:var(--muted); }
-.side-start input { flex:none; width:40px; height:22px; cursor:pointer; accent-color:var(--accent); }
-.side-lang { display:flex; align-items:center; gap:12px; margin-top:0; padding:8px 12px; }
+.side-lang { display:flex; align-items:center; gap:12px; margin-top:auto; padding:8px 12px; }
 .side-lang .ic { color:var(--muted); flex:none; }
 .side-lang .nav-label { font-weight:600; font-size:.95rem; }
 .side-foot { margin-top:8px; }
 @media (min-width:1280px) {
-  body.side-mini .side-start { display:none; }
-  body.side-mini .side-lang { flex-direction:column; gap:6px; padding:8px 0; }
+  body.side-mini   body.side-mini .side-lang { flex-direction:column; gap:6px; padding:8px 0; }
   body.side-mini .langseg { flex-direction:column; border-radius:14px; }
   body.side-mini .langseg button { min-width:40px; padding:0 4px; }
 }

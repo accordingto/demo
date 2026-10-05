@@ -1,7 +1,7 @@
 // 主持人頁的導覽：三個畫面（create／read／library）、Create 的四個步驟（choose 選擇方式／gen／paste／link）、手機與平板的側邊欄抽屜
 // 需先載入 util.js；host.js 的 current（目前文章）與 host-library.js 的 cloud／refreshCloud 在執行時才使用
 let view = 'help';
-// 一開始進入哪一頁：預設是說明頁；左邊選單的「Open the Library first」打開後改成文章庫（記在 localStorage 的 rc-start）
+// 一開始進入哪一頁：預設是說明頁；閱讀設定（齒輪）最上面的「Open the Library first」打開後改成文章庫（記在 localStorage 的 rc-start，開關在 settings.js）
 const START_KEY = 'rc-start';
 function startView() { try { return localStorage.getItem(START_KEY) === 'library' ? 'library' : 'help'; } catch { return 'help'; } }
 const VIEW_TITLES = { help: 'Guide', create: 'Create', read: 'Article', library: 'Library', users: 'Users' };   // 上方列的標題固定，不隨文章標題變動
@@ -43,8 +43,6 @@ $('navClose').addEventListener('click', closeNav);
 $('scrim').addEventListener('click', closeNav);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('nav-open')) closeNav(); });
 window.addEventListener('popstate', () => showView(location.hash.slice(1) || startView(), { push: false }));
-$('startLib').checked = startView() === 'library';
-$('startLib').addEventListener('change', () => { try { localStorage.setItem(START_KEY, $('startLib').checked ? 'library' : 'help'); } catch { /* 存不了就只在這次有效 */ } });
 // ---- 收合側邊欄（桌機）：只留圖示；狀態記在瀏覽器裡 ----
 function setSideMini(on, save = true) {
   document.body.classList.toggle('side-mini', on);

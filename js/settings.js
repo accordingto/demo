@@ -43,11 +43,15 @@
   const themes = `<section><h4>Theme</h4><div class="themes" role="group" aria-label="Theme">${P.THEMES.map((t) =>
     `<button type="button" class="swatch" data-k="theme" data-v="${t.id}" style="--sw-bg:${t.bg};--sw-ink:${t.ink};--sw-hl:${t.hl}" aria-label="${t.label} theme"><span class="sw-a">Aa</span><span class="sw-n">${t.label}</span></button>`).join('')}</div></section>`;
 
+  // 最上面第一項：一開始先開哪一頁（只有主持人頁有；閱讀頁沒有側邊欄就不顯示）。存在 localStorage 的 rc-start，host-nav.js 的 startView() 讀它
+  const START_KEY = 'rc-start', hostPage = !!document.getElementById('sidebar');
+  const startRow = hostPage ? '<section class="sstart"><label class="srow stoggle"><span>Open the Library first</span><input type="checkbox" id="startLib" role="switch"></label></section>' : '';
+
   const panel = document.createElement('div');
   panel.id = 'settings'; panel.className = 'hidden'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Reading settings');
   panel.innerHTML =
     '<div class="shead"><b>⚙ Reading settings</b><span><button type="button" class="secondary" id="sReset">Reset</button><button type="button" class="sclose" id="sClose" aria-label="Close">×</button></span></div>' +
-    '<div class="sbody">' + themes + SECTIONS.map((s) => `<section><h4>${s.title}</h4>${s.items.map(control).join('')}${s.title === 'Pronunciation' ? '<button type="button" class="secondary" id="sTest">▶ Test pronunciation</button><div id="sTestMsg" class="stestmsg" role="status"></div>' : ''}</section>`).join('') + '</div>';
+    '<div class="sbody">' + startRow + themes + SECTIONS.map((s) => `<section><h4>${s.title}</h4>${s.items.map(control).join('')}${s.title === 'Pronunciation' ? '<button type="button" class="secondary" id="sTest">▶ Test pronunciation</button><div id="sTestMsg" class="stestmsg" role="status"></div>' : ''}</section>`).join('') + '</div>';
   document.body.appendChild(panel);
 
   // 把目前設定顯示到畫面上
@@ -55,11 +59,15 @@
     const p = P.get();
     panel.querySelectorAll('[data-k][data-v]').forEach((b) => { const on = String(p[b.dataset.k]) === b.dataset.v; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     panel.querySelectorAll('input[type=range]').forEach((i) => { i.value = p[i.dataset.k]; });
-    panel.querySelectorAll('input[type=checkbox]').forEach((i) => { i.checked = !!p[i.dataset.k]; });
+    panel.querySelectorAll('input[type=checkbox][data-k]').forEach((i) => { i.checked = !!p[i.dataset.k]; });
+    const sl = panel.querySelector('#startLib'); if (sl) { try { sl.checked = localStorage.getItem(START_KEY) === 'library'; } catch { sl.checked = false; } }
     SECTIONS.forEach((s) => s.items.forEach((it) => { if (it.show) panel.querySelector(`[data-val="${it.key}"]`).textContent = it.show(p[it.key]); }));
   }
   P.onChange(sync); sync();
 
+  panel.addEventListener('change', (e) => {   // 「先開啟文章庫」開關
+    if (e.target.id === 'startLib') { try { localStorage.setItem(START_KEY, e.target.checked ? 'library' : 'help'); } catch { /* 存不了就只在這次有效 */ } }
+  });
   panel.addEventListener('input', (e) => {
     const t = e.target, k = t.dataset.k; if (!k) return;
     if (t.type === 'range') P.set({ [k]: Number(t.value) });
