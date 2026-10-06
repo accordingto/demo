@@ -75,6 +75,9 @@ function render(a, vocab = [], libId = null) {
   $('qa').innerHTML = questionsHtml(a.questions, a.discussion);
   $('shareBox').classList.add('hidden');
   $('linkMsg').textContent = '';
+  const va = a.viewAs || '';   // 擁有者在檢視別人的文章：唯讀（沒有編輯、儲存、分享）
+  $('viewAsBar').classList.toggle('hidden', !va); $('viewAsName').textContent = va;
+  $('previewActions').classList.toggle('hidden', !!va); $('editIcon').classList.toggle('hidden', !!va);
   updateNavArticle(a.title);
   showView('read');
   currentLibId = libId;

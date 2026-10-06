@@ -317,3 +317,9 @@ body.side-mini .side-foot.failed label::after { background:var(--lamp-bad); box-
 .tb-user .nosign { color:var(--lamp-bad); }
 @media (max-width:479px) { .tb-user { max-width:74px; padding:0 8px; margin-right:0; min-height:30px; } .tb-user .nosign { display:none; } }
 @media (min-width:1280px) { .tb-user { display:none; } }
+
+/* 擁有者檢視別人的文章（唯讀）的提示列；Users 頁的文章數欄一律顯示 */
+.viewas { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; padding:10px 14px; font-size:.9rem; font-weight:600; color:var(--ink); background:rgba(var(--accent-rgb), .12); border:1px solid rgba(var(--accent-rgb), .45); border-radius:12px; }
+.viewas .who { margin:0 4px; color:var(--accent); }
+.viewas button { min-height:34px; }
+@media (max-width:640px) { #viewUsers .c-keep { display:none; } }

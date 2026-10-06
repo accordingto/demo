@@ -554,3 +554,20 @@ test('新使用者的文章庫先有一篇歡迎文章：B1、約 300 字、標�
   assert.notEqual((await call(lib, c.eve, { action: 'list' })).payload.items[0].id, items[0].id);   // 各人有自己的一份
   assert.equal((await call(lib, 'secret', { action: 'list' })).payload.items.length, 0);             // 擁有者沒有
 }));
+
+test('擁有者可以唯讀檢視某位使用者的文章庫（list／get 帶 as）；其他人不行；不能改別人的', () => withUsers(async () => {
+  const lib = require('../api/library'), c = await makeUsers(['bob', 'eve']), ow = (b) => call(lib, 'secret', b, '1.1.1.1');
+  const art = { title: 'Bob secret', body: 'Hello there world.', questions: [], discussion: [] };
+  const saved = (await call(lib, c.bob, { action: 'save', article: art })).payload;
+  const l = (await ow({ action: 'list', as: 'bob' })).payload.items.map((i) => i.title).sort();
+  assert.deepEqual(l, ['Bob secret', 'Welcome to Reading Club!']);
+  assert.deepEqual((await ow({ action: 'list', as: 'BOB' })).payload.items.length, 2);                              // 名稱不分大小寫
+  assert.equal((await ow({ action: 'get', as: 'bob', id: saved.id })).payload.article.title, 'Bob secret');
+  assert.equal((await ow({ action: 'get', as: 'eve', id: saved.id })).code, 404);                                   // 不是那個人的文章
+  assert.equal((await ow({ action: 'get', id: saved.id })).code, 404);                                              // 沒帶 as 時仍然只看得到自己的
+  for (const action of ['save', 'delete']) assert.equal((await ow({ action, as: 'bob', id: saved.id, article: art })).code, 400, action);   // 唯讀
+  assert.equal((await ow({ action: 'list', as: 'owner' })).code, 400);
+  assert.equal((await ow({ action: 'list', as: 'a b' })).code, 400);
+  assert.equal((await call(lib, c.eve, { action: 'list', as: 'bob' }, '2.2.2.2')).code, 403);                      // 一般使用者不能看別人的
+  assert.equal((await call(lib, c.bob, { action: 'get', as: 'eve', id: saved.id }, '3.3.3.3')).code, 403);
+}));

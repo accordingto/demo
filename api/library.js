@@ -86,9 +86,18 @@ module.exports = async function handler(req, res) {
       return res.status(502).json({ error: 'Cloud storage request failed. Please try again.' });
     }
   }
-  const INDEX = store.INDEX(me.name);
+  // 擁有者可以「檢視」某位使用者的文章庫（唯讀）：list／get 帶 as: 使用者名稱。其他動作一律不行，也不能改別人的文章
+  let view = me.name;
+  if (b.as !== undefined && b.as !== '' && b.as !== null) {
+    if (!me.owner) return res.status(403).json({ error: 'This feature is only available to the site owner.' });
+    const as = String(b.as).toLowerCase();
+    if (!users.NAME_RE.test(as) || as === 'owner') return res.status(400).json({ error: 'Invalid user' });
+    if (b.action !== 'list' && b.action !== 'get') return res.status(400).json({ error: 'Another user’s library is read-only.' });
+    view = as;
+  }
+  const INDEX = store.INDEX(view);
   // 文章屬於誰：沒有 owner 欄位的舊文章都是擁有者的
-  const mine = (it) => (it.owner || 'owner') === me.name;
+  const mine = (it) => (it.owner || 'owner') === view;
 
   try {
     switch (b.action) {

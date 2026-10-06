@@ -35,7 +35,7 @@ function updateNavArticle(title) { $('navArticle').textContent = title || 'No ar
 const openNav = () => { document.body.classList.add('nav-open'); $('navOpen').setAttribute('aria-expanded', 'true'); };
 function closeNav() { document.body.classList.remove('nav-open'); $('navOpen').setAttribute('aria-expanded', 'false'); }
 
-document.querySelectorAll('button[data-view]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.view === 'create') showTab('choose');   // 回到 Create 一律從「選擇方式」開始
+document.querySelectorAll('button[data-view]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.view === 'create') showTab('choose'); if (b.dataset.view === 'library' && typeof libViewAs !== 'undefined') libViewAs = '';   // 從選單進文章庫＝自己的   // 回到 Create 一律從「選擇方式」開始
      showView(b.dataset.view); closeCodePop(); }));
 document.querySelectorAll('[data-goto-tab]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.gotoTab)));
 $('navOpen').addEventListener('click', openNav);

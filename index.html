@@ -293,6 +293,7 @@
                 <button type="button" id="editSave">Save changes</button>
                 <button type="button" id="editCancel" class="secondary">Cancel</button>
               </div>
+              <div id="viewAsBar" class="viewas hidden" role="status"><span>Viewing <b id="viewAsName" class="who"></b>’s article — read-only.</span><button type="button" id="viewAsBack" class="secondary">Back to their library</button></div>
               <div id="doc" class="doc"></div>
               <div class="toolbar" id="previewActions">
                 <button type="button" id="save" class="pill primary"><svg class="ic"><use href="#i-save"/></svg><span>Save</span></button>
@@ -320,6 +321,7 @@
         <div class="page-head">
           <div><h1 id="libTitle">Library</h1><p class="sub" id="libSubtitle">Saved in this browser</p></div>
           <div class="btns">
+            <button type="button" id="libBack" class="secondary hidden">← Back to Users</button>
             <button type="button" id="libDiag" class="secondary hidden">Check cloud setup</button>
             <button type="button" id="libUpload" class="hidden">Upload local articles</button>
             <button type="button" id="libExport" class="secondary">Export backup</button>

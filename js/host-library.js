@@ -20,9 +20,12 @@ const sigNow = () => JSON.stringify(settledVocab());
 const markSynced = () => { vocabSig = sigNow(); };
 
 // ---- 雲端 ----
+// 擁有者正在檢視哪位使用者的文章庫（唯讀）；'' = 自己的。list／get 會帶 as 給後端
+let libViewAs = '';
 function cloudCall(body) {
   const code = $('code').value.trim();
   if (!code) return Promise.reject(new Error('Enter the access code first'));
+  if (libViewAs && (body.action === 'list' || body.action === 'get')) body = { ...body, as: libViewAs };
   return postJson('/api/library', { code, ...body });
 }
 async function refreshCloud() {
@@ -61,13 +64,16 @@ function sortedEntries(list) {
 function renderLib() {
   const all = libEntries(), local = libLoad();
   const q = libQuery.trim().toLowerCase(), l = sortedEntries(q ? all.filter((it) => it.title.toLowerCase().includes(q)) : all);
-  $('libCount').textContent = cloud && cloudErr ? '–' : all.length;
-  $('tbLibCount').textContent = all.length; $('tbLibCount').dataset.n = cloud && cloudErr ? 0 : all.length;
+  if (!libViewAs) {   // 檢視別人的文章庫時，選單上的篇數仍是自己的，不更新
+    $('libCount').textContent = cloud && cloudErr ? '–' : all.length;
+    $('tbLibCount').textContent = all.length; $('tbLibCount').dataset.n = cloud && cloudErr ? 0 : all.length;
+  }
   $('libSub').textContent = cloud ? 'Cloud · any device' : 'Saved in this browser';
-  $('libTitle').textContent = 'Library';
-  $('libSubtitle').textContent = cloud ? 'Cloud library — open it on any device with your access code.' : 'Saved in this browser. Set up cloud storage to open articles on any device.';
-  $('libExport').classList.toggle('hidden', cloud); $('libImport').classList.toggle('hidden', cloud);
-  $('libUpload').classList.toggle('hidden', !(cloud && local.length));
+  $('libTitle').textContent = libViewAs ? `${libViewAs}’s Library` : 'Library';
+  $('libSubtitle').textContent = libViewAs ? 'You are viewing this user’s library (read-only). You can open and share their articles.' : cloud ? 'Cloud library — open it on any device with your access code.' : 'Saved in this browser. Set up cloud storage to open articles on any device.';
+  $('libBack').classList.toggle('hidden', !libViewAs);
+  $('libExport').classList.toggle('hidden', cloud || !!libViewAs); $('libImport').classList.toggle('hidden', cloud || !!libViewAs);
+  $('libUpload').classList.toggle('hidden', !(cloud && local.length) || !!libViewAs);
   $('libDiag').classList.toggle('hidden', cloud); // 還沒啟用雲端時，提供「檢查雲端設定」
   $('libUpload').textContent = `Upload ${REL(local.length)} from this browser`;
   if (typeof syncUsersBtn === 'function') syncUsersBtn();   // 擁有者 + 雲端模式才顯示「Manage users」（host-users.js）
@@ -80,7 +86,7 @@ function renderLib() {
     `<td class="c-level">${it.level ? `<span class="chip lv">${esc(it.level)}</span>` : '<span class="chip">Pasted</span>'}</td>` +
     `<td class="c-num c-words">${(it.words || 0).toLocaleString()}</td><td class="c-num c-vocab">${it.vocab}</td>` +
     `<td class="c-when">${fmtDate(it.ts)}</td>` +
-    '<td class="c-act"><div class="acts"><button type="button" class="act primary" data-act="open">Open</button><button type="button" class="act" data-act="edit">Edit</button><button type="button" class="act" data-act="copy">Copy link</button><button type="button" class="act danger" data-act="del" aria-label="Delete">Delete</button></div></td></tr>'
+    `<td class="c-act"><div class="acts"><button type="button" class="act primary" data-act="open">Open</button>${libViewAs ? '' : '<button type="button" class="act" data-act="edit">Edit</button>'}<button type="button" class="act" data-act="copy">Copy link</button>${libViewAs ? '' : '<button type="button" class="act danger" data-act="del" aria-label="Delete">Delete</button>'}</div></td></tr>`
   ).join('');
   $('libList').innerHTML = `<table class="libtable"><thead><tr>${th}<th class="c-act"><span class="sr">Actions</span></th></tr></thead><tbody>${rows}</tbody></table>` +
     `<div class="libfoot">${l.length} article${l.length === 1 ? '' : 's'}${q ? ` matching “${esc(libQuery)}”` : ''} · double-click a title to open it</div>`;
@@ -91,6 +97,9 @@ function setSort(key, dir) {
   renderLib();
 }
 $('libSortSel').addEventListener('change', (e) => { const [k, d] = e.target.value.split(':'); setSort(k, +d); });
+// 檢視別人的文章庫時：返回使用者頁
+$('libBack').addEventListener('click', () => { libViewAs = ''; showView('users'); });
+$('viewAsBack').addEventListener('click', () => showView('library'));   // 回到正在檢視的那位使用者的文章庫
 $('libSearch').addEventListener('input', (e) => { libQuery = e.target.value; renderLib(); });
 $('code').addEventListener('change', () => { if (cloud) refreshCloud(); });
 
@@ -125,7 +134,7 @@ function localSaveCurrent() {
 // 單字表有增減就自動存檔：文章還沒存過 → 自動存成新文章；已在文章庫 → 更新同一篇（等查詢完成、稍微延遲後存）
 let syncTimer = null;
 function syncLib() {
-  if (!current || editState) return;
+  if (!current || editState || current.viewAs) return;   // 檢視別人的文章時不自動存檔
   clearTimeout(syncTimer);
   syncTimer = setTimeout(async () => {
     if (!current || editState || Vocab.getItems().some((v) => v.loading)) return; // 還在查詢中，查完會再觸發一次
@@ -193,6 +202,7 @@ async function openFromLibrary(id, act, btn) {
     if (cloud) {
       if (act === 'open' || act === 'edit') {
         const r = await cloudCall({ action: 'get', id });
+        if (libViewAs) { openArticle({ ...r.article, viewAs: libViewAs }, r.vocab, null); return; }   // 檢視別人的文章：唯讀，不連到任何文章庫（不會自動存檔）
         openArticle(r.article, r.vocab, id);
         showLink(shortLink(id)); $('linkMsg').textContent = 'Opened from the cloud library. Its share link is ready below.';
         afterOpen();

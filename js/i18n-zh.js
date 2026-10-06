@@ -69,6 +69,8 @@ window.I18N_ZH = {
     'Each user has their own library. You set each user’s password — they type it into “Access code”. They can use everything except this page; AI generate is limited per day.': '每位使用者有自己的文章庫。密碼由你設定，他們輸入在「存取碼」欄位。除了這個頁面，其他功能都能使用；AI 產生每天有次數限制。',
     'User name (letters, numbers, - or _)': '使用者名稱（英文、數字、- 或 _）', 'New user name': '新使用者名稱', 'Password (at least 8 characters)': '密碼（至少 8 個字元）', 'Password for the new user': '新使用者的密碼',
     'Fill in a random password': '填入隨機密碼', 'Add user': '新增使用者', 'Name': '名稱', 'Status': '狀態', 'Articles': '文章數', 'Created': '建立日期', 'Active': '使用中', 'Disabled': '已停用',
+    'View library': '查看文章庫', '← Back to Users': '← 返回使用者', 'Back to their library': '返回他的文章庫', 'Viewing': '正在檢視', '’s article — read-only.': '的文章（唯讀）。',
+    'You are viewing this user’s library (read-only). You can open and share their articles.': '你正在檢視這位使用者的文章庫（唯讀）。可以開啟與分享他的文章。',
     'Set password': '設定密碼', 'Disable': '停用', 'Enable': '啟用', 'No users yet': '還沒有使用者', 'Add one above, then send them the access code that appears.': '在上方新增一位，並把你設定的密碼告訴他。', 'Adding…': '新增中…',
     // ---- 設定面板 ----
     '⚙ Reading settings': '⚙ 閱讀設定', 'Text': '文字', 'Text size': '文字大小', 'Font': '字型', 'Line spacing': '行距', 'Paragraph spacing': '段落間距', 'Letter spacing': '字距', 'Normal': '正常', 'None': '無',
@@ -158,6 +160,6 @@ window.I18N_ZH = {
     [/^Related environment variables on the server:$/, '伺服器上找到的相關環境變數：'], [/^(\d+) words? · (\d+) paragraphs?$/, '$1 字・$2 段'],
     [/^AI articles left today$/, '今天 AI 文章剩餘次數'], [/^Copy it now.*$/, '請現在複製。'],
     [/^(\d+) articles? matching “(.+)”$/, '符合「$2」的 $1 篇文章'], [/^double-click a title to open it$/, '連點兩下標題就能開啟'],
-    [/^Link copied$/, '連結已複製'], [/^(❌|✅|⚠|✗) (.+)$/, (m, i, a, t) => `${i} ${t(a)}`], [/^Sort by (.+)$/, (m, a, t) => `依「${t(a)}」排序`], [/^Remove (.+)$/, '移除 $1'], [/^▶ (.+)$/, (m, a, t) => `▶ ${t(a)}`], [/^(\w+) theme$/, (m, a, t) => `${t(a)}主題`], [/^· (.+)$/, (m, a, t) => `・${t(a)}`],
+    [/^Link copied$/, '連結已複製'], [/^(.+)’s Library$/, '$1 的文章庫'], [/^(❌|✅|⚠|✗) (.+)$/, (m, i, a, t) => `${i} ${t(a)}`], [/^Sort by (.+)$/, (m, a, t) => `依「${t(a)}」排序`], [/^Remove (.+)$/, '移除 $1'], [/^▶ (.+)$/, (m, a, t) => `▶ ${t(a)}`], [/^(\w+) theme$/, (m, a, t) => `${t(a)}主題`], [/^· (.+)$/, (m, a, t) => `・${t(a)}`],
   ],
 };

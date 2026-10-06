@@ -17,10 +17,10 @@ async function loadUsers() {
   try {
     const { users } = await cloudCall({ action: 'users_list' });
     $('userList').innerHTML = users.length
-      ? `<table class="libtable"><thead><tr><th class="c-t">Name</th><th class="c-level">Status</th><th class="c-num c-words">Articles</th><th class="c-when">Created</th><th class="c-act"><span class="sr">Actions</span></th></tr></thead><tbody>${users.map((u) =>
+      ? `<table class="libtable"><thead><tr><th class="c-t">Name</th><th class="c-level">Status</th><th class="c-num c-keep">Articles</th><th class="c-when">Created</th><th class="c-act"><span class="sr">Actions</span></th></tr></thead><tbody>${users.map((u) =>
         `<tr data-name="${esc(u.name)}" data-n="${u.articles}"><td class="c-t"><div class="t">${esc(u.name)}</div><div class="sub">${u.disabled ? 'Disabled' : 'Active'} · ${u.articles} article${u.articles === 1 ? '' : 's'}</div></td>` +
-        `<td class="c-level"><span class="chip ${u.disabled ? 'warn' : 'lv'}">${u.disabled ? 'Disabled' : 'Active'}</span></td><td class="c-num c-words">${u.articles}</td><td class="c-when">${fmtDate(u.createdAt)}</td>` +
-        `<td class="c-act"><div class="acts"><button type="button" class="act" data-uact="password">Set password</button><button type="button" class="act" data-uact="${u.disabled ? 'enable' : 'disable'}">${u.disabled ? 'Enable' : 'Disable'}</button><button type="button" class="act danger" data-uact="delete">Delete</button></div></td></tr>`).join('')}</tbody></table>`
+        `<td class="c-level"><span class="chip ${u.disabled ? 'warn' : 'lv'}">${u.disabled ? 'Disabled' : 'Active'}</span></td><td class="c-num c-keep">${u.articles}</td><td class="c-when">${fmtDate(u.createdAt)}</td>` +
+        `<td class="c-act"><div class="acts"><button type="button" class="act primary" data-uact="view">View library</button><button type="button" class="act" data-uact="password">Set password</button><button type="button" class="act" data-uact="${u.disabled ? 'enable' : 'disable'}">${u.disabled ? 'Enable' : 'Disable'}</button><button type="button" class="act danger" data-uact="delete">Delete</button></div></td></tr>`).join('')}</tbody></table>`
       : '<div class="empty-state"><strong>No users yet</strong>Add one above, then send them the access code that appears.</div>';
   } catch (e) { userMsg('❌ ' + e.message, true); }
 }
@@ -40,6 +40,7 @@ $('userList').addEventListener('click', async (e) => {
   const b = e.target.closest('button[data-uact]'); if (!b) return;
   const row = b.closest('tr'), name = row.dataset.name, act = b.dataset.uact;
   try {
+    if (act === 'view') { libViewAs = name; cloudItems = []; showView('library'); return; }   // 檢視這位使用者的文章庫（唯讀）
     if (act === 'password') {
       const pw = prompt(`New password for “${name}” (at least 8 characters).\nTheir current password stops working immediately.`); if (pw === null) return;
       await cloudCall({ action: 'users_password', name, password: pw }); userMsg(`Password for “${name}” changed.`);
