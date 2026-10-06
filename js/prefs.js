@@ -5,7 +5,7 @@
   const reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   const DEFAULTS = {
     theme: 'light',           // 色彩主題（預設 Light）
-    fs: 20, font: 'sans', lh: 1.8, para: 1, ls: 0, measure: 'full', align: 'left',   // 文字
+    fs: 22, font: 'sans', lh: 1.8, para: 1, ls: 0, measure: 'full', align: 'left',   // 文字
     hl: true, anim: !reduced, dim: 0, warm: 0,                                      // 顯示
     speak: true, rate: 0.85, accent: 'us',                                          // 發音
   };
@@ -43,13 +43,20 @@
     };
   }
 
+  const FS_RESET = 'rc-fs-default';   // 記下已經套用過哪一版的預設文字大小
   let prefs = load();
   const listeners = [];
 
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) return clean(JSON.parse(raw));
+      if (raw) {
+        const o = JSON.parse(raw);
+        if (localStorage.getItem(FS_RESET) !== String(DEFAULTS.fs)) {   // 預設文字大小換了：所有人回到新預設一次（之後自己調的就保留）
+          o.fs = DEFAULTS.fs; localStorage.setItem(FS_RESET, String(DEFAULTS.fs)); localStorage.setItem(KEY, JSON.stringify(clean(o)));
+        }
+        return clean(o);
+      }
       const oldFs = Number(localStorage.getItem('rc-fs-host'));   // 舊版只記文字大小
       if (oldFs) return clean({ fs: oldFs });
     } catch { /* 無痕模式或被封鎖時用預設 */ }
@@ -65,7 +72,7 @@
     const meta = document.querySelector('meta[name="theme-color"]') || Object.assign(document.head.appendChild(document.createElement('meta')), { name: 'theme-color' });
     meta.content = (THEMES.find((t) => t.id === p.theme) || THEMES[0]).bg;   // 手機瀏覽器的網址列顏色
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch { /* 忽略 */ } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(prefs)); localStorage.setItem(FS_RESET, String(DEFAULTS.fs)); } catch { /* 忽略 */ } }
   function changed() { apply(); listeners.forEach((f) => f(prefs)); }
 
   window.Prefs = {
