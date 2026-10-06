@@ -1,7 +1,7 @@
 // 使用者帳號（存在雲端資料庫，由擁有者在管理介面新增／改密碼／停用／刪除）。檔名以底線開頭，不是 API 路由。
 // 密碼由擁有者設定；資料庫只存「加了隨機鹽的 scrypt 雜湊」，不存明文。
 //   rc:users  (hash)  名稱 → JSON { name, createdAt, disabled, salt, hash }
-//   rc:seen   (hash)  名稱 → 最近活動時間（毫秒）；登入後的每次請求都會更新（同一個執行個體 1 分鐘內只寫一次）
+//   rc:seen   (hash)  名稱 → 最近活動時間（毫秒）；登入後的每次請求都會更新（同一個執行個體 5 分鐘內只寫一次）
 //   （舊版隨機產生的存取碼：{ codeHash }（SHA-256），仍可登入，改過密碼後就換成 scrypt）
 // 登入欄位只有一個（Access code），所以每個人的密碼必須各不相同，也不能和擁有者的 HOST_CODE 相同。
 // 擁有者用環境變數 HOST_CODE，不在這裡（所以就算資料庫出問題，擁有者也進得去）
@@ -48,11 +48,11 @@ async function findByCode(code) {
   } catch { return null; }
 }
 
-// 記錄最近活動時間。同一個執行個體 1 分鐘內只寫一次，失敗也不影響正常使用
+// 記錄最近活動時間。同一個執行個體 5 分鐘內只寫一次，失敗也不影響正常使用
 const lastTouch = new Map();
 async function touch(name) {
   const now = Date.now();
-  if (!store.configured() || now - (lastTouch.get(name) || 0) < 60000) return;
+  if (!store.configured() || now - (lastTouch.get(name) || 0) < 300000) return;
   lastTouch.set(name, now);
   try { await store.cmd('HSET', SEEN, name, String(now)); } catch { /* 略過 */ }
 }

@@ -17,7 +17,7 @@ $('userGen').addEventListener('click', () => { $('userPass').value = randomPassw
 function ago(ts) {
   if (!ts) return 'Never';
   const m = Math.floor((Date.now() - ts) / 60000);
-  if (m < 2) return 'Just now';
+  if (m < 6) return 'Just now';
   if (m < 60) return m + ' min ago';
   if (m < 1440) return Math.floor(m / 60) + ' h ago';
   if (m < 10080) return Math.floor(m / 1440) + ' days ago';
