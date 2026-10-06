@@ -290,4 +290,5 @@ document.addEventListener('langchange', () => { renderLib(); if (typeof loadUser
 postJson('/api/library', { action: 'status' }).then((j) => { cloud = !!j.configured; }, () => { cloud = false; }).then(() => {
   renderLib();
   if (cloud && $('code').value.trim()) refreshCloud();
+  document.dispatchEvent(new Event('cloudready'));   // 首頁的開始卡片要等知道是不是雲端模式
 });

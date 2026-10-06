@@ -18,7 +18,7 @@ body { overflow-x:hidden; }
 .tb-actions { display:flex; align-items:center; gap:2px; }
 .tb-btn { position:relative; }
 .tb-btn.active { color:var(--accent); background:rgba(var(--accent-rgb), .16); }
-.tb-btn:disabled { opacity:.35; }
+.tb-btn[aria-disabled="true"] { opacity:.45; }
 .tb-badge { position:absolute; top:3px; right:1px; min-width:17px; height:17px; padding:0 4px; border-radius:999px; display:grid; place-items:center; font-size:.64rem; font-weight:800; color:var(--accent-ink); background:var(--accent); line-height:1; }
 .tb-badge:empty, .tb-badge[data-n="0"] { display:none; }
 @media (max-width:479px) { #topbar { padding:0 4px; padding-top:env(safe-area-inset-top, 0px); gap:2px; } #topbar .iconbtn { width:40px; } .tb-title { font-size:.95rem; text-align:left; padding-left:4px; } .tb-actions { gap:0; } }
@@ -69,8 +69,7 @@ body.nav-open { overflow:hidden; }
 .nav-item { display:flex; align-items:center; gap:12px; width:100%; min-height:52px; padding:8px 12px; text-align:left; font-weight:600; font-size:.95rem; color:var(--ink); background:transparent; border:1px solid transparent; border-radius:12px; }
 .nav-item:hover { background:var(--hover); }
 .nav-item.active { background:rgba(var(--accent-rgb), .15); color:var(--accent); border-color:rgba(var(--accent-rgb), .25); }
-.nav-item:disabled { opacity:.45; cursor:not-allowed; }
-.nav-item:disabled:hover { background:transparent; }
+.nav-item[aria-disabled="true"] { opacity:.45; }
 .nav-label { display:flex; flex-direction:column; min-width:0; flex:1; line-height:1.25; }
 .nav-label small { font-weight:400; font-size:.74rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .nav-item.active .nav-label small { color:inherit; opacity:.8; }
@@ -324,3 +323,18 @@ body.side-mini .side-foot.failed label::after { background:var(--lamp-bad); box-
 .viewas .who { margin:0 4px; color:var(--accent); }
 .viewas button { min-height:34px; }
 @media (max-width:640px) { #viewUsers .c-keep { display:none; } }
+
+/* 新手引導：上方圖示加文字、開始卡片、第一次閱讀提示、提示訊息 */
+#topbar .tb-btn { display:inline-flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; height:50px; padding:0; }
+.tb-lbl { font-size:.62rem; font-weight:700; line-height:1; white-space:nowrap; }
+@media (max-width:479px) { #topbar .tb-btn { width:44px; } .tb-title { display:none; } .tb-actions { margin-left:auto; } }
+.startcard { max-width:980px; margin-bottom:18px; padding:18px; background:var(--card); border:1px solid var(--accent); border-radius:16px; }
+.startcard h2 { margin:0 0 6px; font-size:1.15rem; }
+.startcard p { margin:0 0 12px; color:var(--muted); line-height:1.5; }
+.start-row { display:flex; flex-wrap:wrap; gap:10px; }
+.start-row input { flex:1 1 200px; min-width:0; min-height:46px; padding:0 14px; font-size:1rem; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:12px; }
+.start-row button { min-height:46px; padding:0 20px; }
+.readhint { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:52px 0 12px; padding:10px 14px; line-height:1.45; background:var(--field); border:1px solid var(--accent); border-radius:12px; }
+.readhint button { flex:none; min-height:36px; padding:0 14px; }
+.toast { position:fixed; z-index:90; left:50%; bottom:calc(24px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%); max-width:min(92vw, 420px); padding:12px 18px; font-weight:600; line-height:1.4; color:var(--accent-ink); background:var(--accent); border-radius:14px; box-shadow:0 8px 30px var(--shadow); }
+.toast.hidden { display:none; }

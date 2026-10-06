@@ -2,6 +2,17 @@
 // 沒有翻譯到的字串會維持英文，不會出錯。新增介面文字時，英文照常寫在程式裡，再來這裡補一行中文即可。
 window.I18N_ZH = {
   exact: {
+    'Help': '說明',
+    'Enter your access code to start': '輸入存取碼就能開始',
+    'The site owner gave you a code. Type it here once — this device will remember it.': '網站擁有者會給你一組存取碼。在這裡輸入一次，這台裝置就會記住。',
+    'Sign in': '登入',
+    'Please type your access code.': '請輸入存取碼。',
+    'Ready? Pick one to start': '準備好了嗎？選一個開始',
+    'Open my Library': '開啟我的文章庫',
+    'Create or open an article first — then it shows up here.': '請先新增或開啟一篇文章，它就會出現在這裡。',
+    'Tip:': '小提示：',
+    'tap a word to hear it. Double-tap a word to save it to your vocabulary.': '點一下單字會發音；連點兩下單字，就加入你的單字庫。',
+    'Got it': '知道了',
     'Last active': '最近活動', 'Never': '從未', 'Just now': '剛剛',
     // ---- 選單與導覽 ----
     'Reading Club': '英文讀書會', 'Main menu': '主選單', 'Collapse menu': '收合選單', 'Expand menu': '展開選單', 'Close menu': '關閉選單', 'Open menu': '開啟選單',

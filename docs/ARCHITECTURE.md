@@ -72,10 +72,11 @@
 ### 載入順序（classic script，共用全域作用域）
 - 共通：`prefs.js` 放在 `<head>`（同步載入，頁面繪製前就套用主題，避免先閃一下預設主題）
 - **介面語言**：`i18n-zh.js`＋`i18n.js` 放在兩頁的 `<head>`（`prefs.js` 之後）。英文是原文；切到中文時用 `exact`（整段相同）與 `patterns`（帶數字的句型）對照翻譯文字節點與 `placeholder`／`title`／`aria-label`，MutationObserver 負責之後動態產生的內容，並包住 `alert`／`confirm`／`prompt`；換回英文時還原。使用者內容（文章、標題、單字、使用者名稱）在 `SKIP` 清單內不翻。切換鈕是任何帶 `data-lang` 的按鈕，狀態存 `rc-lang`，並送出 `langchange` 事件（文章庫據此重畫日期）。
-- 主持人頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `host-nav.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-users.js` → `host-main.js`
+- 主持人頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `host-nav.js` → `host.js` → `paste-text.js` → `host-paste.js` → `host-edit.js` → `host-library.js` → `host-users.js` → `host-main.js` → `host-start.js`
 - 閱讀頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `reader.js`
 
 各 host 模組之間的函式只在**執行時**互相呼叫；但 `Vocab.init` 一執行就會呼叫 `onChange(syncLib)`，所以放在最後載入的 `host-main.js`。
+`host-start.js`（新手引導）在 `host-main.js` 之後載入：首頁的開始卡片（雲端模式沒登入就顯示輸入存取碼的卡片；登入成功後，這個瀏覽器第一次會直接打開歡迎文章，之後去 Library；本機模式或已登入則顯示「Create an article／Open my Library」）與第一次閱讀的提示（`rc-hint-read`）。它靠 `host-main.js` 送出的 `codestatus` 事件與 `host-library.js` 的 `cloudready` 事件取得狀態。
 
 ### 主持人頁的導覽（`host-nav.js`、`css/app.css`）
 - **五個畫面** `section.view[data-view]`：`help`（Guide，預設首頁，`css/guide.css`）／`create`／`read`／`library`，擁有者（雲端模式）另有 `users`（使用者管理，`host-users.js`；非擁有者呼叫 `showView('users')` 會退回 `library`）；`showView(v)` 切換；一開始進入的頁面由 `startView()` 決定（預設 `help`，選單的 Open the Library first 開關打開則是 `library`，存 `rc-start`；網址有 `#help|#create|#library` 則依網址，首次進入不寫入 # 網址）（還沒有文章時 `read` 會退回 `create`）並更新側邊欄、上方列標題與網址 `#v`（`pushState`，所以上一頁可用）。**Create 的三個頁面** `[data-panel]`：`gen`（首頁：主題＋產生＋兩張入口卡）／`paste`／`link`（子頁面，有 Back 鈕），由 `showTab(t)` 切換（選擇卡與 Back 鈕用 `data-goto-tab`）。

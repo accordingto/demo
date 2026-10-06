@@ -29,13 +29,20 @@ function showTab(t) {
   document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== t));
 }
 // Article 在側邊欄的標題；有文章後才能點
-function updateNavArticle(title) { $('navArticle').textContent = title || 'No article yet'; $('navRead').disabled = $('tbRead').disabled = !title; }
+function updateNavArticle(title) {
+  $('navArticle').textContent = title || 'No article yet';
+  for (const b of [$('navRead'), $('tbRead')]) b.setAttribute('aria-disabled', String(!title));   // 不用 disabled：點了要能說明，不是毫無反應
+}
+let toastTimer = 0;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('hidden'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add('hidden'), 3500); }
 
 // ---- 抽屜（< 1280px）----
 const openNav = () => { document.body.classList.add('nav-open'); $('navOpen').setAttribute('aria-expanded', 'true'); };
 function closeNav() { document.body.classList.remove('nav-open'); $('navOpen').setAttribute('aria-expanded', 'false'); }
 
-document.querySelectorAll('button[data-view]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.view === 'create') showTab('choose'); if (b.dataset.view === 'library' && typeof libViewAs !== 'undefined') libViewAs = '';   // 從選單進文章庫＝自己的   // 回到 Create 一律從「選擇方式」開始
+document.querySelectorAll('button[data-view]').forEach((b) => b.addEventListener('click', () => {
+  if (b.getAttribute('aria-disabled') === 'true') { toast('Create or open an article first — then it shows up here.'); showTab('choose'); showView('create'); return; }
+  if (b.dataset.view === 'create') showTab('choose'); if (b.dataset.view === 'library' && typeof libViewAs !== 'undefined') libViewAs = '';   // 從選單進文章庫＝自己的   // 回到 Create 一律從「選擇方式」開始
      showView(b.dataset.view); closeCodePop(); }));
 document.querySelectorAll('[data-goto-tab]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.gotoTab)));
 $('navOpen').addEventListener('click', openNav);

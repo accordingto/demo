@@ -7,7 +7,10 @@
   const ATTRS = ['placeholder', 'title', 'aria-label'];
   const SKIP = '#bodyText, #qa li, .text h2, .t, .v1 b, .kk, .lem, .who, .qtext, [contenteditable], textarea, code, #ipTitle, #ipExcerpt, #ipHost, script, style';
   let lang = 'en';
-  try { if (localStorage.getItem(KEY) === 'zh') lang = 'zh'; } catch { /* 沒有就用英文 */ }
+  try {
+    const saved = localStorage.getItem(KEY);   // 自己選過的語言優先；第一次來且瀏覽器是中文，就預設中文（不寫入，使用者仍可切換）
+    if (saved === 'zh' || (!saved && /^zh/i.test(navigator.language || ''))) lang = 'zh';
+  } catch { /* 沒有就用英文 */ }
 
   const trCore = (core) => {
     const ex = Z.exact[core]; if (ex !== undefined) return ex;

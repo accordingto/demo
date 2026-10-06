@@ -54,7 +54,7 @@
     <nav class="nav" aria-label="Sections">
       <button type="button" class="nav-item" data-view="help"><svg class="ic"><use href="#i-help"/></svg><span class="nav-label">Guide<small>How this site works</small></span></button>
       <button type="button" class="nav-item" data-view="create"><svg class="ic"><use href="#i-create"/></svg><span class="nav-label">Create<small>Generate, paste or import</small></span></button>
-      <button type="button" class="nav-item" data-view="read" id="navRead" disabled><svg class="ic"><use href="#i-book"/></svg><span class="nav-label">Article<small id="navArticle">No article yet</small></span></button>
+      <button type="button" class="nav-item" data-view="read" id="navRead" aria-disabled="true"><svg class="ic"><use href="#i-book"/></svg><span class="nav-label">Article<small id="navArticle">No article yet</small></span></button>
       <button type="button" class="nav-item" data-view="library"><svg class="ic"><use href="#i-library"/></svg><span class="nav-label">Library<small id="libSub">Saved articles</small></span><span class="badge" id="libCount">0</span></button>
       <button type="button" class="nav-item hidden" data-view="users" id="navUsers"><svg class="ic"><use href="#i-users"/></svg><span class="nav-label">Users<small>Passwords, accounts</small></span></button>
     </nav>
@@ -79,14 +79,15 @@
       <button type="button" class="tb-user" id="tbUser" aria-label="Access code" title="Access code" aria-haspopup="dialog" aria-expanded="false"></button>
       <!-- 快速圖示：和選單裡的項目一一對應，點一下直接前往 -->
       <div class="tb-actions" role="toolbar" aria-label="Quick actions">
-        <button type="button" class="iconbtn plain tb-btn" data-view="help" aria-label="Guide" title="Guide"><svg class="ic"><use href="#i-help"/></svg></button>
-        <button type="button" class="iconbtn plain tb-btn" data-view="create" aria-label="Create" title="Create"><svg class="ic"><use href="#i-create"/></svg></button>
-        <button type="button" class="iconbtn plain tb-btn" data-view="read" id="tbRead" aria-label="Article" title="Article" disabled><svg class="ic"><use href="#i-book"/></svg></button>
-        <button type="button" class="iconbtn plain tb-btn" data-view="library" aria-label="Library" title="Library"><svg class="ic"><use href="#i-library"/></svg><span class="tb-badge" id="tbLibCount">0</span></button>
-        <button type="button" class="iconbtn plain tb-btn hidden" data-view="users" id="tbUsers" aria-label="Users" title="Users"><svg class="ic"><use href="#i-users"/></svg></button>
-        <button type="button" class="iconbtn plain tb-btn gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings"><svg class="ic"><use href="#i-gear"/></svg></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="help" aria-label="Guide" title="Guide"><svg class="ic"><use href="#i-help"/></svg><span class="tb-lbl">Help</span></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="create" aria-label="Create" title="Create"><svg class="ic"><use href="#i-create"/></svg><span class="tb-lbl">Create</span></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="read" id="tbRead" aria-label="Article" title="Article" aria-disabled="true"><svg class="ic"><use href="#i-book"/></svg><span class="tb-lbl">Article</span></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="library" aria-label="Library" title="Library"><svg class="ic"><use href="#i-library"/></svg><span class="tb-lbl">Library</span><span class="tb-badge" id="tbLibCount">0</span></button>
+        <button type="button" class="iconbtn plain tb-btn hidden" data-view="users" id="tbUsers" aria-label="Users" title="Users"><svg class="ic"><use href="#i-users"/></svg><span class="tb-lbl">Users</span></button>
+        <button type="button" class="iconbtn plain tb-btn gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings"><svg class="ic"><use href="#i-gear"/></svg><span class="tb-lbl">Settings</span></button>
       </div>
     </header>
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
     <div id="codePop" class="popcard hidden" role="dialog" aria-label="Access code">
       <label for="codeQuick"><svg class="ic"><use href="#i-key"/></svg>Access code</label>
       <input type="password" id="codeQuick" autocomplete="off" placeholder="Enter once, remembered here">
@@ -98,6 +99,19 @@
       <!-- ⓪ Guide：使用說明（預設的首頁）-->
       <section id="viewHelp" class="view" data-view="help">
         <div class="page-head"><div><h1>Welcome to Reading Club</h1><p class="sub">Read English articles, tap any word to hear it, and build your own vocabulary list.</p></div></div>
+
+                <section id="startCard" class="startcard hidden" aria-live="polite">
+          <form id="startLogin" class="start-login hidden" autocomplete="off">
+            <h2>Enter your access code to start</h2>
+            <p>The site owner gave you a code. Type it here once — this device will remember it.</p>
+            <div class="start-row"><input type="password" id="codeHome" autocomplete="off" enterkeyhint="go" placeholder="Access code" aria-label="Access code"><button type="submit" id="codeHomeGo">Sign in</button></div>
+            <div class="msg err hidden" id="codeHomeMsg" role="alert"></div>
+          </form>
+          <div id="startReady" class="start-ready hidden">
+            <h2>Ready? Pick one to start</h2>
+            <div class="start-row"><button type="button" data-go="create">Create an article</button><button type="button" class="secondary" data-go="library">Open my Library</button></div>
+          </div>
+        </section>
 
         <div class="guide">
           <section class="gsec">
@@ -293,6 +307,7 @@
                 <button type="button" id="editSave">Save changes</button>
                 <button type="button" id="editCancel" class="secondary">Cancel</button>
               </div>
+              <div id="readHint" class="readhint hidden" role="note"><span><b>Tip:</b> tap a word to hear it. Double-tap a word to save it to your vocabulary.</span><button type="button" id="readHintOk">Got it</button></div>
               <div id="viewAsBar" class="viewas hidden" role="status"><span>Viewing <b id="viewAsName" class="who"></b>’s article — read-only.</span><button type="button" id="viewAsBack" class="secondary">Back to their library</button></div>
               <div id="doc" class="doc"></div>
               <div class="toolbar" id="previewActions">
@@ -368,5 +383,6 @@
 <script src="js/host-library.js"></script>
 <script src="js/host-users.js"></script>
 <script src="js/host-main.js"></script>
+<script src="js/host-start.js"></script>
 </body>
 </html>
