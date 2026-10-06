@@ -328,7 +328,7 @@ body.side-mini .side-foot.failed label::after { background:var(--lamp-bad); box-
 #topbar .tb-btn { display:inline-flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; height:50px; padding:0; }
 .tb-lbl { font-size:.62rem; font-weight:700; line-height:1; white-space:nowrap; }
 @media (max-width:479px) { #topbar .tb-btn { width:44px; } .tb-title { display:none; } .tb-actions { margin-left:auto; } }
-.startcard { max-width:980px; margin-bottom:18px; padding:18px; background:var(--card); border:1px solid var(--accent); border-radius:16px; }
+.startcard { margin-bottom:18px; padding:18px; background:var(--card); border:1px solid var(--accent); border-radius:16px; }
 .startcard h2 { margin:0 0 6px; font-size:1.15rem; }
 .startcard p { margin:0 0 12px; color:var(--muted); line-height:1.5; }
 .start-row { display:flex; flex-wrap:wrap; gap:10px; }

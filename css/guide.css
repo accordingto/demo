@@ -1,5 +1,5 @@
 /* 使用說明頁（Guide）：顏色一律用主題變數 */
-.guide { display:flex; flex-direction:column; gap:18px; max-width:980px; }
+.guide { display:flex; flex-direction:column; gap:18px; }
 .gsec { padding:22px; background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:0 8px 24px var(--shadow); }
 .gsec h2 { margin:0 0 14px; font-size:1.2rem; }
 .gnote { margin:0 0 14px; color:var(--muted); font-size:.92rem; }
@@ -43,3 +43,7 @@
 .gcards strong { display:block; margin-bottom:4px; color:var(--accent); }
 .gcards span { color:var(--muted); font-size:.9rem; line-height:1.45; }
 @media print { #viewHelp { display:none !important; } }
+@media (min-width:1100px) {   /* 寬螢幕：兩欄排列，不留一大片空白（Quick start、Creating、Edit and save 佔滿一列） */
+  .guide { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); align-items:start; }
+  .guide > .gsec:nth-child(1), .guide > .gsec:nth-child(2), .guide > .gsec:nth-child(5) { grid-column:1 / -1; }
+}
