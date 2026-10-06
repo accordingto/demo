@@ -109,7 +109,7 @@
   // 窄螢幕則是浮動單字卡消失時（5 秒後）才恢復。點單字卡觸發的（auto=false）會一直保留到下一次點擊
   function highlight(v, auto = false) {
     clearTimeout(autoTimer); autoTimer = 0;
-    active = { key: v.word.toLowerCase(), auto };
+    active = { key: v.word.toLowerCase(), auto }; focusKey = active.key;
     applyActive();
     if (auto && !floatingMode()) autoTimer = setTimeout(() => {
       const c = activeItem();
@@ -125,7 +125,7 @@
   const complete = (v) => !!(v.definition && v.zh);   // 英文解釋與中文解釋都有，才算「取得完整資訊」
   const missingText = (v) => [!v.definition && 'English meaning', !v.zh && 'Chinese meaning'].filter(Boolean).join(' and ');
   function reveal(v, pin) { // 展開；pin = 使用者主動展開，不會自動收起，並收起其他卡片
-    clearTimeout(v._t); v.open = true; if (pin) { v.pinned = true; collapseOthers(v); }
+    clearTimeout(v._t); v.open = true; focusKey = v.word.toLowerCase(); if (pin) { v.pinned = true; collapseOthers(v); }
     if (!v.pinned && !v.loading && !v.failed && complete(v)) v._t = setTimeout(   // 取得完整資訊後才開始 5 秒倒數；缺資訊時保持展開
       () => { if (!v.pinned && items.includes(v)) { v.open = false; renderVocab(); } }, AUTO_COLLAPSE_MS);
   }
@@ -186,6 +186,16 @@
   narrowQuery.addEventListener?.('change', (e) => { if (!e.matches) hidePop(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && popState) hidePop(); });
 
+  // 單字卡展開（或查完字、內容變長）後，要完整看得到：只捲動單字表面板本身（不動文章的位置）。使用者自己捲動面板後就不再自動捲
+  let focusKey = null;
+  function showFocusCard() {
+    const panel = $('vocabPanel'), li = focusKey && [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === focusKey);
+    if (!panel || !li || !li.classList.contains('open') || panel.scrollHeight <= panel.clientHeight + 1) return;
+    const p = panel.getBoundingClientRect(), r = li.getBoundingClientRect();
+    if (r.bottom > p.bottom - 8) panel.scrollTop += r.bottom - p.bottom + 8;
+    else if (r.top < p.top + 8) panel.scrollTop -= p.top - r.top + 8;
+  }
+  ['wheel', 'touchstart'].forEach((ev) => $('vocabPanel')?.addEventListener(ev, () => { focusKey = null; }, { passive: true }));
   function renderVocab() {
     paintBody();
     $('vocabList').innerHTML = items.length ? items.map((v) => {
@@ -200,6 +210,7 @@
     applyActive();
     updatePop();
     cfg.onChange(items);
+    if (focusKey) requestAnimationFrame(showFocusCard);
   }
 
   // 找出文章中含該字的句子，當作查詢的上下文（讓 AI 依語境給出正確意思）
@@ -220,7 +231,7 @@
   }
   function flash(v) { // 單字表中對應的項目短暫反白，並捲到可見位置
     const li = [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === v.word.toLowerCase()); if (!li) return;
-    li.classList.add('on'); li.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); setTimeout(() => li.classList.remove('on'), 1800);
+    li.classList.add('on'); focusKey = v.word.toLowerCase(); showFocusCard(); setTimeout(() => li.classList.remove('on'), 1800);
   }
   function addWord(raw, fromText) {
     // 一個字，或 2～6 個字的片語（只留字母、撇號、連字號，其他標點換成空白）
