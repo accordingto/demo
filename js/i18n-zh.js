@@ -26,7 +26,7 @@ window.I18N_ZH = {
     'New article': '新文章', 'How do you want to start?': '你想從哪裡開始？', 'Pick one — you’ll only see what that option needs.': '選一個，只會顯示該方式需要的內容。',
     'Paste text': '貼上文字', 'Use any English article you already have.': '貼上你手邊任何一篇英文文章。', 'No access code needed': '不需要存取碼',
     'From a link': '從網址', 'We pull the main text out of a web page.': '我們幫你從網頁擷取主要文字。', 'Needs access code': '需要存取碼',
-    'AI generate': 'AI 產生', 'Type a topic and we’ll write an article at your level.': '輸入主題，我們依你的程度寫一篇文章。', 'Needs access code · limited per day': '需要存取碼・每天有次數限制',
+    'AI generate': 'AI 產生', 'Type a topic and we’ll write an article at the level you choose.': '輸入主題，我們依你指定的程度寫一篇文章。', 'Needs access code · limited per day': '需要存取碼・每天有次數限制',
     'Back': '返回', 'What do you want to read about?': '你想讀什麼主題？', 'e.g. the history of coffee': '例如：咖啡的歷史', 'Topic (max 100 characters)': '主題（最多 100 字元）', 'Topic': '主題',
     'Generate': '產生', 'Length': '長度', '100 – 800 words (▲▼ or arrow keys: ±100)': '100 – 800 字（▲▼ 或方向鍵：±100）', 'Increase by 100': '增加 100', 'Decrease by 100': '減少 100',
     'Genre': '文體', 'Any genre': '不指定', 'Explanation': '說明文', 'Science': '科學', 'History': '歷史', 'Biography': '傳記', 'How-to guide': '操作指南', 'Travel': '旅遊', 'News style': '新聞風格',
