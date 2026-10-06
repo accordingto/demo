@@ -174,13 +174,24 @@
       `<div class="v1"><b>${esc(v.word)}</b>${v.kk ? `<span class="kk">${esc(v.kk)}</span>` : ''}${v.lemma ? `<span class="lem">← ${esc(v.lemma)}</span>` : ''}</div>` +
       `<div class="vdet">${detailOf(v)}</div>`;
     el.classList.remove('hidden');
+    el.style.top = stickyTop() ? stickyTop() + 8 + 'px' : '';   // 有固定的上方列就貼在它下面
+    requestAnimationFrame(() => {   // 被點的那個字若剛好在浮動卡片底下，把頁面往下推一點，讓字露出來（卡片高度改變時再檢查一次）
+      if (!popState || popState.tapIdx == null) return;
+      const top = el.offsetTop, bottom = top + el.offsetHeight;   // 用版面位置，不受淡入動畫的位移影響
+      if (el.offsetHeight === popState.h) return; popState.h = el.offsetHeight;
+      const r = document.querySelectorAll('#bodyText .w')[popState.tapIdx]?.getBoundingClientRect();
+      if (r && r.bottom > top && r.top < bottom) window.scrollBy({ top: -(bottom + 12 - r.top) });
+    });
     // 英文與中文都拿到之後才開始 5 秒倒數（點過卡片就固定住）
     if (!popState.pinned && !popState.t && !v.loading && !v.failed && complete(v)) popState.t = setTimeout(hidePop, AUTO_COLLAPSE_MS);
   }
+  // 記下最後被按到的是文章中第幾個字（文章重繪後元素會換掉，所以記順序）
+  let tapIdx = null;
+  document.addEventListener('pointerdown', (e) => { const w = e.target.closest?.('#bodyText .w'); tapIdx = w ? [...document.querySelectorAll('#bodyText .w')].indexOf(w) : null; }, true);
   function showPop(v) { // 只在窄螢幕、且是從文章上操作時使用
     if (!floatingMode()) return;
     if (popState) clearTimeout(popState.t);
-    popState = { key: v.word.toLowerCase(), pinned: false, t: 0 };
+    popState = { key: v.word.toLowerCase(), pinned: false, t: 0, tapIdx: tapIdx, h: 0 };
     updatePop();
   }
   narrowQuery.addEventListener?.('change', (e) => { if (!e.matches) hidePop(); });
