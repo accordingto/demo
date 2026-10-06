@@ -425,6 +425,8 @@ test('users 管理：新增（密碼由擁有者設定、資料庫只存加鹽�
   assert.equal((await call(lib, c.bob, { action: 'users_list' })).code, 403);                                      // 一般使用者不能管理
   const l = (await call(lib, 'owner-long-password', { action: 'users_list' }, '1.1.1.1')).payload.users;
   assert.deepEqual(l.map((u) => [u.name, u.disabled, u.articles]), [['bob', false, 1]]);   // 新使用者先有一篇歡迎文章
+  assert.ok(Date.now() - l[0].lastActive < 60000);   // Bob 登入過，記下了最近活動時間
+  assert.equal((await call(lib, 'owner-long-password', { action: 'users_list' }, '1.1.1.1')).payload.users.length, 1);   // 擁有者自己的請求不會產生紀錄
 }));
 
 test('users 管理：改密碼、停用／啟用、刪除（連文章一起刪）', () => withUsers(async () => {

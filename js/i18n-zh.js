@@ -2,6 +2,7 @@
 // 沒有翻譯到的字串會維持英文，不會出錯。新增介面文字時，英文照常寫在程式裡，再來這裡補一行中文即可。
 window.I18N_ZH = {
   exact: {
+    'Last active': '最近活動', 'Never': '從未', 'Just now': '剛剛',
     // ---- 選單與導覽 ----
     'Reading Club': '英文讀書會', 'Main menu': '主選單', 'Collapse menu': '收合選單', 'Expand menu': '展開選單', 'Close menu': '關閉選單', 'Open menu': '開啟選單',
     'Sections': '區塊', 'Quick actions': '快速操作',
@@ -133,6 +134,7 @@ window.I18N_ZH = {
   patterns: [
     [/^([\d,]+) words?$/, '$1 字'], [/^~(\d+) min read$/, '約 $1 分鐘'], [/^Level (\w+)$/, '程度 $1'], [/^([\d,]+) vocab$/, '$1 個單字'], [/^([\d,]+) articles?$/, '$1 篇文章'],
     [/^([\d,]+) paragraphs?$/, '$1 段'], [/^\(auto: (.+)\)$/, (m, a, t) => `（自動：${t(a)}）`], [/^\(manual: (.+)\)$/, (m, a, t) => `（手動：${t(a)}）`],
+    [/^Last active (.+)$/, (m, a, t) => `最近活動：${t(a)}`], [/^([\d,]+) min ago$/, '$1 分鐘前'], [/^([\d,]+) h ago$/, '$1 小時前'], [/^([\d,]+) days ago$/, '$1 天前'],
     [/^(Active|Disabled) · ([\d,]+) articles?$/, (m, s, n, t) => `${t(s)}・${n} 篇文章`],
     [/^Link length: ([\d,]+) characters$/, '連結長度：$1 字元'], [/^Writing your article… \(([\d,]+) characters so far\)$/, '正在寫你的文章…（目前 $1 字元）'],
     [/^Using ([\d,]+) words\. Long texts make a long share link — test it before sending\.$/, '使用 $1 字。文字太長會讓分享連結很長，送出前請先測試。'],

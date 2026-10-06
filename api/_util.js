@@ -58,6 +58,7 @@ async function checkHostCode(req, res, code, { ownerOnly = false } = {}) {
   }
   if (!user) { authFails(ip); res.status(401).json({ error: 'Incorrect access code' }); return null; }
   if (ownerOnly && !user.owner) { res.status(403).json({ error: 'This feature is only available to the site owner.' }); return null; }
+  if (!user.owner) await require('./_users').touch(user.name);   // 記下最近活動時間（Users 畫面顯示）
   return user;
 }
 

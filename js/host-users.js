@@ -13,13 +13,24 @@ const userMsg = (t, err) => { $('userMsg').className = err ? 'msg err' : 'meta';
 const randomPassword = () => { const b = crypto.getRandomValues(new Uint8Array(15)); return btoa(String.fromCharCode(...b)).replace(/\+/g, 'x').replace(/\//g, 'y').replace(/=+$/, ''); };   // 20 個字母數字
 $('userGen').addEventListener('click', () => { $('userPass').value = randomPassword(); $('userPass').focus(); });
 
+// 最近活動時間：一天內用「幾分鐘／幾小時前」，更早用日期
+function ago(ts) {
+  if (!ts) return 'Never';
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 2) return 'Just now';
+  if (m < 60) return m + ' min ago';
+  if (m < 1440) return Math.floor(m / 60) + ' h ago';
+  if (m < 10080) return Math.floor(m / 1440) + ' days ago';
+  return fmtDate(ts);
+}
+
 async function loadUsers() {
   try {
     const { users } = await cloudCall({ action: 'users_list' });
     $('userList').innerHTML = users.length
-      ? `<table class="libtable"><thead><tr><th class="c-t">Name</th><th class="c-level">Status</th><th class="c-num c-keep">Articles</th><th class="c-when">Created</th><th class="c-act"><span class="sr">Actions</span></th></tr></thead><tbody>${users.map((u) =>
-        `<tr data-name="${esc(u.name)}" data-n="${u.articles}"><td class="c-t"><div class="t">${esc(u.name)}</div><div class="sub">${u.disabled ? 'Disabled' : 'Active'} · ${u.articles} article${u.articles === 1 ? '' : 's'}</div></td>` +
-        `<td class="c-level"><span class="chip ${u.disabled ? 'warn' : 'lv'}">${u.disabled ? 'Disabled' : 'Active'}</span></td><td class="c-num c-keep">${u.articles}</td><td class="c-when">${fmtDate(u.createdAt)}</td>` +
+      ? `<table class="libtable"><thead><tr><th class="c-t">Name</th><th class="c-level">Status</th><th class="c-num c-keep">Articles</th><th class="c-when">Last active</th><th class="c-act"><span class="sr">Actions</span></th></tr></thead><tbody>${users.map((u) =>
+        `<tr data-name="${esc(u.name)}" data-n="${u.articles}"><td class="c-t"><div class="t">${esc(u.name)}</div><div class="sub">${u.disabled ? 'Disabled' : 'Active'} · ${u.articles} article${u.articles === 1 ? '' : 's'}</div><div class="sub">Last active ${ago(u.lastActive)}</div></td>` +
+        `<td class="c-level"><span class="chip ${u.disabled ? 'warn' : 'lv'}">${u.disabled ? 'Disabled' : 'Active'}</span></td><td class="c-num c-keep">${u.articles}</td><td class="c-when" title="${u.lastActive ? esc(new Date(u.lastActive).toLocaleString(I18N.locale())) : ''}">${ago(u.lastActive)}</td>` +
         `<td class="c-act"><div class="acts"><button type="button" class="act primary" data-uact="view">View library</button><button type="button" class="act" data-uact="password">Set password</button><button type="button" class="act" data-uact="${u.disabled ? 'enable' : 'disable'}">${u.disabled ? 'Enable' : 'Disable'}</button><button type="button" class="act danger" data-uact="delete">Delete</button></div></td></tr>`).join('')}</tbody></table>`
       : '<div class="empty-state"><strong>No users yet</strong>Add one above, then send them the access code that appears.</div>';
   } catch (e) { userMsg('❌ ' + e.message, true); }
