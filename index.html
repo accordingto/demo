@@ -54,8 +54,8 @@
     <nav class="nav" aria-label="Sections">
       <button type="button" class="nav-item" data-view="help"><svg class="ic"><use href="#i-help"/></svg><span class="nav-label">Guide<small>How this site works</small></span></button>
       <button type="button" class="nav-item" data-view="create"><svg class="ic"><use href="#i-create"/></svg><span class="nav-label">Create<small>Generate, paste or import</small></span></button>
-      <button type="button" class="nav-item" data-view="library"><svg class="ic"><use href="#i-library"/></svg><span class="nav-label">Library<small id="libSub">Saved articles</small></span><span class="badge" id="libCount">0</span></button>
       <button type="button" class="nav-item" data-view="read" id="navRead" disabled><svg class="ic"><use href="#i-book"/></svg><span class="nav-label">Article<small id="navArticle">No article yet</small></span></button>
+      <button type="button" class="nav-item" data-view="library"><svg class="ic"><use href="#i-library"/></svg><span class="nav-label">Library<small id="libSub">Saved articles</small></span><span class="badge" id="libCount">0</span></button>
       <button type="button" class="nav-item hidden" data-view="users" id="navUsers"><svg class="ic"><use href="#i-users"/></svg><span class="nav-label">Users<small>Passwords, accounts</small></span></button>
     </nav>
     <button type="button" class="nav-item gear" aria-haspopup="dialog" aria-expanded="false"><svg class="ic"><use href="#i-gear"/></svg><span class="nav-label">Reading settings<small>Theme, font, voice…</small></span></button>
@@ -81,8 +81,8 @@
       <div class="tb-actions" role="toolbar" aria-label="Quick actions">
         <button type="button" class="iconbtn plain tb-btn" data-view="help" aria-label="Guide" title="Guide"><svg class="ic"><use href="#i-help"/></svg></button>
         <button type="button" class="iconbtn plain tb-btn" data-view="create" aria-label="Create" title="Create"><svg class="ic"><use href="#i-create"/></svg></button>
-        <button type="button" class="iconbtn plain tb-btn" data-view="library" aria-label="Library" title="Library"><svg class="ic"><use href="#i-library"/></svg><span class="tb-badge" id="tbLibCount">0</span></button>
         <button type="button" class="iconbtn plain tb-btn" data-view="read" id="tbRead" aria-label="Article" title="Article" disabled><svg class="ic"><use href="#i-book"/></svg></button>
+        <button type="button" class="iconbtn plain tb-btn" data-view="library" aria-label="Library" title="Library"><svg class="ic"><use href="#i-library"/></svg><span class="tb-badge" id="tbLibCount">0</span></button>
         <button type="button" class="iconbtn plain tb-btn hidden" data-view="users" id="tbUsers" aria-label="Users" title="Users"><svg class="ic"><use href="#i-users"/></svg></button>
         <button type="button" class="iconbtn plain tb-btn gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings"><svg class="ic"><use href="#i-gear"/></svg></button>
       </div>
@@ -99,252 +99,15 @@
       <section id="viewHelp" class="view" data-view="help">
         <div class="page-head"><div><h1>Welcome to Reading Club</h1><p class="sub">Read English articles, tap any word to hear it, and build your own vocabulary list.</p></div></div>
 
-        <div class="gtabs" role="tablist" aria-label="Guide sections">
-          <button type="button" role="tab" id="gt-start" aria-controls="gp-start" aria-selected="true" data-gtab="start">Quick Start</button>
-          <button type="button" role="tab" id="gt-create" aria-controls="gp-create" aria-selected="false" data-gtab="create">Create</button>
-          <button type="button" role="tab" id="gt-library" aria-controls="gp-library" aria-selected="false" data-gtab="library">Library</button>
-          <button type="button" role="tab" id="gt-article" aria-controls="gp-article" aria-selected="false" data-gtab="article">Article</button>
-          <button type="button" role="tab" id="gt-settings" aria-controls="gp-settings" aria-selected="false" data-gtab="settings">Settings</button>
-        </div>
         <div class="guide">
-<section class="gpanel" id="gp-start" role="tabpanel" aria-labelledby="gt-start" data-gpanel="start">
-  <div class="gsec">
-    <h2>Three steps</h2>
-    <ol class="gsteps">
-      <li><b>1</b><div><strong>Create an article</strong><span>Paste your own text, import a web page, or let the AI write one.</span></div></li>
-      <li><b>2</b><div><strong>Read and tap words</strong><span>Click a word to hear it. Double-click to save it to your vocabulary.</span></div></li>
-      <li><b>3</b><div><strong>Save it</strong><span>Press Save to keep the article and its words in your Library.</span></div></li>
-    </ol>
-  </div>
-  <div class="gsec">
-    <h2>The three main pages</h2>
-    <p class="gnote">Everything happens on three pages. Open them from the menu on the left.</p>
-    <div class="gtrio" aria-hidden="true">
-      <div class="gmini">
-        <div class="gmini-head"><span class="keycap"><svg class="ic"><use href="#i-create"/></svg></span><b>Create</b></div>
-        <div class="gm-choices small"><div class="gm-choice"><b>Paste text</b></div><div class="gm-choice"><b>From a link</b></div><div class="gm-choice"><b>AI generate</b></div></div>
-      </div>
-      <div class="gmini">
-        <div class="gmini-head"><span class="keycap"><svg class="ic"><use href="#i-library"/></svg></span><b>Library</b></div>
-        <div class="gm-table small"><div class="gm-tr head"><span>Title</span><span>Level</span></div><div class="gm-tr"><span>A Day at the Market</span><span class="chip lv">B1</span></div><div class="gm-tr"><span>My Pasted Text</span><span class="chip">Pasted</span></div></div>
-      </div>
-      <div class="gmini">
-        <div class="gmini-head"><span class="keycap"><svg class="ic"><use href="#i-book"/></svg></span><b>Article</b></div>
-        <div class="gm-text">I walked to the <mark class="vh w">market</mark> and bought some <mark class="vh w">fruit</mark>.</div>
-      </div>
-    </div>
-    <ul class="gmenu">
-      <li><span class="keycap"><svg class="ic"><use href="#i-create"/></svg></span><div><strong>Create</strong><span>Start a new article: Paste text, From a link, or AI generate. See the “Create” tab.</span></div></li>
-      <li><span class="keycap"><svg class="ic"><use href="#i-library"/></svg></span><div><strong>Library</strong><span>All your saved articles. Open, edit, share or delete them. See the “Library” tab.</span></div></li>
-      <li><span class="keycap"><svg class="ic"><use href="#i-book"/></svg></span><div><strong>Article</strong><span>The article you are reading. It is grayed out until you open or create one. See the “Article” tab.</span></div></li>
-    </ul>
-  </div>
-  <div class="gsec">
-    <h2>The menu (left side)</h2>
-    <ul class="gmenu">
-      <li><span class="keycap"><svg class="ic"><use href="#i-help"/></svg></span><div><strong>Guide</strong><span>This page. It opens first, unless you turn on “Open the Library first” in Reading settings.</span></div></li>
-      <li><span class="keycap"><svg class="ic"><use href="#i-create"/></svg></span><div><strong>Create</strong><span>Start a new article.</span></div></li>
-      <li><span class="keycap"><svg class="ic"><use href="#i-library"/></svg></span><div><strong>Library</strong><span>Your saved articles.</span></div></li>
-      <li><span class="keycap"><svg class="ic"><use href="#i-book"/></svg></span><div><strong>Article</strong><span>The article you are reading.</span></div></li>
-      <li><span class="keycap"><svg class="ic"><use href="#i-users"/></svg></span><div><strong>Users</strong><span>Only the site owner sees this: add users, set passwords, disable or delete accounts.</span></div></li>
-      <li><span class="keycap"><svg class="ic"><use href="#i-gear"/></svg></span><div><strong>Reading settings</strong><span>Theme, text size, font, voice and more. See the “Settings” tab.</span></div></li>
-    </ul>
-  </div>
-  <div class="gsec">
-    <h2>Signing in</h2>
-    <p class="gnote">Type your access code in the box at the bottom of the menu and press Enter. The light tells you what happened.</p>
-    <div class="gdemo two" aria-hidden="true">
-      <div class="gm-code"><div class="gm-codehead"><svg class="ic"><use href="#i-key"/></svg>Access code</div><div class="gm-input">••••••••</div><div class="codestatus ok"><i class="lamp ok"></i>✓ Signed in as <b class="who">alice</b></div></div>
-      <div class="gm-code"><div class="gm-codehead"><svg class="ic"><use href="#i-key"/></svg>Access code</div><div class="gm-input"></div><div class="codestatus none"><i class="lamp bad"></i>Not signed in</div></div>
-    </div>
-    <p class="gnote">A <i class="lamp ok"></i>green light and your name mean you are signed in. A <i class="lamp bad"></i>red light means you are not. On a phone or tablet your name is also shown at the top of the screen — tap it to type the code.</p>
-  </div>
-</section>
-<section class="gpanel hidden" id="gp-create" role="tabpanel" aria-labelledby="gt-create" data-gpanel="create">
-  <div class="gsec">
-    <h2>Pick how to start</h2>
-    <p class="gnote">Open Create from the menu. It first asks how you want to start. Pick one and only that page opens.</p>
-    <div class="gdemo" aria-hidden="true">
-      <div class="gm-choices">
-        <div class="gm-choice"><span class="keycap"><svg class="ic"><use href="#i-paste"/></svg></span><b>Paste text</b><small>Use any English article you already have.</small><span class="gm-tag">No access code needed</span><i class="gd-n">1</i></div>
-        <div class="gm-choice"><span class="keycap"><svg class="ic"><use href="#i-link"/></svg></span><b>From a link</b><small>We pull the main text out of a web page.</small><span class="gm-tag">Needs access code</span><i class="gd-n">2</i></div>
-        <div class="gm-choice"><span class="keycap"><svg class="ic"><use href="#i-create"/></svg></span><b>AI generate</b><small>Type a topic and we’ll write an article.</small><span class="gm-tag">Limited per day</span><i class="gd-n">3</i></div>
-      </div>
-    </div>
-    <ol class="glegend">
-      <li><b>1</b><span><strong>Paste text</strong> — free and instant. Nothing is sent to the AI.</span></li>
-      <li><b>2</b><span><strong>From a link</strong> — type a web address and we find the article on that page.</span></li>
-      <li><b>3</b><span><strong>AI generate</strong> — the AI writes a new article for you from a topic.</span></li>
-    </ol>
-  </div>
-
-  <div class="gsec">
-    <h2>Paste text</h2>
-    <div class="gdemo" aria-hidden="true">
-      <div class="gm-form">
-        <div class="gm-input">Title (optional)<i class="gd-n">1</i></div>
-        <div class="gm-area">Paste or type an English article here…<i class="gd-n">2</i></div>
-        <div class="gm-formrow"><span class="gm-note">320 words · 4 paragraphs</span><span class="gd-save"><svg class="ic"><use href="#i-check"/></svg>Use this text<i class="gd-n">3</i></span></div>
-      </div>
-    </div>
-    <ol class="glegend">
-      <li><b>1</b><span>Give it a title, or leave it empty.</span></li>
-      <li><b>2</b><span>Paste your text. Paragraphs are detected for you. Under “More options” you can change how paragraphs are split and add your own questions.</span></li>
-      <li><b>3</b><span>Press <strong>Use this text</strong>. The article opens and you can start reading. The number of words and paragraphs is shown live.</span></li>
-    </ol>
-  </div>
-
-  <div class="gsec">
-    <h2>From a link</h2>
-    <div class="gdemo" aria-hidden="true">
-      <div class="gm-form">
-        <div class="gm-url"><svg class="ic"><use href="#i-search"/></svg><span>https://example.com/interesting-article</span><span class="gd-save small">Import<i class="gd-n">1</i></span></div>
-        <div class="gm-prev"><div class="gm-chips"><span class="chip">example.com</span><span class="chip">1,200 words</span></div><b>An Interesting Article</b><small>The first lines of the article appear here so you can check it…</small><div class="gd-actions"><span class="gd-save"><svg class="ic"><use href="#i-check"/></svg>Use this article<i class="gd-n">2</i></span><span class="gd-share">Review &amp; edit text</span></div></div>
-      </div>
-    </div>
-    <ol class="glegend">
-      <li><b>1</b><span>Paste a web address and press <strong>Import</strong>. We remove menus, ads and comments and keep the main text. You need to be signed in.</span></li>
-      <li><b>2</b><span>Check the preview, then press <strong>Use this article</strong> — or <strong>Review &amp; edit text</strong> to change it first.</span></li>
-    </ol>
-    <p class="gnote">Some sites need a login or block automatic readers. If a page can’t be imported, copy its text and use Paste text instead.</p>
-  </div>
-
-  <div class="gsec">
-    <h2>AI generate</h2>
-    <div class="gdemo" aria-hidden="true">
-      <div class="gm-form">
-        <div class="gm-ask"><span>the history of coffee</span><span class="gd-save">Generate <svg class="ic"><use href="#i-arrow"/></svg><i class="gd-n">1</i></span></div>
-        <div class="gm-opts">
-          <div class="gm-field"><small>Length</small><div class="gm-input">300</div><i class="gd-n">2</i></div>
-          <div class="gm-field"><small>Genre</small><div class="gm-input">Any genre</div></div>
-        </div>
-        <div class="gm-field"><small>Language level</small><div class="gm-levels"><span>A1</span><span>A2</span><span class="on">B1</span><span>B2</span><span>C1</span><span>C2</span></div><i class="gd-n">3</i></div>
-        <div class="genusage"><b>4 / 5</b> AI articles left today<i class="gd-n">4</i></div>
-      </div>
-    </div>
-    <ol class="glegend">
-      <li><b>1</b><span>Type a topic and press <strong>Generate</strong>. A progress message shows while the AI writes.</span></li>
-      <li><b>2</b><span>Choose the length (100–800 words) and a genre such as story, news or analyst briefing. You can also switch the comprehension and discussion questions on or off.</span></li>
-      <li><b>3</b><span>Pick your language level, from A1 (beginner) to C2 (mastery).</span></li>
-      <li><b>4</b><span>Each person can use AI generate a few times per day. The number left is shown here, and it resets at midnight (Taipei time).</span></li>
-    </ol>
-  </div>
-</section>
-<section class="gpanel hidden" id="gp-library" role="tabpanel" aria-labelledby="gt-library" data-gpanel="library">
-  <div class="gsec">
-    <h2>Your Library</h2>
-    <p class="gnote">Every article you save is kept here, with its vocabulary. New words you add while reading are saved for you automatically.</p>
-    <div class="gdemo" aria-hidden="true">
-      <div class="gm-search"><svg class="ic"><use href="#i-search"/></svg><span>Search saved articles</span><i class="gd-n">1</i></div>
-      <div class="gm-table">
-        <div class="gm-tr head"><span class="t">Title</span><span>Level</span><span>Words</span><span>Vocab</span><span class="sorted">Updated ▼<i class="gd-n">2</i></span><span class="gm-acts">&nbsp;</span></div>
-        <div class="gm-tr"><span class="t"><b>A Day at the Market</b><i class="gd-n">3</i></span><span class="chip lv">B1</span><span>300</span><span>5</span><span>Oct 6</span><span class="gm-acts"><i class="gm-act primary">Open<i class="gd-n">4</i></i><i class="gm-act">Edit<i class="gd-n">5</i></i><i class="gm-act">Copy link<i class="gd-n">6</i></i><i class="gm-act danger">Delete<i class="gd-n">7</i></i></span></div>
-        <div class="gm-tr"><span class="t"><b>My Pasted Text</b></span><span class="chip">Pasted</span><span>180</span><span>2</span><span>Oct 5</span><span class="gm-acts"><i class="gm-act primary">Open</i><i class="gm-act">Edit</i><i class="gm-act">Copy link</i><i class="gm-act danger">Delete</i></span></div>
-      </div>
-    </div>
-    <ol class="glegend">
-      <li><b>1</b><span><strong>Search</strong> by title.</span></li>
-      <li><b>2</b><span><strong>Click a column heading</strong> to sort (click again to reverse). On a narrow screen use the sort menu next to the search box.</span></li>
-      <li><b>3</b><span><strong>Double-click a title</strong> to open the article.</span></li>
-      <li><b>4</b><span><strong>Open</strong> — read the article.</span></li>
-      <li><b>5</b><span><strong>Edit</strong> — open it and go straight to editing.</span></li>
-      <li><b>6</b><span><strong>Copy link</strong> — a short link anyone can open, without an access code. It always shows the latest version.</span></li>
-      <li><b>7</b><span><strong>Delete</strong> — asks you to confirm first. The share link stops working.</span></li>
-    </ol>
-  </div>
-  <div class="gsec">
-    <h2>Good to know</h2>
-    <div class="gcards">
-      <div><strong>Saved automatically</strong><span>Add or remove a vocabulary word and the article is saved for you. You can also press Save yourself.</span></div>
-      <div><strong>Cloud or this browser</strong><span>With cloud storage your library follows you to any device after you sign in. Without it, articles are stored in this browser only — use Export backup now and then.</span></div>
-      <div><strong>Opening from the Library</strong><span>Opening an article takes you to the Article page. Use the menu to come back to the Library.</span></div>
-    </div>
-  </div>
-</section>
-<section class="gpanel hidden" id="gp-article" role="tabpanel" aria-labelledby="gt-article" data-gpanel="article">
-  <div class="gsec">
-    <h2>Reading an article</h2>
-    <p class="gnote">This picture shows an opened article. The numbers match the list below it.</p>
-    <div class="gdemo" aria-hidden="true">
-      <div class="gd-card">
-        <div class="gd-head"><b>A Day at the Market</b>
-          <span class="gd-icons"><span class="gd-btn"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><i class="gd-n">1</i></span><span class="gd-btn"><svg class="ic"><use href="#i-edit"/></svg><i class="gd-n">2</i></span></span></div>
-        <p><span class="gd-btn small"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><i class="gd-n">3</i></span>I walked to the <mark class="vh w">market</mark> and <span class="gd-tap">bought<i class="gd-n">4</i></span> some <mark class="vh w">fruit</mark> for lunch.</p>
-        <div class="gd-actions"><span class="gd-save"><svg class="ic"><use href="#i-save"/></svg>Save<i class="gd-n">5</i></span><span class="gd-share"><svg class="ic"><use href="#i-share"/></svg>Share</span></div>
-      </div>
-      <div class="gd-vocab"><b>Vocabulary</b><div class="gd-vcard"><strong>market</strong> <small>[ˈmɑrkɪt]</small><div>(noun) a place where people buy and sell things<i class="gd-n">6</i></div></div></div>
-    </div>
-    <ol class="glegend">
-      <li><b>1</b><span><span class="keycap"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span> <strong>Read aloud</strong> reads the whole article. Click it again (or press the Space bar) to pause and resume.</span></li>
-      <li><b>2</b><span><span class="keycap"><svg class="ic"><use href="#i-edit"/></svg></span> <strong>Edit</strong> turns the article into an editor — see “Edit and save” below.</span></li>
-      <li><b>3</b><span><span class="keycap"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span> <strong>Paragraph button</strong> reads from this paragraph all the way to the end.</span></li>
-      <li><b>4</b><span><strong>Click a word once</strong> to hear it. It lights up for a moment so you know which word you tapped.</span></li>
-      <li><b>5</b><span><strong>Double-click a word</strong> to add it to your Vocabulary. It turns highlighted everywhere in the article.</span></li>
-      <li><b>6</b><span><strong>Vocabulary card</strong>: click it to hear the word and jump to it in the text; click again to jump to the next place; double-click to hear the whole sentence. The × removes the word.</span></li>
-    </ol>
-  </div>
-
-  <div class="gsec">
-    <h2>Save a whole phrase</h2>
-    <div class="gdemo" aria-hidden="true">
-      <div class="gd-card"><p>She is really <span class="gm-sel">looking forward to</span> the weekend.</p><span class="gm-pop">+ Add phrase<i class="gd-n">1</i></span></div>
-    </div>
-    <p class="gnote">Select two to six words (drag with the mouse, or touch and drag the handles) and press <strong>+ Add phrase</strong>. The phrase is looked up as one expression.</p>
-  </div>
-
-  <div class="gsec">
-    <h2>Edit and save</h2>
-    <div class="gdemo" aria-hidden="true">
-      <div class="gm-editbar"><span><b>Editing</b> — click the title, the text or a question and type.</span><span class="gd-save small">Save changes<i class="gd-n">1</i></span><span class="gd-share small">Cancel</span></div>
-    </div>
-    <ol class="gsteps">
-      <li><b>1</b><div><strong>Press the pencil</strong><span><span class="keycap"><svg class="ic"><use href="#i-edit"/></svg></span> at the top right of the article.</span></div></li>
-      <li><b>2</b><div><strong>Change anything</strong><span>Click the title, the text or a question and type.</span></div></li>
-      <li><b>3</b><div><strong>Save changes</strong><span>Press “Save changes” to apply your edits (or Cancel to discard them).</span></div></li>
-      <li><b>4</b><div><strong>Press Save</strong><span><span class="keycap"><svg class="ic"><use href="#i-save"/></svg></span> The green Save button keeps the article and its vocabulary in your Library. New words are also saved automatically.</span></div></li>
-    </ol>
-    <p class="gnote">Press <span class="keycap"><svg class="ic"><use href="#i-share"/></svg></span> <strong>Share</strong> to get a link that anyone can open — they can read and look up words without an access code.</p>
-  </div>
-</section>
-<section class="gpanel hidden" id="gp-settings" role="tabpanel" aria-labelledby="gt-settings" data-gpanel="settings">
-  <div class="gsec">
-    <h2>Reading settings</h2>
-    <p class="gnote">Press <span class="keycap"><svg class="ic"><use href="#i-gear"/></svg></span> <strong>Reading settings</strong> in the menu (on a phone or tablet, the gear at the top of the screen). Every change applies right away and is remembered on this device.</p>
-    <div class="gdemo" aria-hidden="true">
-      <div class="gm-settings">
-        <div class="gm-shead"><b>⚙ Reading settings</b><span class="gd-share small">Reset</span></div>
-        <div class="gm-srow"><span>Open the Library first</span><span class="gm-switch on"></span><i class="gd-n">1</i></div>
-        <div class="gm-srow col"><span>Theme</span><div class="gm-themes"><i></i><i></i><i></i><i></i></div><i class="gd-n">2</i></div>
-        <div class="gm-srow"><span>Text size</span><span class="gm-range"><i></i></span><i class="gd-n">3</i></div>
-        <div class="gm-srow"><span>Pronounce words on tap</span><span class="gm-switch on"></span><i class="gd-n">4</i></div>
-        <div class="gm-srow"><span>Accent</span><span class="gm-seg"><i class="on">American</i><i>British</i></span><span class="gm-spacer"></span></div>
-      </div>
-    </div>
-    <ol class="glegend">
-      <li><b>1</b><span><strong>Open the Library first</strong> — the first switch. When it is on, the site opens on your Library instead of this Guide.</span></li>
-      <li><b>2</b><span><strong>Theme</strong> — Dark, Night, Gray, Light, Paper, Sepia or high Contrast. Light is the default.</span></li>
-      <li><b>3</b><span><strong>Text</strong> — text size, font, line and paragraph spacing, letter spacing, text width and alignment.</span></li>
-      <li><b>4</b><span><strong>Display and pronunciation</strong> — dim the screen, warm light, word highlighting, animations, pronounce-on-tap, American or British accent, and speaking speed. Use “Test pronunciation” if you hear nothing.</span></li>
-    </ol>
-  </div>
-  <div class="gsec">
-    <h2>Language</h2>
-    <div class="gdemo two" aria-hidden="true">
-      <div class="gm-lang"><span class="gm-langlabel"><svg class="ic"><use href="#i-globe"/></svg>Language</span><span class="langseg"><button type="button" class="on" tabindex="-1">EN</button><button type="button" tabindex="-1">中文</button></span><i class="gd-n">1</i></div>
-    </div>
-    <p class="gnote"><strong>Language</strong> — the switch above the access code changes the whole site between English and 中文 right away. Your articles, titles and vocabulary are never translated.</p>
-  </div>
-  <div class="gsec">
-    <h2>Other things in the menu</h2>
-    <ul class="gmenu">
-      <li><span class="keycap"><svg class="ic"><use href="#i-key"/></svg></span><div><strong>Access code</strong><span>Type it and press Enter. The green or red light shows whether you are signed in, and your name appears next to it.</span></div></li>
-      <li><span class="keycap"><svg class="ic"><use href="#i-users"/></svg></span><div><strong>Users</strong><span>Site owner only. Add users and set their passwords, see how many articles each has, open a user’s library (read-only), disable or delete accounts.</span></div></li>
-      <li><span class="keycap"><svg class="ic"><use href="#i-back"/></svg></span><div><strong>Collapse the menu</strong><span>The arrow at the top of the menu shrinks it to icons so the article gets more room. Press it again to expand.</span></div></li>
-    </ul>
-  </div>
-</section>
-        </div>
-      </section>
+          <section class="gsec">
+            <h2>Quick start</h2>
+            <ol class="gsteps">
+              <li><b>1</b><div><strong>Create an article</strong><span>Paste your own text, import a web page, or let the AI write one.</span></div></li>
+              <li><b>2</b><div><strong>Read and tap words</strong><span>Click a word to hear it. Double-click to save it to your vocabulary.</span></div></li>
+              <li><b>3</b><div><strong>Save it</strong><span>Press Save to keep the article and its words in your Library.</span></div></li>
+            </ol>
+          </section>
 
           <section class="gsec">
             <h2>Creating articles</h2>

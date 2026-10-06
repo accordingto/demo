@@ -76,19 +76,3 @@ for (const ev of ['input', 'change']) $('codeQuick').addEventListener(ev, () => 
 $('codeQuick').addEventListener('keydown', (e) => { if (e.key === 'Enter') { $('codeQuick').dispatchEvent(new Event('change')); closeCodePop(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCodePop(); });
 document.addEventListener('pointerdown', (e) => { if (!$('codePop').classList.contains('hidden') && !$('codePop').contains(e.target) && !$('tbUser').contains(e.target)) closeCodePop(); });
-
-// Guide 的頁籤
-(function () {
-  const tabs = [...document.querySelectorAll('[data-gtab]')];
-  function showGuideTab(name) {
-    tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.gtab === name)));
-    document.querySelectorAll('[data-gpanel]').forEach(p => p.classList.toggle('hidden', p.dataset.gpanel !== name));
-  }
-  tabs.forEach((b, i) => {
-    b.addEventListener('click', () => showGuideTab(b.dataset.gtab));
-    b.addEventListener('keydown', e => {
-      const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-      if (d) { const t = tabs[(i + d + tabs.length) % tabs.length]; t.focus(); showGuideTab(t.dataset.gtab); }
-    });
-  });
-})();
