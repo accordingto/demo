@@ -2,6 +2,7 @@
 // 沒有翻譯到的字串會維持英文，不會出錯。新增介面文字時，英文照常寫在程式裡，再來這裡補一行中文即可。
 window.I18N_ZH = {
   exact: {
+    'Home': '首頁',
     'Help': '說明',
     'Enter your access code to start': '輸入存取碼就能開始',
     'The site owner gave you a code. Type it here once — this device will remember it.': '網站擁有者會給你一組存取碼。在這裡輸入一次，這台裝置就會記住。',

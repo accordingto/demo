@@ -45,6 +45,8 @@ document.querySelectorAll('button[data-view]').forEach((b) => b.addEventListener
   if (b.dataset.view === 'create') showTab('choose'); if (b.dataset.view === 'library' && typeof libViewAs !== 'undefined') libViewAs = '';   // 從選單進文章庫＝自己的   // 回到 Create 一律從「選擇方式」開始
      showView(b.dataset.view); closeCodePop(); }));
 document.querySelectorAll('[data-goto-tab]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.gotoTab)));
+// 左上角的圖示與名稱 = 回首頁（Guide，或「Open the Library first」打開時的 Library）
+$('brandHome').addEventListener('click', () => document.querySelector(`#sidebar .nav-item[data-view="${startView()}"]`).click());
 $('navOpen').addEventListener('click', openNav);
 $('navClose').addEventListener('click', closeNav);
 $('scrim').addEventListener('click', closeNav);
