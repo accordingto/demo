@@ -82,5 +82,5 @@ a.btn.secondary { color:var(--accent); border:1px solid var(--accent); }
 @media print { #editBar, #shareBox, #linkMsg, .toolbar { display:none !important; } }
 
 /* 標題右上角有三顆圖示（朗讀、編輯、設定），標題右邊多留一顆的位置 */
-#viewRead .doc .text h2 { padding-right:104px; }
-@media (max-width:479px) { #viewRead .doc .text h2 { padding-right:104px; } }
+#viewRead .doc .text h2 { padding-right:64px; }
+@media (max-width:479px) { #viewRead .doc .text h2 { padding-right:64px; } }

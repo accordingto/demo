@@ -47,3 +47,4 @@
   .guide { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); align-items:start; }
   .guide > .gsec:nth-child(1), .guide > .gsec:nth-child(2), .guide > .gsec:nth-child(5) { grid-column:1 / -1; }
 }
+.gd-card mark { position:relative; }

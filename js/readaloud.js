@@ -1,8 +1,7 @@
-// 朗讀文章：標題右上角的 ▶ 朗讀全文，以及每個段落前面的 ▶ 從該段開始往下念。朗讀中按鈕變成 ⏸，再按暫停／繼續。
+// 朗讀文章：每個段落前面的 ▶ 從該段開始往下念（第一段的 ▶ 就是朗讀全文）。朗讀中按鈕變成 ⏸，再按暫停／繼續。
 // 需先載入 prefs.js、tts.js、vocab.js。暫停 = 停在目前這一句，繼續時從這一句重新念（各平台的 pause/resume 不可靠，所以不用）。
 (function () {
-  const allBtns = [...document.querySelectorAll('.readall')];
-  if (!window.TTS || !TTS.canSpeak) { document.documentElement.dataset.tts = 'off'; allBtns.forEach((b) => b.classList.add('hidden')); window.ReadAloud = { stop() {}, refresh() {} }; return; }
+  if (!window.TTS || !TTS.canSpeak) { document.documentElement.dataset.tts = 'off'; window.ReadAloud = { stop() {}, refresh() {} }; return; }
 
   const ICON = {
     play: '<svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>',
@@ -48,12 +47,6 @@
       b.title = b.getAttribute('aria-label');
     });
     highlight();
-    const allOn = st.status !== 'idle', playingAll = allOn && st.status === 'playing';
-    allBtns.forEach((b) => {
-      b.innerHTML = playingAll ? ICON.pause : ICON.play;
-      const label = playingAll ? 'Pause reading' : allOn ? 'Resume reading the article' : 'Read the whole article aloud';
-      b.setAttribute('aria-label', label); b.title = label; b.classList.toggle('on', allOn);
-    });
   }
 
   // 目前念到的句子（底色）與字（變色）
@@ -135,11 +128,7 @@
   function stop() { gen++; TTS.cancel(); st.status = 'idle'; st.w = -1; refresh(); }
 
   document.addEventListener('click', (e) => {
-    const all = e.target.closest('.readall'), one = e.target.closest('.pread');
-    if (all) {
-      if (st.status !== 'idle') return st.status === 'playing' ? pause() : resume();
-      return start(0);
-    }
+    const one = e.target.closest('.pread');
     if (one) {
       const i = [...document.querySelectorAll('#bodyText p')].indexOf(one.closest('p'));
       if (isCurrent(i)) return st.status === 'playing' ? pause() : resume();
