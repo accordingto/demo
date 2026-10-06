@@ -117,11 +117,12 @@ html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 橫放時不
 #vocabList .v1 .kk { margin-left:0; }
 /* 手機／平板直放：從畫面下方浮出的單字卡 */
 #wordPop { position:fixed; left:12px; right:12px; top:calc(8px + env(safe-area-inset-top, 0px));   /* 浮在畫面最上方（有固定上方列時由 vocab.js 改成貼在列的下面） */ max-width:560px; margin:0 auto; z-index:30; max-height:48vh; overflow:auto;
-  background:linear-gradient(rgba(var(--accent-rgb), .16), rgba(var(--accent-rgb), .16)), var(--card);   /* 底色帶一點主題色（不透明），和文章的底色區分開 */
+  background:linear-gradient(rgba(255, 196, 64, .14), rgba(255, 196, 64, .14)), var(--card);   /* 淡淡的黃色（不透明，白底上是 #fff7e4），和文章的底色區分開 */
+  font-size:1.08rem;
   border:1.5px solid var(--accent); border-radius:14px; padding:12px 14px 12px; box-shadow:0 10px 30px var(--shadow); animation:popDown .22s ease-out; }
 #wordPop .v1 { display:flex; align-items:center; flex-wrap:wrap; gap:2px 8px; padding-right:40px; }
-#wordPop .v1 > b { color:var(--vocab); font-size:1.25em; }
-#wordPop .vdet { margin-top:6px; font-size:1rem; }
+#wordPop .v1 > b { color:var(--vocab); font-size:1.4em; }
+#wordPop .vdet { margin-top:6px; font-size:1.1rem; }
 #wordPop .pclose { position:absolute; top:6px; right:6px; width:40px; height:40px; min-height:0; padding:0; background:none; border:0; color:var(--muted); font-size:1.6rem; line-height:1; }
 @keyframes popDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:none; } }
 @keyframes popUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
