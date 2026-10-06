@@ -521,7 +521,9 @@ test('users: 每個人只看得到、改得到、刪得到自己的文章；擁�
 test('users: whoami 回報身分；diagnose 只有擁有者；公開的 /api/article 仍可用 id 讀', () => withUsers(async () => {
   const lib = require('../api/library'), art = require('../api/article'), c = await makeUsers(['bob']);
   assert.deepEqual((await call(lib, c.bob, { action: 'whoami' })).payload, { user: 'bob', owner: false, generate: { used: 0, limit: 5, remaining: 5 } });
-  assert.deepEqual((await call(lib, 'secret', { action: 'whoami' })).payload, { user: 'owner', owner: true, generate: { used: 0, limit: 30, remaining: 30 } });
+  assert.deepEqual((await call(lib, 'secret', { action: 'whoami' })).payload, { user: 'odds', owner: true, generate: { used: 0, limit: 30, remaining: 30 } });
+  process.env.OWNER_NAME = 'Boss'; assert.equal((await call(lib, 'secret', { action: 'whoami' })).payload.user, 'Boss'); delete process.env.OWNER_NAME;   // 可用環境變數改顯示名稱
+  assert.equal((await call(lib, 'secret', { action: 'users_add', name: 'odds', password: 'some-long-password' })).code, 400);   // 不能取和擁有者顯示名稱相同的名字
   assert.equal((await call(lib, c.bob, { action: 'diagnose' })).code, 403);
   const saved = (await call(lib, c.bob, { action: 'save', article: { title: 'T', body: 'Some text here.', questions: [], discussion: [] } })).payload;
   const r = fakeRes(); await art({ method: 'GET', headers: {}, query: { id: saved.id }, url: '/' }, r);

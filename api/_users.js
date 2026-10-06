@@ -13,7 +13,7 @@ const { WELCOME } = require('./_welcome');
 const scrypt = promisify(crypto.scrypt);
 const USERS = 'rc:users', SEEN = 'rc:seen';
 const NAME_RE = /^[a-z0-9_-]{1,20}$/;
-const RESERVED = ['owner'];
+const reserved = () => ['owner', require('./_util').ownerName().toLowerCase()];   // 不能取和擁有者相同的名字
 const MIN_PASSWORD = 8, MAX_PASSWORD = 100;
 
 const parse = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
@@ -83,7 +83,7 @@ async function seedWelcome(name) {
 
 async function add(name, password, opts) {
   name = String(name ?? '').trim().toLowerCase();
-  if (!NAME_RE.test(name) || RESERVED.includes(name)) throw new UserError('Use 1–20 letters, numbers, “-” or “_” for the name (not “owner”).', 400);
+  if (!NAME_RE.test(name) || reserved().includes(name)) throw new UserError('Use 1–20 letters, numbers, “-” or “_” for the name (not “owner”).', 400);
   if (await get(name)) throw new UserError(`“${name}” already exists.`, 409);
   const pw = await checkPassword(password, opts);
   await put({ name, createdAt: Date.now(), disabled: false, ...(await hashPassword(pw)) });

@@ -175,6 +175,7 @@
 | `HOST_CODE` | ✅ | **擁有者**的存取碼（自訂一組難猜的字串）。擁有者可以用所有功能，包括 AI 產生文章與管理使用者；原本的文章都歸他。只放在環境變數，不在資料庫，所以不會被鎖在外面 |
 | `GENERATE_PER_DAY` | 選用 | **擁有者**每天最多用 AI 產生幾篇（預設 30） |
 | `USER_GENERATE_PER_DAY` | 選用 | **其他使用者**每人每天最多用 AI 產生幾篇（預設 5）。每人各算各的；產生失敗不算一次；AI generate 頁面會顯示今天還剩幾次（例如 `4 / 5`），用完會停用 Generate 鈕 |
+| `OWNER_NAME` | 選用 | 擁有者（用 `HOST_CODE` 登入）在畫面上顯示的名字，預設 `odds`（顯示成「Signed in as odds (owner)」）。其他使用者不能取同名。內部代號仍是 `owner`，所以改名不影響已存的文章 |
 | `LIMIT_TZ` | 選用 | 「一天」換日的時區（預設 `Asia/Taipei`） |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | 選用 | 雲端文章庫（Upstash Redis）。也接受 `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`，名稱可帶前綴（以結尾比對）；不會使用名稱含 `READ_ONLY` 的唯讀 token |
 

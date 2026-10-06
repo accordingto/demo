@@ -39,6 +39,7 @@ const missingEnv = (names) => names.filter((k) => !(process.env[k] || '').trim()
 // ---- 使用者與存取碼 ----
 // 擁有者 = 環境變數 HOST_CODE（只有擁有者能用 AI 產生文章、管理使用者；舊文章也歸他）。
 // 其他使用者存在資料庫（api/_users.js），由擁有者在介面上管理。
+const ownerName = () => (process.env.OWNER_NAME || 'odds').trim();   // 擁有者在畫面上顯示的名字（內部代號仍是 owner）
 const OWNER = 'owner';
 
 // 驗證存取碼（所有需要存取碼的端點共用）。通過回傳使用者 { name, owner }；否則已經回應錯誤，回傳 null，呼叫端直接 return。
@@ -65,4 +66,4 @@ async function checkHostCode(req, res, code, { ownerOnly = false } = {}) {
 // 每天最多用 AI 產生幾篇：一般使用者預設 5（USER_GENERATE_PER_DAY），擁有者預設 30（GENERATE_PER_DAY）
 const generateLimit = (user) => Math.max(1, Number(process.env[user.owner ? 'GENERATE_PER_DAY' : 'USER_GENERATE_PER_DAY']) || (user.owner ? 30 : 5));
 
-module.exports = { generateLimit, safeEqual, checkHostCode, OWNER, clientIp, makeLimiter, readBody, clip, ID_RE, missingEnv };
+module.exports = { ownerName, generateLimit, safeEqual, checkHostCode, OWNER, clientIp, makeLimiter, readBody, clip, ID_RE, missingEnv };

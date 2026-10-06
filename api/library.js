@@ -4,7 +4,7 @@
 const crypto = require('crypto');
 const store = require('./_store');
 const users = require('./_users');
-const { generateLimit, checkHostCode, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
+const { ownerName, generateLimit, checkHostCode, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
 
 const limited = makeLimiter(60);
 const MAX_ITEMS = 500;
@@ -51,7 +51,7 @@ module.exports = async function handler(req, res) {
       const limit = generateLimit(me);
       try { const used = Math.min(limit, Number(await store.cmd('GET', store.todayKey('gen', me.name))) || 0); generate = { used, limit, remaining: limit - used }; } catch { /* 讀不到就不顯示 */ }
     }
-    return res.status(200).json({ user: me.name, owner: me.owner, generate });
+    return res.status(200).json({ user: me.owner ? ownerName() : me.name, owner: me.owner, generate });
   }
 
   // 檢查雲端設定（需存取碼）：只回報「找到哪些相關變數的名稱」與連線測試結果，不回傳任何值或 token
