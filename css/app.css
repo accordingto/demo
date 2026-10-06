@@ -285,7 +285,8 @@ body.nav-open { overflow:hidden; }
 .side-lang .nav-label { font-weight:600; font-size:.95rem; }
 .side-foot { margin-top:8px; }
 @media (min-width:1280px) {
-  body.side-mini   body.side-mini .side-lang { flex-direction:column; gap:6px; padding:8px 0; }
+  body.side-mini .side-lang { flex-direction:column; justify-content:center; gap:6px; padding:8px 0; }
+  body.side-mini .side-lang .nav-label { display:none; }
   body.side-mini .langseg { flex-direction:column; border-radius:14px; }
   body.side-mini .langseg button { min-width:40px; padding:0 4px; }
 }
