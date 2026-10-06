@@ -6,7 +6,7 @@ body { overflow-x:hidden; }
 /* ---- 外殼：≥1280px 左側固定欄；其他（手機、平板）= 上方列 + 抽屜 ---- */
 .app { min-height:100vh; display:block; }
 .main { min-width:0; }
-.content { max-width:1240px; margin:0 auto; transition:max-width .22s ease; padding:16px 16px 48px; }
+.content { max-width:1760px; margin:0 auto; transition:max-width .22s ease; padding:16px 16px 48px; }
 @media (min-width:640px) { .content { padding:24px 24px 64px; } }
 
 #topbar { position:sticky; top:0; z-index:40; height:56px; display:flex; align-items:center; gap:8px; padding:0 8px; padding-top:env(safe-area-inset-top, 0px); box-sizing:content-box;
@@ -53,7 +53,7 @@ body.nav-open { overflow:hidden; }
   .side-toggle { display:grid; }
   .nav-item { position:relative; }
   body.side-mini { --side-w:76px; }
-  body.side-mini .content { max-width:1760px; }   /* 收合後把騰出的空間還給內容（文章、單字表） */
+  body.side-mini .content { max-width:1760px; }
   body.side-mini #sidebar { padding-left:10px; padding-right:10px; overflow-x:hidden; }
   body.side-mini .brand { flex-direction:column; gap:10px; padding:4px 0 12px; }
   body.side-mini .brand-name, body.side-mini .nav-label, body.side-mini .side-foot small, body.side-mini .side-foot input { display:none; }

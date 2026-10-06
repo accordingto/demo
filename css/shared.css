@@ -17,7 +17,7 @@ button:disabled { opacity:.5; cursor:wait; }
 .work { display:grid; gap:12px; grid-template-columns:1fr; align-items:start; }
 @media (min-width:640px) { .layout { padding:16px; } #preview { padding:20px; } }
 @media (min-width:1100px) {
-  .work { grid-template-columns:minmax(0,1fr) 360px; }
+  .work { grid-template-columns:minmax(0,1fr) clamp(360px, 26vw, 480px); }
   #vocabPanel { position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto; }
 }
 
