@@ -89,7 +89,7 @@ html[data-theme="contrast"] {
 }
 
 /* ---- 閱讀偏好（文章與題目）---- */
-:root { --fs:18px; --lh:1.8; --para:1em; --ls:0em; --align:left; --measure:none; --reader-font:inherit; }
+:root { --fs:29px; --lh:1.8; --para:1em; --ls:0em; --align:left; --measure:none; --reader-font:inherit; }
 .doc, .qa { font-family:var(--reader-font); }
 .doc .text, .qa { max-width:var(--measure); margin-left:auto; margin-right:auto; width:100%; }
 .doc .text p { font-size:var(--fs); line-height:var(--lh); margin:0 0 var(--para); text-align:var(--align); letter-spacing:var(--ls); }
