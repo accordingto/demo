@@ -201,8 +201,15 @@
     if (r2.bottom > vh - 8) window.scrollBy({ top: Math.min(r2.bottom - vh + 16, Math.max(0, r2.top - 8)), behavior: 'smooth' });
   }
   ['wheel', 'touchstart'].forEach((ev) => $('vocabPanel')?.addEventListener(ev, () => { focusKey = null; }, { passive: true }));
+  // 單字表依「在文章中第一次出現的位置」排序（出現很多次以第一次為準）；文章裡找不到的字放最後，彼此維持原本的順序
+  function sortByAppearance() {
+    const marks = [...document.querySelectorAll('#bodyText mark.vh')]; if (!marks.length) return;
+    const idx = new Map(marks.map((m, i) => [m, i]));
+    items = items.map((v, i) => { const m = marksOf(v)[0]; return [v, m ? idx.get(m) : Infinity, i]; })
+      .sort((a, b) => (a[1] === b[1] ? a[2] - b[2] : a[1] - b[1])).map((x) => x[0]);
+  }
   function renderVocab() {
-    paintBody();
+    paintBody(); sortByAppearance();
     $('vocabList').innerHTML = items.length ? items.map((v) => {
       const k = esc(v.word.toLowerCase());
       const partial = !v.loading && !v.failed && !complete(v) && !!(v.open);   // 查完了但缺英文或中文
