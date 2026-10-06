@@ -190,10 +190,15 @@
   let focusKey = null;
   function showFocusCard() {
     const panel = $('vocabPanel'), li = focusKey && [...document.querySelectorAll('#vocabList li')].find((x) => x.dataset.w === focusKey);
-    if (!panel || !li || !li.classList.contains('open') || panel.scrollHeight <= panel.clientHeight + 1) return;
-    const p = panel.getBoundingClientRect(), r = li.getBoundingClientRect();
-    if (r.bottom > p.bottom - 8) panel.scrollTop += r.bottom - p.bottom + 8;
-    else if (r.top < p.top + 8) panel.scrollTop -= p.top - r.top + 8;
+    if (!panel || !li || !li.classList.contains('open')) return;
+    if (panel.scrollHeight > panel.clientHeight + 1) {   // 面板內部有捲動：先把卡片捲進面板
+      const p = panel.getBoundingClientRect(), r = li.getBoundingClientRect();
+      if (r.bottom > p.bottom - 8) panel.scrollTop += r.bottom - p.bottom + 8;
+      else if (r.top < p.top + 8) panel.scrollTop -= p.top - r.top + 8;
+    }
+    // 面板下緣可能在螢幕外（頁面還沒捲動、或 iPad 的網址列佔掉一部分）：卡片還是看不到就把頁面往下捲一點
+    const vh = window.visualViewport?.height || innerHeight, r2 = li.getBoundingClientRect();
+    if (r2.bottom > vh - 8) window.scrollBy({ top: Math.min(r2.bottom - vh + 16, Math.max(0, r2.top - 8)), behavior: 'smooth' });
   }
   ['wheel', 'touchstart'].forEach((ev) => $('vocabPanel')?.addEventListener(ev, () => { focusKey = null; }, { passive: true }));
   function renderVocab() {
