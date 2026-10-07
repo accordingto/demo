@@ -6,7 +6,7 @@
   const DEFAULTS = {
     theme: 'light',           // 色彩主題（預設 Light）
     fs: 20, font: 'sans', lh: 1.8, para: 1, ls: 0, measure: 'full', align: 'left',   // 文字
-    hl: true, anim: !reduced, dim: 0, warm: 0,                                      // 顯示
+    hl: false, hlColor: '', anim: !reduced, dim: 0, warm: 0,   // hl：本文中的單字是否特別標示（預設不標）；hlColor：標示顏色（空 = 依主題）                                      // 顯示
     speak: true, rate: 0.85, accent: 'us',                                          // 發音
   };
   const THEMES = [
@@ -37,13 +37,13 @@
       fs: Math.round(NUM(o.fs, 12, 40, d.fs)), font: ONE_OF(o.font, Object.keys(FONTS), d.font),
       lh: NUM(o.lh, 1.2, 2.6, d.lh), para: NUM(o.para, 0, 2, d.para), ls: NUM(o.ls, 0, 0.12, d.ls),
       measure: ONE_OF(o.measure, Object.keys(MEASURES), d.measure), align: ONE_OF(o.align, ['left', 'justify'], d.align),
-      hl: o.hl === undefined ? d.hl : !!o.hl, anim: o.anim === undefined ? d.anim : !!o.anim,
+      hl: o.hl === undefined ? d.hl : !!o.hl, hlColor: /^#[0-9a-f]{6}$/i.test(o.hlColor || '') ? o.hlColor.toLowerCase() : '', anim: o.anim === undefined ? d.anim : !!o.anim,
       dim: NUM(o.dim, 0, 0.6, d.dim), warm: NUM(o.warm, 0, 0.6, d.warm),
       speak: o.speak === undefined ? d.speak : !!o.speak, rate: NUM(o.rate, 0.5, 1.2, d.rate), accent: ONE_OF(o.accent, ['us', 'uk'], d.accent),
     };
   }
 
-  const FS_RESET = 'rc-fs-default';   // 記下已經套用過哪一版的預設文字大小
+  const HL_RESET = 'rc-hl-default', FS_RESET = 'rc-fs-default';   // 記下已經套用過哪一版的預設文字大小
   let prefs = load();
   const listeners = [];
 
@@ -52,6 +52,7 @@
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const o = JSON.parse(raw);
+        if (localStorage.getItem(HL_RESET) !== 'off') { o.hl = false; localStorage.setItem(HL_RESET, 'off'); localStorage.setItem(KEY, JSON.stringify(clean(o))); }   // 單字標示改成預設不標：所有人關閉一次（之後自己打開的就保留）
         if (localStorage.getItem(FS_RESET) !== String(DEFAULTS.fs)) {   // 預設文字大小換了：所有人回到新預設一次（之後自己調的就保留）
           o.fs = DEFAULTS.fs; localStorage.setItem(FS_RESET, String(DEFAULTS.fs)); localStorage.setItem(KEY, JSON.stringify(clean(o)));
         }
@@ -69,10 +70,14 @@
     s.setProperty('--fs', p.fs + 'px'); s.setProperty('--lh', p.lh); s.setProperty('--para', p.para + 'em'); s.setProperty('--ls', p.ls + 'em');
     s.setProperty('--align', p.align); s.setProperty('--measure', MEASURES[p.measure]); s.setProperty('--reader-font', FONTS[p.font].css);
     s.setProperty('--dim', p.dim); s.setProperty('--warm', p.warm);
+    if (p.hlColor) {   // 自選的單字標示顏色：用同一個顏色做底色、外框、滑過時的底色
+      const n = parseInt(p.hlColor.slice(1), 16), rgb = [n >> 16, (n >> 8) & 255, n & 255].join(',');
+      s.setProperty('--mark-bg', `rgba(${rgb},.30)`); s.setProperty('--mark-ring', `rgba(${rgb},.60)`); s.setProperty('--mark-hover', `rgba(${rgb},.48)`);
+    } else ['--mark-bg', '--mark-ring', '--mark-hover'].forEach((k) => s.removeProperty(k));
     const meta = document.querySelector('meta[name="theme-color"]') || Object.assign(document.head.appendChild(document.createElement('meta')), { name: 'theme-color' });
     meta.content = (THEMES.find((t) => t.id === p.theme) || THEMES[0]).bg;   // 手機瀏覽器的網址列顏色
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(prefs)); localStorage.setItem(FS_RESET, String(DEFAULTS.fs)); } catch { /* 忽略 */ } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(prefs)); localStorage.setItem(FS_RESET, String(DEFAULTS.fs)); localStorage.setItem(HL_RESET, 'off'); } catch { /* 忽略 */ } }
   function changed() { apply(); listeners.forEach((f) => f(prefs)); }
 
   window.Prefs = {

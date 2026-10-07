@@ -18,7 +18,8 @@
     { title: 'Display', items: [
       { key: 'dim', label: 'Dim screen', type: 'range', min: 0, max: 0.6, step: 0.05, show: (v) => (v === 0 ? 'Off' : pct(v)) },
       { key: 'warm', label: 'Warm light (reduce blue)', type: 'range', min: 0, max: 0.6, step: 0.05, show: (v) => (v === 0 ? 'Off' : pct(v)) },
-      { key: 'hl', label: 'Highlight vocabulary words', type: 'toggle' },
+      { key: 'hl', label: 'Mark vocabulary words in the text', type: 'toggle' },
+      { key: 'hlColor', label: 'Vocabulary word color', type: 'color' },
       { key: 'anim', label: 'Animations', type: 'toggle' },
     ] },
     { title: 'Pronunciation', items: [
@@ -28,6 +29,7 @@
     ] },
   ];
 
+  const COLORS = ['#4f8cff', '#2fbf71', '#f2c230', '#ff7a59', '#e0559c', '#9b6bff'];   // 預設的幾個顏色；也可用調色盤選任何顏色
   const row = (it, body) => `<div class="srow" data-key="${it.key}"><div class="slabel"><span>${it.label}</span><span class="sval" data-val="${it.key}"></span></div>${body}</div>`;
   function control(it) {
     if (it.type === 'range') {
@@ -37,6 +39,7 @@
     }
     if (it.type === 'seg') return row(it, `<div class="seg" role="group" aria-label="${it.label}">${it.options.map(([v, l]) => `<button type="button" class="secondary" data-k="${it.key}" data-v="${v}">${l}</button>`).join('')}</div>`);
     if (it.type === 'toggle') return `<label class="srow stoggle" data-key="${it.key}"><span>${it.label}</span><input type="checkbox" data-k="${it.key}" role="switch"></label>`;
+    if (it.type === 'color') return row(it, `<div class="colors" role="group" aria-label="${it.label}">${COLORS.map((c) => `<button type="button" class="cdot" data-k="hlColor" data-v="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}<input type="color" id="hlPick" data-k="hlColor" aria-label="Pick any color"><button type="button" class="secondary cdef" data-k="hlColor" data-v="">Theme default</button></div>`);
     if (it.type === 'fonts') return row(it, `<div class="fontgrid">${Object.entries(P.FONTS).map(([id, f]) => `<button type="button" class="secondary" data-k="font" data-v="${id}" style="font-family:${f.css.replace(/"/g, "'")}">${f.label}</button>`).join('')}</div>`);
     return '';
   }
@@ -61,6 +64,10 @@
     panel.querySelectorAll('input[type=range]').forEach((i) => { i.value = p[i.dataset.k]; });
     panel.querySelectorAll('input[type=checkbox][data-k]').forEach((i) => { i.checked = !!p[i.dataset.k]; });
     const sl = panel.querySelector('#startLib'); if (sl) { try { sl.checked = localStorage.getItem(START_KEY) === 'library'; } catch { sl.checked = false; } }
+    const hlRow = panel.querySelector('[data-key="hlColor"]');
+    if (hlRow) { hlRow.classList.toggle('off', !p.hl); hlRow.querySelectorAll('button, input').forEach((x) => { x.disabled = !p.hl; }); }   // 沒勾選「標示單字」時，顏色設定停用
+    const pick = panel.querySelector('#hlPick'); if (pick) pick.value = p.hlColor || '#4f8cff';
+    panel.querySelectorAll('.colors button[data-k]').forEach((b) => { const on = b.dataset.v === p.hlColor; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     SECTIONS.forEach((s) => s.items.forEach((it) => { if (it.show) panel.querySelector(`[data-val="${it.key}"]`).textContent = it.show(p[it.key]); }));
   }
   P.onChange(sync); sync();
@@ -72,6 +79,7 @@
     const t = e.target, k = t.dataset.k; if (!k) return;
     if (t.type === 'range') P.set({ [k]: Number(t.value) });
     else if (t.type === 'checkbox') P.set({ [k]: t.checked });
+    else if (t.type === 'color') P.set({ hlColor: t.value });
   });
   panel.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;

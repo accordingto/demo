@@ -97,7 +97,7 @@ html[data-align="justify"] .doc .text p { hyphens:auto; -webkit-hyphens:auto; }
 .qa li { line-height:var(--lh); letter-spacing:var(--ls); }
 
 /* 不顯示單字標示 */
-html[data-hl="off"] mark.vh:not(.cur) { background:none; box-shadow:none; }
+html[data-hl="off"] mark.vh:not(.cur), html[data-hl="off"] mark.vh:not(.cur):hover { background:none; box-shadow:none; padding:0; margin:0; border-radius:0; cursor:inherit; }   /* 不標示：和其他字完全一樣（點一下剛被點的字短暫變橘色的提示 .cur 仍保留） */
 
 /* 關閉動畫 */
 html[data-anim="off"] *, html[data-anim="off"] *::before, html[data-anim="off"] *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
