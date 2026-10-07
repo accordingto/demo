@@ -19,7 +19,7 @@ const GENRES = {
   speech: 'a short speech that a speaker gives to an audience',
   analysis: 'an analyst\'s briefing that analyses a problem and answers it as a numbered list of points',
 };
-const MIN_WORDS = 100, MAX_WORDS = 800;
+const MIN_WORDS = 100, MAX_WORDS = 800, OWNER_MAX_WORDS = 2000;   // 一般使用者 800 字；只有擁有者可到 2000 字
 
 // 各文體的「起承轉合」寫法
 const ARC = {
@@ -134,9 +134,9 @@ const LEVEL_GUIDE = {
 };
 
 // 驗證輸入，回傳 { error } 或 { value }
-function validate(b) {
-  const words = Number(b.words);
-  if (!Number.isInteger(words) || words < MIN_WORDS || words > MAX_WORDS) return { error: `Word count must be an integer from ${MIN_WORDS} to ${MAX_WORDS}` };
+function validate(b, { owner = false } = {}) {
+  const words = Number(b.words), max = owner ? OWNER_MAX_WORDS : MAX_WORDS;
+  if (!Number.isInteger(words) || words < MIN_WORDS || words > max) return { error: `Word count must be an integer from ${MIN_WORDS} to ${max}` };
   if (!LEVELS.includes(b.level)) return { error: `Level must be one of ${LEVELS.join(', ')}` };
   // 主題：移除控制字元與換行，限制長度
   const topic = String(b.topic ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -146,8 +146,8 @@ function validate(b) {
   return { value: { words, level: b.level, topic, genre, questions: !!b.questions, discussion: !!b.discussion } };
 }
 
-// 依字數決定段落數（約每段 110 字，至少 2 段、最多 12 段）
-const paragraphCount = (words) => Math.max(2, Math.min(12, Math.round(words / 110)));
+// 依字數決定段落數（約每段 110 字，至少 2 段、最多 20 段）
+const paragraphCount = (words) => Math.max(2, Math.min(20, Math.round(words / 110)));
 
 // 把段落依「起承轉合」分配角色
 function arcPlan(n, genre) {
@@ -194,7 +194,7 @@ const ANALYSIS_RULES = [
 ].join('\n');
 const buildSystem = (o) => (o.genre === 'analysis' ? SYSTEM_PROMPT.slice(0, SYSTEM_PROMPT.indexOf('WRITING QUALITY RULES')) + ANALYSIS_RULES : SYSTEM_PROMPT);
 // 分析師風格的條列點數：約每點 80 字，3～10 點
-const pointCount = (words) => Math.max(3, Math.min(10, Math.round(words / 80)));
+const pointCount = (words) => Math.max(3, Math.min(20, Math.round(words / 80)));
 
 function buildMessages(o) {
   const analysis = o.genre === 'analysis';
@@ -222,4 +222,4 @@ function buildMessages(o) {
   return [{ role: 'system', content: buildSystem(o) }, { role: 'user', content: user }];
 }
 
-module.exports = { validate, buildMessages, paragraphCount, pointCount, arcPlan, LEVELS, GENRES, ARC };
+module.exports = { OWNER_MAX_WORDS, MAX_WORDS, validate, buildMessages, paragraphCount, pointCount, arcPlan, LEVELS, GENRES, ARC };

@@ -18,7 +18,13 @@ function loadSettings() {
   } catch { /* 忽略 */ }
 }
 // 字數：100–800，▲▼（或方向鍵、滑鼠滾輪不處理）每次 ±100，並對齊到整百
-const MIN_WORDS = 100, MAX_WORDS = 800, WORDS_STEP = 100;
+const MIN_WORDS = 100, WORDS_STEP = 100;
+let MAX_WORDS = 800;   // 一般使用者 800；擁有者 2000（refreshRole 登入確認後呼叫 setMaxWords）
+function setMaxWords(owner) {
+  MAX_WORDS = owner ? 2000 : 800;
+  $('words').max = MAX_WORDS; $('words').title = `${MIN_WORDS} – ${MAX_WORDS} words (▲▼ or arrow keys: ±100)`;
+  if (Number($('words').value) > MAX_WORDS) $('words').value = MAX_WORDS;   // 只改畫面上的數字，不覆蓋已記住的設定（擁有者之後登入還是 2000）
+}
 function stepWords(dir) {
   const v = Number($('words').value) || 300;
   const next = dir > 0 ? (Math.floor(v / WORDS_STEP) + 1) * WORDS_STEP : (Math.ceil(v / WORDS_STEP) - 1) * WORDS_STEP;
@@ -30,7 +36,7 @@ $('words').addEventListener('keydown', (e) => { if (e.key === 'ArrowUp' || e.key
 $('words').addEventListener('change', () => { const v = Number($('words').value); if (v) $('words').value = Math.min(MAX_WORDS, Math.max(MIN_WORDS, Math.round(v))); });
 
 loadSettings();
-$('words').value = Math.min(MAX_WORDS, Math.max(MIN_WORDS, Number($('words').value) || 300));   // 舊的設定可能超過上限
+$('words').value = Math.min(2000, Math.max(MIN_WORDS, Number($('words').value) || 300));   // 舊的設定可能超過上限（擁有者最高 2000，登入後再依身分調整）
 // 設定欄位（存取碼在側邊欄、其餘在 Create 表單）有變動就記住
 for (const ev of ['input', 'change']) document.addEventListener(ev, (e) => { if (SAVED.includes(e.target.id)) saveSettings(); });
 

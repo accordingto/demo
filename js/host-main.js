@@ -43,6 +43,7 @@ async function refreshRole() {
     } catch (e) { if (seq !== roleSeq) return; setCodeStatus('bad', null, false, e.message); }
   }
   setOwner(owner);   // 擁有者才有「Users」（host-users.js）
+  setMaxWords(owner);   // 擁有者的字數上限 2000，其他人 800
   const box = $('genUsage');
   box.classList.toggle('hidden', !gen);
   if (gen) {

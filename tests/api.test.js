@@ -17,6 +17,9 @@ test('validate: accepts good input and cleans the topic', () => {
 test('validate: 字數上限 800（100～800 都接受）', () => {
   for (const words of [100, 800]) assert.equal(validate({ words, level: 'B1', topic: 't' }).value.words, words);
   assert.ok(validate({ words: 801, level: 'B1', topic: 't' }).error);
+  assert.equal(validate({ words: 2000, level: 'B1', topic: 't' }, { owner: true }).value.words, 2000);   // 只有擁有者可到 2000
+  assert.ok(validate({ words: 2001, level: 'B1', topic: 't' }, { owner: true }).error);
+  assert.ok(validate({ words: 2000, level: 'B1', topic: 't' }).error);
 });
 test('validate: rejects bad input', () => {
   for (const bad of [{ words: 99 }, { words: 801 }, { words: 1000 }, { words: 150.5 }, { level: 'D1' }, { topic: '' }, { topic: 'x'.repeat(101) }, { genre: 'poem' }]) {
@@ -27,7 +30,7 @@ test('validate: rejects bad input', () => {
 test('paragraphCount / arcPlan: first is opening, last is closing, a turn exists', () => {
   assert.equal(paragraphCount(100), 2);
   assert.equal(paragraphCount(1000), 9);
-  assert.equal(paragraphCount(2000), 12);
+  assert.equal(paragraphCount(2000), 18);
   for (const n of [2, 3, 5, 12]) {
     const plan = arcPlan(n, 'story');
     assert.equal(plan.length, n);
@@ -221,8 +224,8 @@ test('analysis genre: prompt asks for numbered points, not paragraphs', () => {
   const normal = buildMessages(opts({ genre: 'story' }))[0].content;
   assert.match(normal, /NEVER put each sentence in its own paragraph/);
 });
-test('pointCount: about 80 words per point, 3 to 10', () => {
-  assert.equal(pointCount(100), 3); assert.equal(pointCount(400), 5); assert.equal(pointCount(1000), 10);
+test('pointCount: about 80 words per point, 3 to 20', () => {
+  assert.equal(pointCount(100), 3); assert.equal(pointCount(400), 5); assert.equal(pointCount(800), 10); assert.equal(pointCount(2000), 20);
 });
 test('normalizeNumbered: keeps numbered points as separate blocks', () => {
   const ok = '1. First point. It explains.\n\n2. Second point.\n\n3. Third.';

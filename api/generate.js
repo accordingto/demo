@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
   if (!user) return;
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
 
-  const { error, value: o } = validate(body);
+  const { error, value: o } = validate(body, { owner: user.owner });
   if (error) return res.status(400).json({ error });
   let counted = null;
   if (store.configured()) {
