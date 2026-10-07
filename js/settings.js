@@ -70,7 +70,11 @@
     panel.querySelectorAll('.colors button[data-k]').forEach((b) => { const on = b.dataset.v === p.hlColor; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     SECTIONS.forEach((s) => s.items.forEach((it) => { if (it.show) panel.querySelector(`[data-val="${it.key}"]`).textContent = it.show(p[it.key]); }));
   }
-  P.onChange(sync); sync();
+  // 文章右上角的「標示單字」按鈕：和設定裡的開關是同一個值（P.hl），任何一邊改都會同步
+  const hlBtns = [...document.querySelectorAll('.hlbtn')];
+  const syncHlBtns = () => hlBtns.forEach((b) => { const on = P.get('hl'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  hlBtns.forEach((b) => b.addEventListener('click', () => P.set({ hl: !P.get('hl') })));
+  P.onChange(() => { sync(); syncHlBtns(); }); sync(); syncHlBtns();
 
   panel.addEventListener('change', (e) => {   // 「先開啟文章庫」開關
     if (e.target.id === 'startLib') { try { localStorage.setItem(START_KEY, e.target.checked ? 'library' : 'help'); } catch { /* 存不了就只在這次有效 */ } }

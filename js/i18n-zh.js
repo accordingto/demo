@@ -2,6 +2,7 @@
 // 沒有翻譯到的字串會維持英文，不會出錯。新增介面文字時，英文照常寫在程式裡，再來這裡補一行中文即可。
 window.I18N_ZH = {
   exact: {
+    'Highlight vocabulary words': '標示單字',
     'Mark vocabulary words in the text': '在文章中標示單字', 'Vocabulary word color': '單字標示顏色', 'Theme default': '依主題', 'Pick any color': '自選顏色',
     'Home': '首頁',
     'Help': '說明',
