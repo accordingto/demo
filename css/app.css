@@ -340,3 +340,10 @@ body.side-mini .side-foot.failed label::after { background:var(--lamp-bad); box-
 .readhint button { flex:none; min-height:36px; padding:0 14px; }
 .toast { position:fixed; z-index:90; left:50%; bottom:calc(24px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%); max-width:min(92vw, 420px); padding:12px 18px; font-weight:600; line-height:1.4; color:var(--accent-ink); background:var(--accent); border-radius:14px; box-shadow:0 8px 30px var(--shadow); }
 .toast.hidden { display:none; }
+/* Users 表格：視窗不夠寬時，操作按鈕換行（不要被切掉），名稱欄可以縮 */
+#viewUsers .libtable .c-act { white-space:normal; width:auto; min-width:250px; max-width:360px; }
+#viewUsers .libtable .act { white-space:nowrap; }
+#viewUsers .libtable .acts { flex-wrap:wrap; }
+#viewUsers .libtable .c-t { min-width:110px; }
+@media (min-width:1500px) { #viewUsers .libtable .acts { flex-wrap:nowrap; } #viewUsers .libtable .c-act { max-width:none; } }   /* 夠寬時四顆按鈕排成一列 */
+@media (max-width:820px) { #viewUsers .libtable th:nth-child(4), #viewUsers .libtable td:nth-child(4) { display:none; } #viewUsers .libtable .c-act { min-width:220px; } }   /* 平板：先藏「建立時間」 */
