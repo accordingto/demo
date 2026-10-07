@@ -148,7 +148,7 @@ window.I18N_ZH = {
   patterns: [
     [/^([\d,]+) words?$/, '$1 字'], [/^~(\d+) min read$/, '約 $1 分鐘'], [/^Level (\w+)$/, '程度 $1'], [/^([\d,]+) vocab$/, '$1 個單字'], [/^([\d,]+) articles?$/, '$1 篇文章'],
     [/^([\d,]+) paragraphs?$/, '$1 段'], [/^\(auto: (.+)\)$/, (m, a, t) => `（自動：${t(a)}）`], [/^\(manual: (.+)\)$/, (m, a, t) => `（手動：${t(a)}）`],
-    [/^Last active (.+)$/, (m, a, t) => `最近活動：${t(a)}`], [/^([\d,]+) min ago$/, '$1 分鐘前'], [/^([\d,]+) h ago$/, '$1 小時前'], [/^([\d,]+) days ago$/, '$1 天前'],
+    [/^Created (.+)$/, '建立於 $1'], [/^Last active (.+)$/, (m, a, t) => `最近活動：${t(a)}`], [/^([\d,]+) min ago$/, '$1 分鐘前'], [/^([\d,]+) h ago$/, '$1 小時前'], [/^([\d,]+) days ago$/, '$1 天前'],
     [/^(Active|Disabled) · ([\d,]+) articles?$/, (m, s, n, t) => `${t(s)}・${n} 篇文章`],
     [/^Link length: ([\d,]+) characters$/, '連結長度：$1 字元'], [/^Writing your article… \(([\d,]+) characters so far\)$/, '正在寫你的文章…（目前 $1 字元）'],
     [/^Using ([\d,]+) words\. Long texts make a long share link — test it before sending\.$/, '使用 $1 字。文字太長會讓分享連結很長，送出前請先測試。'],
