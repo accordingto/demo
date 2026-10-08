@@ -347,8 +347,8 @@ body.side-mini .side-foot.failed label::after { background:var(--lamp-bad); box-
 #viewUsers .libtable .c-t { min-width:110px; }
 @media (min-width:1500px) { #viewUsers .libtable .acts { flex-wrap:nowrap; } #viewUsers .libtable .c-act { max-width:none; } }   /* 夠寬時四顆按鈕排成一列 */
 @media (max-width:820px) { #viewUsers .libtable th:nth-child(4), #viewUsers .libtable td:nth-child(4) { display:none; } #viewUsers .libtable .c-act { min-width:220px; } }   /* 平板：先藏「建立時間」 */
-/* Users：平板（641–1279px）改成「名稱＋說明文字在左、按鈕排成一列在右」，不用表格欄位，才不會名稱欄空一大片、按鈕擠成兩排 */
-@media (min-width:641px) and (max-width:1279px) {
+/* Users：641–1499px（iPad、一般筆電桌機）改成「名稱＋說明文字在左、按鈕排成一列在右」，不用表格欄位，才不會名稱欄空一大片、按鈕擠成兩排 */
+@media (min-width:641px) and (max-width:1499px) {
   #viewUsers .libtable thead, #viewUsers .libtable .c-level, #viewUsers .libtable .c-num, #viewUsers .libtable .c-when { display:none; }
   #viewUsers .libtable, #viewUsers .libtable tbody { display:block; }
   #viewUsers .libtable tr { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 16px; }
