@@ -69,6 +69,16 @@ module.exports = async function handler(req, res) {
   if (limited(clientIp(req))) return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
   const me = await checkHostCode(req, res, b.code); if (!me) return;
 
+  // 使用者自己改存取碼：要先用目前的碼登入（上面的 checkHostCode），新碼規則與擁有者設定時相同（8–100 字、不能和別人／擁有者的相同）
+  if (b.action === 'password_change') {
+    if (me.owner) return res.status(403).json({ error: 'The owner’s access code is set in Vercel (HOST_CODE) and can’t be changed here.' });
+    try { await users.setPassword(me.name, b.newPassword, { ownerCode: process.env.HOST_CODE }); return res.status(200).json({ ok: true }); }
+    catch (e) {
+      if (e instanceof users.UserError) return res.status(e.status).json({ error: e.message });
+      return res.status(502).json({ error: 'Cloud storage request failed. Please try again.' });
+    }
+  }
+
   // 使用者管理（只有擁有者）：list / add（名稱＋密碼）/ password（改密碼）/ disable / enable / delete
   if (/^users_/.test(String(b.action))) {
     if (!me.owner) return res.status(403).json({ error: 'This feature is only available to the site owner.' });

@@ -76,7 +76,7 @@
 - 閱讀頁：`util.js` → `tts.js` → `vocab.js` → `settings.js` → `readaloud.js` → `reader.js`
 
 各 host 模組之間的函式只在**執行時**互相呼叫；但 `Vocab.init` 一執行就會呼叫 `onChange(syncLib)`，所以放在最後載入的 `host-main.js`。
-`host-start.js`（新手引導）在 `host-main.js` 之後載入：首頁的開始卡片（雲端模式沒登入就顯示輸入存取碼的卡片；登入成功後，這個瀏覽器第一次會直接打開歡迎文章，之後去 Library；本機模式或已登入則顯示「Create an article／Open my Library」）與第一次閱讀的提示（`rc-hint-read`）。它靠 `host-main.js` 送出的 `codestatus` 事件與 `host-library.js` 的 `cloudready` 事件取得狀態。
+`host-account.js`（使用者自己改存取碼的視窗，呼叫 `password_change`）在 `host-main.js` 之後載入；`host-start.js`（新手引導）在 `host-main.js` 之後載入：首頁的開始卡片（雲端模式沒登入就顯示輸入存取碼的卡片；登入成功後，這個瀏覽器第一次會直接打開歡迎文章，之後去 Library；本機模式或已登入則顯示「Create an article／Open my Library」）與第一次閱讀的提示（`rc-hint-read`）。它靠 `host-main.js` 送出的 `codestatus` 事件與 `host-library.js` 的 `cloudready` 事件取得狀態。
 
 ### 主持人頁的導覽（`host-nav.js`、`css/app.css`）
 - **五個畫面** `section.view[data-view]`：`help`（Guide，預設首頁，`css/guide.css`）／`create`／`read`／`library`，擁有者（雲端模式）另有 `users`（使用者管理，`host-users.js`；非擁有者呼叫 `showView('users')` 會退回 `library`）；`showView(v)` 切換；一開始進入的頁面由 `startView()` 決定（預設 `help`，選單的 Open the Library first 開關打開則是 `library`，存 `rc-start`；網址有 `#help|#create|#library` 則依網址，首次進入不寫入 # 網址）（還沒有文章時 `read` 會退回 `create`）並更新側邊欄、上方列標題與網址 `#v`（`pushState`，所以上一頁可用）。**Create 的三個頁面** `[data-panel]`：`gen`（首頁：主題＋產生＋兩張入口卡）／`paste`／`link`（子頁面，有 Back 鈕），由 `showTab(t)` 切換（選擇卡與 Back 鈕用 `data-goto-tab`）。

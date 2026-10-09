@@ -578,3 +578,16 @@ test('擁有者可以唯讀檢視某位使用者的文章庫（list／get 帶 as
   assert.equal((await call(lib, c.eve, { action: 'list', as: 'bob' }, '2.2.2.2')).code, 403);                      // 一般使用者不能看別人的
   assert.equal((await call(lib, c.bob, { action: 'get', as: 'eve', id: saved.id }, '3.3.3.3')).code, 403);
 }));
+
+test('使用者自己改存取碼：要用目前的碼、規則同擁有者設定、舊碼立刻失效、擁有者不能用', () => withUsers(async () => {
+  const lib = require('../api/library');
+  const c = await makeUsers(['bob', 'eve']), chg = (code, newPassword) => call(lib, code, { action: 'password_change', newPassword });
+  assert.equal((await chg('wrong-code-xyz', 'brand-new-password')).code, 401);            // 要先用正確的碼
+  assert.equal((await chg(c.bob, 'short')).code, 400);                                      // 太短
+  assert.equal((await chg(c.bob, c.eve)).code, 409);                                        // 不能和別人的相同
+  assert.equal((await chg('secret', 'brand-new-password')).code, 403);                      // 擁有者的碼在環境變數，不能在這裡改
+  assert.equal((await chg(c.bob, 'brand-new-password')).code, 200);
+  assert.equal((await call(lib, c.bob, { action: 'whoami' })).code, 401);                   // 舊碼立刻失效
+  assert.equal((await call(lib, 'brand-new-password', { action: 'whoami' })).payload.user, 'bob');   // 新碼可用
+  assert.equal((await call(lib, 'brand-new-password', { action: 'list' })).code, 200);      // 文章還在
+}));

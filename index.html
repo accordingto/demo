@@ -66,6 +66,7 @@
       <label for="code"><svg class="ic"><use href="#i-key"/></svg>Access code</label>
       <input type="password" id="code" autocomplete="off" placeholder="Enter once, remembered here">
       <div class="codestatus" role="status" aria-live="polite"></div>
+      <button type="button" class="changecode hidden">Change my access code</button>
       <small>Needed to generate, import and sync your library.</small>
     </div>
   </aside>
@@ -86,11 +87,20 @@
         <button type="button" class="iconbtn plain tb-btn gear" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings"><svg class="ic"><use href="#i-gear"/></svg><span class="tb-lbl">Settings</span></button>
       </div>
     </header>
-    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+    <div id="pwDialog" class="popcard pwdlg hidden" role="dialog" aria-label="Change my access code">
+    <h3>Change my access code</h3>
+    <p>Your current code stops working as soon as you save. Use 8–100 characters. Write it down — the owner can reset it if you forget.</p>
+    <input type="password" id="pwNew" autocomplete="new-password" placeholder="New access code (at least 8 characters)">
+    <input type="password" id="pwNew2" autocomplete="new-password" placeholder="Type it again">
+    <div class="msg err hidden" id="pwMsg" role="alert"></div>
+    <div class="start-row"><button type="button" id="pwSave">Save new code</button><button type="button" class="secondary" id="pwCancel">Cancel</button></div>
+  </div>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
     <div id="codePop" class="popcard hidden" role="dialog" aria-label="Access code">
       <label for="codeQuick"><svg class="ic"><use href="#i-key"/></svg>Access code</label>
       <input type="password" id="codeQuick" autocomplete="off" placeholder="Enter once, remembered here">
       <div class="codestatus" role="status" aria-live="polite"></div>
+      <button type="button" class="changecode hidden">Change my access code</button>
       <small>Needed to generate, import and sync your library.</small>
     </div>
 
@@ -382,5 +392,6 @@
 <script src="js/host-users.js"></script>
 <script src="js/host-main.js"></script>
 <script src="js/host-start.js"></script>
+<script src="js/host-account.js"></script>
 </body>
 </html>

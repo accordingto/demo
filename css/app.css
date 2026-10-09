@@ -358,3 +358,13 @@ body.side-mini .side-foot.failed label::after { background:var(--lamp-bad); box-
   #viewUsers .libtable .c-act { flex:none; min-width:0; max-width:none; }
   #viewUsers .libtable .acts { flex-wrap:nowrap; }
 }
+/* 使用者自己改存取碼 */
+.changecode { align-self:flex-start; padding:0; font-size:.8rem; font-weight:600; color:var(--accent); background:none; border:0; text-decoration:underline; cursor:pointer; text-align:left; }
+.changecode.hidden { display:none; }
+body.side-mini .side-foot .changecode { display:none; }
+.pwdlg { top:50%; right:auto; left:50%; transform:translate(-50%, -50%); width:min(420px, calc(100vw - 24px)); z-index:9995; }
+.pwdlg h3 { margin:0; font-size:1.1rem; }
+.pwdlg p { margin:0; color:var(--muted); font-size:.9rem; line-height:1.5; }
+.pwdlg input { min-height:46px; padding:0 14px; font-size:1rem; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:12px; }
+.pwdlg.hidden { display:none; }
+@media (min-width:1280px) { .popcard.pwdlg:not(.hidden) { display:flex; } }   /* .popcard 在桌機預設隱藏（那是上方列的存取碼小視窗），改密碼視窗要例外 */

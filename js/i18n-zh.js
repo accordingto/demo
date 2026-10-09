@@ -2,6 +2,10 @@
 // 沒有翻譯到的字串會維持英文，不會出錯。新增介面文字時，英文照常寫在程式裡，再來這裡補一行中文即可。
 window.I18N_ZH = {
   exact: {
+    'Change my access code': '修改我的存取碼', 'Your current code stops working as soon as you save. Use 8–100 characters. Write it down — the owner can reset it if you forget.': '儲存後，你現在的存取碼就會立刻失效。請用 8–100 個字元，並記下來——忘記的話，擁有者可以幫你重設。',
+    'New access code (at least 8 characters)': '新的存取碼（至少 8 個字元）', 'Type it again': '再輸入一次', 'Save new code': '儲存新存取碼', 'Cancel': '取消',
+    'The access code must be 8–100 characters.': '存取碼必須是 8–100 個字元。', 'The two codes are not the same.': '兩次輸入的存取碼不一樣。', 'Your access code was changed.': '你的存取碼已修改。',
+    'The owner’s access code is set in Vercel (HOST_CODE) and can’t be changed here.': '擁有者的存取碼是在 Vercel 設定的（HOST_CODE），不能在這裡修改。',
     'Highlight vocabulary words': '標示單字',
     'Mark vocabulary words in the text': '在文章中標示單字', 'Vocabulary word color': '單字標示顏色', 'Theme default': '依主題', 'Pick any color': '自選顏色',
     'Home': '首頁',
