@@ -66,4 +66,5 @@ async function checkHostCode(req, res, code, { ownerOnly = false } = {}) {
 // 每天最多用 AI 產生幾篇：一般使用者預設 5（USER_GENERATE_PER_DAY），擁有者預設 30（GENERATE_PER_DAY）
 const generateLimit = (user) => Math.max(1, Number(process.env[user.owner ? 'GENERATE_PER_DAY' : 'USER_GENERATE_PER_DAY']) || (user.owner ? 30 : 5));
 
-module.exports = { ownerName, generateLimit, safeEqual, checkHostCode, OWNER, clientIp, makeLimiter, readBody, clip, ID_RE, missingEnv };
+const noteAuthFail = (req) => authFails(clientIp(req));   // 把一次「猜碼性質」的失敗算進限流（和輸入錯誤存取碼同一個計數）
+module.exports = { noteAuthFail, ownerName, generateLimit, safeEqual, checkHostCode, OWNER, clientIp, makeLimiter, readBody, clip, ID_RE, missingEnv };

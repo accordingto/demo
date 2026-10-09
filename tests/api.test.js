@@ -584,10 +584,20 @@ test('使用者自己改存取碼：要用目前的碼、規則同擁有者設�
   const c = await makeUsers(['bob', 'eve']), chg = (code, newPassword) => call(lib, code, { action: 'password_change', newPassword });
   assert.equal((await chg('wrong-code-xyz', 'brand-new-password')).code, 401);            // 要先用正確的碼
   assert.equal((await chg(c.bob, 'short')).code, 400);                                      // 太短
-  assert.equal((await chg(c.bob, c.eve)).code, 409);                                        // 不能和別人的相同
+  const clashOther = await chg(c.bob, c.eve); process.env.HOST_CODE = 'owner-long-password'; const clashOwner = await chg(c.bob, 'owner-long-password'); process.env.HOST_CODE = 'secret';   // 撞到別人的碼／撞到擁有者的碼：回應要完全一樣，不透露是誰
+  assert.equal(clashOther.code, 409); assert.equal(clashOwner.code, 409); assert.deepEqual(clashOwner.payload, clashOther.payload);
   assert.equal((await chg('secret', 'brand-new-password')).code, 403);                      // 擁有者的碼在環境變數，不能在這裡改
   assert.equal((await chg(c.bob, 'brand-new-password')).code, 200);
   assert.equal((await call(lib, c.bob, { action: 'whoami' })).code, 401);                   // 舊碼立刻失效
   assert.equal((await call(lib, 'brand-new-password', { action: 'whoami' })).payload.user, 'bob');   // 新碼可用
   assert.equal((await call(lib, 'brand-new-password', { action: 'list' })).code, 200);      // 文章還在
+}));
+
+test('改存取碼不能拿來試探別人的碼：撞到算猜錯（會被限流），每小時最多 5 次', () => withUsers(async () => {
+  const lib = require('../api/library');
+  const c = await makeUsers(['bob', 'eve']), chg = (code, newPassword, ip) => call(lib, code, { action: 'password_change', newPassword }, ip);
+  const codes = [];
+  for (let i = 0; i < 5; i++) codes.push((await chg(c.bob, c.eve, '9.9.9.9')).code);       // 5 次都撞到
+  assert.deepEqual(codes, [409, 409, 409, 409, 409]);
+  assert.equal((await chg(c.bob, 'brand-new-password', '9.9.9.9')).code, 429);             // 第 6 次：每小時上限（即使這次的新碼沒問題）
 }));

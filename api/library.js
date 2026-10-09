@@ -4,7 +4,7 @@
 const crypto = require('crypto');
 const store = require('./_store');
 const users = require('./_users');
-const { ownerName, generateLimit, checkHostCode, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
+const { noteAuthFail, ownerName, generateLimit, checkHostCode, clientIp, makeLimiter, readBody, clip: str, ID_RE } = require('./_util');
 
 const limited = makeLimiter(60);
 const MAX_ITEMS = 500;
@@ -72,8 +72,14 @@ module.exports = async function handler(req, res) {
   // 使用者自己改存取碼：要先用目前的碼登入（上面的 checkHostCode），新碼規則與擁有者設定時相同（8–100 字、不能和別人／擁有者的相同）
   if (b.action === 'password_change') {
     if (me.owner) return res.status(403).json({ error: 'The owner’s access code is set in Vercel (HOST_CODE) and can’t be changed here.' });
-    try { await users.setPassword(me.name, b.newPassword, { ownerCode: process.env.HOST_CODE }); return res.status(200).json({ ok: true }); }
-    catch (e) {
+    try {
+      // 每位使用者每小時最多嘗試 5 次（不論成功失敗），避免拿「改密碼」一直試別人的碼
+      const key = `rc:pwchg:${me.name}:${Math.floor(Date.now() / 3600000)}`, r = await store.pipeline([['INCR', key], ['EXPIRE', key, 7200]]);
+      if (Number(r[0]) > 5) return res.status(429).json({ error: 'Too many attempts. Please try again in an hour.' });
+      await users.setPassword(me.name, b.newPassword, { ownerCode: process.env.HOST_CODE, generic: true });
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      if (e.collision) noteAuthFail(req);   // 撞到別人／擁有者的碼 = 等同猜中一次，和登入猜錯用同一個限流
       if (e instanceof users.UserError) return res.status(e.status).json({ error: e.message });
       return res.status(502).json({ error: 'Cloud storage request failed. Please try again.' });
     }

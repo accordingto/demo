@@ -66,11 +66,13 @@ async function list() {
 }
 
 // 檢查密碼：長度、不能和擁有者相同、不能和其他使用者相同（except：正在改密碼的那位自己）
-async function checkPassword(password, { except, ownerCode } = {}) {
+async function checkPassword(password, { except, ownerCode, generic } = {}) {
   const pw = String(password ?? '').trim();
   if (pw.length < MIN_PASSWORD || pw.length > MAX_PASSWORD) throw new UserError(`The password must be ${MIN_PASSWORD}–${MAX_PASSWORD} characters.`, 400);
-  if (ownerCode && pw === ownerCode) throw new UserError('Choose a different password.', 400);
-  for (const u of await all()) if (u.name !== except && await matches(u, pw)) throw new UserError('That password is already used by another user — choose a different one.', 409);
+  // generic（使用者自己改碼）：撞到擁有者或別人的碼時，回應完全一樣、不透露撞到的是誰（避免用「改密碼」來試探別人的碼）；呼叫端會把這種失敗算進猜碼次數
+  const clash = (msg, status) => { const e = new UserError(generic ? 'That access code can’t be used. Please choose a different one.' : msg, generic ? 409 : status); e.collision = true; return e; };
+  if (ownerCode && pw === ownerCode) throw clash('Choose a different password.', 400);
+  for (const u of await all()) if (u.name !== except && await matches(u, pw)) throw clash('That password is already used by another user — choose a different one.', 409);
   return pw;
 }
 
