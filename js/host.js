@@ -108,6 +108,7 @@ async function run() {
     current = await generate(payload, (n) => { st.textContent = `Writing your article… (${n.toLocaleString()} characters so far)`; });
     st.textContent = ''; st.className = 'msg';
     render(current);
+    autoSaveNew();   // 先自動存一次，避免忘記按 Save
   } catch (e) {
     st.className = 'msg err'; st.textContent = e.message;
     if (e.message === 'Incorrect access code') { $('code').value = ''; saveSettings(); askForCode(); } // 存的是錯誤的碼就清掉，並打開側邊欄讓你重新輸入

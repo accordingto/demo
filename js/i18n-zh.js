@@ -2,6 +2,10 @@
 // 沒有翻譯到的字串會維持英文，不會出錯。新增介面文字時，英文照常寫在程式裡，再來這裡補一行中文即可。
 window.I18N_ZH = {
   exact: {
+    'Not saved yet — sign in with your access code, then press Save.': '還沒存檔——請先輸入存取碼登入，再按 Save。',
+    '✅ Saved to the cloud library automatically. The share link below works on any device; edits you make here (like new words) update it.': '✅ 已自動存到雲端文章庫。下面的分享連結在任何裝置都能開；你在這裡做的修改（例如新增單字）會自動更新。',
+    '✅ Saved to your library automatically (stored in this browser only — export a backup now and then).': '✅ 已自動存到你的文章庫（只存在這個瀏覽器——請不時匯出備份）。',
+    'Could not save automatically: browser storage is full or blocked.': '無法自動存檔：瀏覽器儲存空間已滿或被封鎖。',
     'Change my access code': '修改我的存取碼', 'Your current code stops working as soon as you save. Use 8–100 characters. Write it down — the owner can reset it if you forget.': '儲存後，你現在的存取碼就會立刻失效。請用 8–100 個字元，並記下來——忘記的話，擁有者可以幫你重設。',
     'New access code (at least 8 characters)': '新的存取碼（至少 8 個字元）', 'Type it again': '再輸入一次', 'Save new code': '儲存新存取碼', 'Cancel': '取消',
     'The access code must be 8–100 characters.': '存取碼必須是 8–100 個字元。', 'The two codes are not the same.': '兩次輸入的存取碼不一樣。', 'Your access code was changed.': '你的存取碼已修改。',
@@ -152,7 +156,7 @@ window.I18N_ZH = {
   patterns: [
     [/^([\d,]+) words?$/, '$1 字'], [/^~(\d+) min read$/, '約 $1 分鐘'], [/^Level (\w+)$/, '程度 $1'], [/^([\d,]+) vocab$/, '$1 個單字'], [/^([\d,]+) articles?$/, '$1 篇文章'],
     [/^([\d,]+) paragraphs?$/, '$1 段'], [/^\(auto: (.+)\)$/, (m, a, t) => `（自動：${t(a)}）`], [/^\(manual: (.+)\)$/, (m, a, t) => `（手動：${t(a)}）`],
-    [/^Created (.+)$/, '建立於 $1'], [/^Last active (.+)$/, (m, a, t) => `最近活動：${t(a)}`], [/^([\d,]+) min ago$/, '$1 分鐘前'], [/^([\d,]+) h ago$/, '$1 小時前'], [/^([\d,]+) days ago$/, '$1 天前'],
+    [/^Could not save automatically: (.+) Press Save to try again\.$/, '無法自動存檔：$1 請按 Save 再試一次。'], [/^Created (.+)$/, '建立於 $1'], [/^Last active (.+)$/, (m, a, t) => `最近活動：${t(a)}`], [/^([\d,]+) min ago$/, '$1 分鐘前'], [/^([\d,]+) h ago$/, '$1 小時前'], [/^([\d,]+) days ago$/, '$1 天前'],
     [/^(Active|Disabled) · ([\d,]+) articles?$/, (m, s, n, t) => `${t(s)}・${n} 篇文章`],
     [/^Link length: ([\d,]+) characters$/, '連結長度：$1 字元'], [/^Writing your article… \(([\d,]+) characters so far\)$/, '正在寫你的文章…（目前 $1 字元）'],
     [/^Using ([\d,]+) words\. Long texts make a long share link — test it before sending\.$/, '使用 $1 字。文字太長會讓分享連結很長，送出前請先測試。'],

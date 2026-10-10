@@ -156,6 +156,23 @@ function syncLib() {
   }, 400);
 }
 
+// 新產生／新貼上／從網址匯入的文章：成功後先自動存一次（使用者常常忘記按 Save）。之後在文章庫裡看得到，Save 鈕再按就是更新同一篇
+async function autoSaveNew() {
+  if (!current || current.viewAs) return;
+  if (cloud) {
+    if (!$('code').value.trim()) { $('linkMsg').textContent = 'Not saved yet — sign in with your access code, then press Save.'; return; }
+    try {
+      const id = await cloudSave(); showLink(shortLink(id));
+      $('linkMsg').textContent = '✅ Saved to the cloud library automatically. The share link below works on any device; edits you make here (like new words) update it.';
+      refreshCloud(); flashSaved();
+    } catch (e) { $('linkMsg').textContent = `Could not save automatically: ${e.message} Press Save to try again.`; }
+    return;
+  }
+  const r = localSaveCurrent();
+  $('linkMsg').textContent = r.ok ? '✅ Saved to your library automatically (stored in this browser only — export a backup now and then).' : 'Could not save automatically: browser storage is full or blocked.';
+  if (r.ok) flashSaved();
+}
+
 // Save 鈕：存好後短暫變成「Saved ✓」
 function flashSaved() {
   const b = $('save'), label = b.querySelector('span'), use = b.querySelector('use');

@@ -39,6 +39,7 @@ function usePastedText() {
   const title = $('pasteTitle').value.replace(/\s+/g, ' ').trim() || body.split(/\s+/).slice(0, 6).join(' ').replace(/[.,;:!?"“”]+$/, '') + '…';
   current = { source: 'pasted', title, body, level: '', targetWords: n, wordCount: n, withinTolerance: true, questions: toLines($('pasteQ').value), discussion: toLines($('pasteD').value) };
   render(current, []);   // 切到 Article 畫面
+  autoSaveNew();   // 先自動存一次（貼上與從網址匯入都走這裡），避免忘記按 Save
   $('pasteMode').value = 'auto'; savePasteDraft();   // 下次貼新的文字時從自動判斷開始
   setPasteMsg(n > 3000 ? `Using ${n} words. Long texts make a long share link — test it before sending.` : PASTE_NOTE);
   return true;
