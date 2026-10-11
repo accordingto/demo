@@ -156,7 +156,7 @@ function syncLib() {
   }, 400);
 }
 
-// 新產生／新貼上／從網址匯入的文章：成功後先自動存一次（使用者常常忘記按 Save）。之後在文章庫裡看得到，Save 鈕再按就是更新同一篇
+// AI 產生的文章：成功後先自動存一次（使用者常常忘記按 Save）。貼上與從網址匯入的不會自動存（避免文章庫被試貼的內容塞滿）。之後按 Save 就是更新同一篇
 async function autoSaveNew() {
   if (!current || current.viewAs) return;
   if (cloud) {
