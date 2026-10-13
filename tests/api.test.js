@@ -311,6 +311,7 @@ test('fetch: end-to-end against a local server (redirect, gzip, errors, size lim
     assert.equal(extractArticle(r.html).title, 'Why Coffee Costs More Now');
     await assert.rejects(() => fetchMod.fetchPage(base + '/img'), /not a web page/);
     await assert.rejects(() => fetchMod.fetchPage(base + '/big'), /too large/);
+    assert.equal((await fetchMod.fetchPage(base + '/big', { maxBytes: 6 * 1024 * 1024 })).html.length, 3 * 1024 * 1024);   // 已知很大的頁面（TED）可以放寬上限
     await assert.rejects(() => fetchMod.fetchPage(base + '/loop'), /too many times/);
     await assert.rejects(() => fetchMod.fetchPage(base + '/nope'), /not found/);
     await assert.rejects(() => fetchMod.fetchPage(base + '/private'), /cannot be fetched/);   // 轉址到內網位址也要擋
@@ -601,3 +602,29 @@ test('改存取碼不能拿來試探別人的碼：撞到算猜錯（會被限�
   assert.deepEqual(codes, [409, 409, 409, 409, 409]);
   assert.equal((await chg(c.bob, 'brand-new-password', '9.9.9.9')).code, 429);             // 第 6 次：每小時上限（即使這次的新碼沒問題）
 }));
+
+test('TED：網址判斷一律抓英文版、從頁面資料取出逐字稿（不依賴固定路徑）、拿掉舞台說明、標題含講者', () => {
+  const { tedUrl, parseTed } = require('../api/_ted');
+  assert.equal(tedUrl('https://www.ted.com/talks/reshma_saujani_teach_girls_bravery_not_perfection?language=zh-tw'), 'https://www.ted.com/talks/reshma_saujani_teach_girls_bravery_not_perfection?language=en');
+  assert.equal(tedUrl('https://embed.ted.com/talks/some_talk'), 'https://www.ted.com/talks/some_talk?language=en');
+  for (const bad of ['https://www.ted.com/', 'https://www.ted.com/playlists/1', 'https://example.com/talks/x', 'ftp://ted.com/talks/x', 'not a url']) assert.equal(tedUrl(bad), null, bad);
+  const cue = (t) => ({ text: t });
+  const paras = [
+    { cues: [cue('So a few years ago, I did something really brave,'), cue('or some would say really stupid.')] },
+    { cues: [cue('(Laughter)')] },
+    { cues: [cue('I ran for Congress. (Applause) For years, I had existed safely behind the scenes in politics as a fundraiser,'), cue('as an organizer, but in my heart, I always wanted to run.')] },
+  ];
+  const page = (pageProps) => `<html><head><title>Teach girls bravery | TED Talk</title></head><body><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ props: { pageProps } })}</script></body></html>`;
+  // 形式一：transcriptData 是物件、videoData 是物件
+  const a = parseTed(page({ videoData: { title: 'Teach girls bravery, not perfection', presenterDisplayName: 'Reshma Saujani' }, transcriptData: { translation: { paragraphs: paras } } }));
+  assert.equal(a.title, 'Teach girls bravery, not perfection - Reshma Saujani');
+  assert.equal(a.text.split('\n\n').length, 2);                  // 只有 (Laughter) 的段落整段拿掉
+  assert.ok(!/Laughter|Applause/.test(a.text) && a.text.startsWith('So a few years ago') && a.text.includes('I ran for Congress. For years'));
+  // 形式二：資料包成字串、放在別的位置；沒有講者就用網頁標題
+  const b = parseTed(page({ videoData: JSON.stringify({}), somewhere: { deeper: [{ x: 1 }, { list: paras }] } }));
+  assert.equal(b.title, 'Teach girls bravery');
+  assert.ok(b.text.includes('I ran for Congress.'));
+  // 沒有逐字稿資料 → null（呼叫端改走一般網頁擷取）
+  assert.equal(parseTed('<html><body><p>No data</p></body></html>'), null);
+  assert.equal(parseTed(page({ videoData: {} })), null);
+});

@@ -52,7 +52,7 @@ function safeLookup(hostname, options, cb) {
   });
 }
 
-function once(u) {
+function once(u, maxBytes = MAX_BYTES) {
   return new Promise((resolve, reject) => {
     const lib = u.protocol === 'https:' ? https : http;
     const req = lib.request(u, { method: 'GET', lookup: safeLookup, timeout: TIMEOUT_MS, headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml;q=0.9,text/plain;q=0.5', 'Accept-Language': 'en,*;q=0.5', 'Accept-Encoding': 'gzip, deflate, br' } }, (res) => {
@@ -63,7 +63,7 @@ function once(u) {
       const enc = String(res.headers['content-encoding'] || '').toLowerCase();
       const stream = enc === 'gzip' ? res.pipe(zlib.createGunzip()) : enc === 'deflate' ? res.pipe(zlib.createInflate()) : enc === 'br' ? res.pipe(zlib.createBrotliDecompress()) : res;
       const chunks = []; let size = 0;
-      stream.on('data', (c) => { size += c.length; if (size > MAX_BYTES) { req.destroy(new FetchError('The page is too large (over 2 MB).')); } else chunks.push(c); });
+      stream.on('data', (c) => { size += c.length; if (size > maxBytes) { req.destroy(new FetchError(`The page is too large (over ${Math.round(maxBytes / 1048576)} MB).`)); } else chunks.push(c); });
       stream.on('end', () => {
         const buf = Buffer.concat(chunks);
         let charset = (/charset=([\w-]+)/i.exec(type) || /<meta[^>]+charset=["']?([\w-]+)/i.exec(buf.slice(0, 4096).toString('latin1')) || [])[1] || 'utf-8';
@@ -79,10 +79,10 @@ function once(u) {
 }
 
 // 抓取網頁文字（最多跟著轉址 4 次，每一次都重新檢查）
-async function fetchPage(raw) {
+async function fetchPage(raw, { maxBytes = MAX_BYTES } = {}) {   // maxBytes：少數已知很大的頁面（TED 講者頁含逐字稿）可以放寬
   let u = checkUrl(raw);
   for (let i = 0; i <= MAX_REDIRECTS; i++) {
-    const r = await once(u);
+    const r = await once(u, maxBytes);
     if (r.html !== undefined) return { html: r.html, url: u.href };
     u = checkUrl(r.redirect);
   }

@@ -2,6 +2,8 @@
 // 沒有翻譯到的字串會維持英文，不會出錯。新增介面文字時，英文照常寫在程式裡，再來這裡補一行中文即可。
 window.I18N_ZH = {
   exact: {
+    'Found the transcript. Use it as is, or review and edit the text first.': '找到逐字稿了。可以直接使用，或先檢查、修改文字。', 'TED transcript': 'TED 逐字稿',
+    'Could not find the transcript on this TED page. On the TED page, open “Read transcript”, copy the text and use “Paste text” instead.': '在這個 TED 頁面找不到逐字稿。請在 TED 頁面打開「Read transcript」，複製文字後改用「Paste text」。',
     'Not saved yet — sign in with your access code, then press Save.': '還沒存檔——請先輸入存取碼登入，再按 Save。',
     '✅ Saved to the cloud library automatically. The share link below works on any device; edits you make here (like new words) update it.': '✅ 已自動存到雲端文章庫。下面的分享連結在任何裝置都能開；你在這裡做的修改（例如新增單字）會自動更新。',
     '✅ Saved to your library automatically (stored in this browser only — export a backup now and then).': '✅ 已自動存到你的文章庫（只存在這個瀏覽器——請不時匯出備份）。',

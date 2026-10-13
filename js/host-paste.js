@@ -59,9 +59,9 @@ async function importFromUrl() {
     $('pasteTitle').value = j.title || ''; $('pasteBody').value = j.text; $('pasteMode').value = 'auto';   // 匯入的文字本來就用空行分段，自動判斷即可
     updatePasteInfo(); savePasteDraft();
     $('ipTitle').textContent = j.title || 'Untitled article';
-    $('ipHost').textContent = j.host; $('ipWords').textContent = `${j.words.toLocaleString()} words`; $('ipTrunc').classList.toggle('hidden', !j.truncated);
+    $('ipHost').textContent = j.via ? `${j.host} · ${j.via}` : j.host; $('ipWords').textContent = `${j.words.toLocaleString()} words`; $('ipTrunc').classList.toggle('hidden', !j.truncated);
     $('ipExcerpt').textContent = j.text.split('\n\n').slice(0, 3).join(' ');
-    box.classList.remove('loading'); setImportMsg('Found the article. Use it as is, or review and edit the text first.', 'ok');
+    box.classList.remove('loading'); setImportMsg(j.via ? 'Found the transcript. Use it as is, or review and edit the text first.' : 'Found the article. Use it as is, or review and edit the text first.', 'ok');
   } catch (e) {
     box.classList.add('hidden'); box.classList.remove('loading'); setImportMsg(e.message, 'err');
     if (e.message === 'Incorrect access code') askForCode();

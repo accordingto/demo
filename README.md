@@ -86,6 +86,8 @@
 
 - **AI 產生的文章成功後自動存檔一次**：AI generate 成功產生文章就會馬上存進文章庫（雲端模式存到雲端並產生分享連結；本機模式存在這個瀏覽器），避免使用者忘記按 Save。之後按 Save 是更新同一篇，不會重複新增。**Paste text 和 From a link 不會自動存**（試貼的內容不想塞滿文章庫），要自己按 Save；不過只要在文章裡加入第一個單字，就會依原本的規則自動存成新文章。
 
+- **From a link 支援 TED 逐字稿**：貼上 TED 講者頁網址（`ted.com/talks/…`，中文版連結也可以，會自動改抓英文版），就直接取得頁面公開的完整逐字稿（就是 TED 頁面「Read transcript」那份），保留 TED 原本的分段，拿掉 (Laughter)、(Applause) 這類舞台說明，標題是「講題 - 講者」；預覽會標示「ted.com · TED transcript」。程式在 `api/_ted.js`：只讀頁面裡的 `__NEXT_DATA__` 資料，不寫死路徑而是搜尋「段落裡有 cues」的結構；抓頁面仍走 `_fetch.js`（防 SSRF，TED 頁面較大，上限放寬到 6 MB）。找不到逐字稿時退回一般網頁擷取，再不行就提示到 TED 頁面複製「Read transcript」後用 Paste text。**YouTube 等其他影片網站不支援**（沒有公開、可正當取得的逐字稿來源）。
+
 ### 新手引導（手機友善）
 - **語言**：第一次來、瀏覽器語言是中文時，介面預設中文（自己切換過就以選擇為準，記在 `rc-lang`）。
 - **首頁開始卡片**：雲端模式、尚未登入時，首頁最上方是「Enter your access code to start」的輸入卡片（不必打開選單）。輸入正確後，這個瀏覽器的**第一次**會直接打開歡迎文章，之後登入就進 Library；輸入錯誤會直接在卡片上顯示原因。已登入或本機模式則顯示「Create an article／Open my Library」兩個按鈕。
