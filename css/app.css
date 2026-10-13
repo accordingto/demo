@@ -368,4 +368,3 @@ body.side-mini .side-foot .changecode { display:none; }
 .pwdlg input { min-height:46px; padding:0 14px; font-size:1rem; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:12px; }
 .pwdlg.hidden { display:none; }
 @media (min-width:1280px) { .popcard.pwdlg:not(.hidden) { display:flex; } }   /* .popcard 在桌機預設隱藏（那是上方列的存取碼小視窗），改密碼視窗要例外 */
-@media (min-width:1280px) and (max-width:1365px) { body:not(.side-mini) .libtable .c-level, body:not(.side-mini) .libtable .c-vocab { display:none; } }   /* 有側邊欄的小筆電：和平板一樣先藏次要欄位，表格才不會左右捲動 */

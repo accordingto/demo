@@ -86,7 +86,7 @@ function renderLib() {
     `<td class="c-level">${it.level ? `<span class="chip lv">${esc(it.level)}</span>` : '<span class="chip">Pasted</span>'}</td>` +
     `<td class="c-num c-words">${(it.words || 0).toLocaleString()}</td><td class="c-num c-vocab">${it.vocab}</td>` +
     `<td class="c-when">${fmtDate(it.ts)}</td><td class="c-when c-created">${fmtDate(it.created)}</td>` +
-    `<td class="c-act"><div class="acts"><button type="button" class="act primary" data-act="open">Open</button>${libViewAs ? '' : '<button type="button" class="act" data-act="edit">Edit</button>'}<button type="button" class="act" data-act="copy">Copy link</button>${libViewAs ? '' : '<button type="button" class="act danger" data-act="del" aria-label="Delete">Delete</button>'}</div></td></tr>`
+    `<td class="c-act"><div class="acts"><button type="button" class="act primary" data-act="open">Open</button>${libViewAs ? '' : '<button type="button" class="act" data-act="edit">Edit</button>'}${libViewAs ? '' : '<button type="button" class="act danger" data-act="del" aria-label="Delete">Delete</button>'}</div></td></tr>`
   ).join('');
   $('libList').innerHTML = `<table class="libtable"><thead><tr>${th}<th class="c-act"><span class="sr">Actions</span></th></tr></thead><tbody>${rows}</tbody></table>` +
     `<div class="libfoot">${l.length} article${l.length === 1 ? '' : 's'}${q ? ` matching “${esc(libQuery)}”` : ''} · double-click a title to open it</div>`;
@@ -223,7 +223,7 @@ async function openFromLibrary(id, act, btn) {
         openArticle(r.article, r.vocab, id);
         showLink(shortLink(id)); $('linkMsg').textContent = 'Opened from the cloud library. Its share link is ready below.';
         afterOpen();
-      } else if (act === 'copy') copyText(shortLink(id), btn, 'Copy link');
+      }
       else if (act === 'del') {
         const title = document.querySelector(`#libList tr[data-id="${CSS.escape(id)}"] .t`)?.textContent || '';
         if (!confirm(`Delete “${title}” from the cloud library?\nIts share link will stop working for everyone.`)) return;
@@ -235,7 +235,6 @@ async function openFromLibrary(id, act, btn) {
     }
     const l = libLoad(), it = l.find((x) => x.id === id); if (!it) return;
     if (act === 'open' || act === 'edit') { openArticle(it.article, it.vocab, it.id); afterOpen(); } // 開啟後，單字表的變動會自動同步回文章庫
-    else if (act === 'copy') copyText(await buildLink(it.article, it.vocab || []), btn, 'Copy link');
     else if (act === 'del') {
       if (!confirm(`Delete “${it.article.title}”? Links you already shared are not affected.`)) return;
       libStore(l.filter((x) => x.id !== id)); renderLib();
