@@ -2,6 +2,7 @@
 // 沒有翻譯到的字串會維持英文，不會出錯。新增介面文字時，英文照常寫在程式裡，再來這裡補一行中文即可。
 window.I18N_ZH = {
   exact: {
+    'Newest created': '最近建立在前', 'Oldest created': '最早建立在前', 'Sort by Created': '依建立日期排序',
     'Found the transcript. Use it as is, or review and edit the text first.': '找到逐字稿了。可以直接使用，或先檢查、修改文字。', 'TED transcript': 'TED 逐字稿',
     'Could not find the transcript on this TED page. On the TED page, open “Read transcript”, copy the text and use “Paste text” instead.': '在這個 TED 頁面找不到逐字稿。請在 TED 頁面打開「Read transcript」，複製文字後改用「Paste text」。',
     'Not saved yet — sign in with your access code, then press Save.': '還沒存檔——請先輸入存取碼登入，再按 Save。',

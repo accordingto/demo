@@ -33,7 +33,7 @@ const cleanVocab = (v) => (Array.isArray(v) ? v : []).slice(0, 300).map((x) => (
 
 const summary = (it) => ({
   id: it.id, title: it.article.title, level: it.article.level, source: it.article.source,
-  wordCount: it.article.wordCount, vocabCount: (it.vocab || []).length, updatedAt: it.updatedAt,
+  wordCount: it.article.wordCount, vocabCount: (it.vocab || []).length, updatedAt: it.updatedAt, createdAt: it.createdAt || it.updatedAt,
 });
 
 module.exports = async function handler(req, res) {

@@ -43,15 +43,15 @@ async function cloudSave() {
 // ---- 清單 ----
 // 雲端與本機統一成同一種清單格式
 const libEntries = () => cloud
-  ? cloudItems.map((i) => ({ id: i.id, title: i.title, level: i.level, words: i.wordCount, vocab: i.vocabCount, ts: i.updatedAt }))
-  : libLoad().map((it) => ({ id: it.id, title: it.article.title, level: it.article.level, words: it.article.wordCount, vocab: (it.vocab || []).length, ts: it.savedAt }));
+  ? cloudItems.map((i) => ({ id: i.id, title: i.title, level: i.level, words: i.wordCount, vocab: i.vocabCount, ts: i.updatedAt, created: i.createdAt || i.updatedAt }))
+  : libLoad().map((it) => ({ id: it.id, title: it.article.title, level: it.article.level, words: it.article.wordCount, vocab: (it.vocab || []).length, ts: it.updatedAt || it.savedAt, created: it.savedAt }));   // 本機：savedAt = 第一次存的時間，updatedAt = 最後更新
 
 let libQuery = '';
 let libSort = { key: 'ts', dir: -1 };   // 排序欄位與方向（1 小到大、-1 大到小），記在瀏覽器裡
-try { const s = JSON.parse(localStorage.getItem('rc-lib-sort') || 'null'); if (s && ['title', 'level', 'words', 'vocab', 'ts'].includes(s.key)) libSort = { key: s.key, dir: s.dir === 1 ? 1 : -1 }; } catch { /* 沒有就用預設 */ }
+try { const s = JSON.parse(localStorage.getItem('rc-lib-sort') || 'null'); if (s && ['title', 'level', 'words', 'vocab', 'ts', 'created'].includes(s.key)) libSort = { key: s.key, dir: s.dir === 1 ? 1 : -1 }; } catch { /* 沒有就用預設 */ }
 const fmtDate = (ts) => { try { return new Date(ts).toLocaleDateString(I18N.locale(), { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return ''; } };
 const COLS = [   // [排序鍵, 標題, class]
-  ['title', 'Title', 'c-t'], ['level', 'Level', 'c-level'], ['words', 'Words', 'c-num c-words'], ['vocab', 'Vocab', 'c-num c-vocab'], ['ts', 'Updated', 'c-when'],
+  ['title', 'Title', 'c-t'], ['level', 'Level', 'c-level'], ['words', 'Words', 'c-num c-words'], ['vocab', 'Vocab', 'c-num c-vocab'], ['ts', 'Updated', 'c-when'], ['created', 'Created', 'c-when c-created'],
 ];
 function sortedEntries(list) {
   const { key, dir } = libSort, val = (it) => (key === 'title' ? it.title.toLowerCase() : key === 'level' ? (it.level || '') : (it[key] || 0));
@@ -85,7 +85,7 @@ function renderLib() {
     `<tr data-id="${esc(it.id)}"><td class="c-t"><div class="t" title="Double-click to open">${esc(it.title)}</div><div class="sub">${it.level ? esc(it.level) + ' · ' : ''}${it.words || 0} words · ${it.vocab} vocab · ${fmtDate(it.ts)}</div></td>` +
     `<td class="c-level">${it.level ? `<span class="chip lv">${esc(it.level)}</span>` : '<span class="chip">Pasted</span>'}</td>` +
     `<td class="c-num c-words">${(it.words || 0).toLocaleString()}</td><td class="c-num c-vocab">${it.vocab}</td>` +
-    `<td class="c-when">${fmtDate(it.ts)}</td>` +
+    `<td class="c-when">${fmtDate(it.ts)}</td><td class="c-when c-created">${fmtDate(it.created)}</td>` +
     `<td class="c-act"><div class="acts"><button type="button" class="act primary" data-act="open">Open</button>${libViewAs ? '' : '<button type="button" class="act" data-act="edit">Edit</button>'}<button type="button" class="act" data-act="copy">Copy link</button>${libViewAs ? '' : '<button type="button" class="act danger" data-act="del" aria-label="Delete">Delete</button>'}</div></td></tr>`
   ).join('');
   $('libList').innerHTML = `<table class="libtable"><thead><tr>${th}<th class="c-act"><span class="sr">Actions</span></th></tr></thead><tbody>${rows}</tbody></table>` +
@@ -120,7 +120,7 @@ function localSaveCurrent() {
   const l = libLoad(), vocab = settledVocab();
   const dup = l.find((it) => it.article.body === current.body && it.article.title === current.title);
   let created = false;
-  if (dup) { dup.vocab = vocab; currentLibId = dup.id; }
+  if (dup) { dup.vocab = vocab; dup.updatedAt = Date.now(); currentLibId = dup.id; }
   else {
     const entry = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), savedAt: Date.now(), article: current, vocab };
     l.unshift(entry); currentLibId = entry.id; created = true;
