@@ -10,6 +10,9 @@
   },
   "scripts": {
     "dev": "vercel dev",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "audit:code": "node scripts/audit/dead-code.js",
+    "audit:layout": "node scripts/audit/layout.js",
+    "audit:server": "node scripts/audit/server.js"
   }
 }

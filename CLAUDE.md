@@ -5,6 +5,8 @@
 ## Commands
 ```bash
 npm test          # node --test tests/*.test.js （後端單元測試，不需金鑰、不需網路）
+npm run audit:code                              # 死碼掃描（沒用到的函式、id、CSS class、圖示、匯出）
+NODE_PATH=$(npm root -g) npm run audit:layout   # 排版檢查：PC／iPad 直橫／iPhone 16 種尺寸 × 中英文（需 Playwright）
 vercel dev        # 本機執行（需 .env：GROQ_API_KEY / AI_MODEL / HOST_CODE）
 ```
 
@@ -18,3 +20,4 @@ vercel dev        # 本機執行（需 .env：GROQ_API_KEY / AI_MODEL / HOST_COD
 - 前端是 classic script（共用全域作用域），載入順序見 docs/ARCHITECTURE.md；`Vocab.init` 必須最後執行。
 - 改動前端行為後，請在窄螢幕（393px）與桌面（≥1100px）都確認一次。
 - 不要自行建立 PR；使用者要求時才推到 `main`（Vercel 自動部署）。
+- 全站檢查（測試＋死碼＋各裝置排版＋整理）的完整流程在 `.claude/skills/site-audit/SKILL.md`，使用者說「全站檢查」或 `/site-audit` 時照著做。
