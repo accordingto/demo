@@ -81,4 +81,4 @@ function extractArticle(html, { maxWords = 8000 } = {}) {
   return { title, paragraphs: out, text: out.join('\n\n'), words, truncated };
 }
 
-module.exports = { extractArticle, textOf, pageTitle };
+module.exports = { extractArticle, pageTitle };

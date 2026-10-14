@@ -67,4 +67,4 @@ async function checkHostCode(req, res, code, { ownerOnly = false } = {}) {
 const generateLimit = (user) => Math.max(1, Number(process.env[user.owner ? 'GENERATE_PER_DAY' : 'USER_GENERATE_PER_DAY']) || (user.owner ? 30 : 5));
 
 const noteAuthFail = (req) => authFails(clientIp(req));   // 把一次「猜碼性質」的失敗算進限流（和輸入錯誤存取碼同一個計數）
-module.exports = { noteAuthFail, ownerName, generateLimit, safeEqual, checkHostCode, OWNER, clientIp, makeLimiter, readBody, clip, ID_RE, missingEnv };
+module.exports = { noteAuthFail, ownerName, generateLimit, safeEqual, checkHostCode, clientIp, makeLimiter, readBody, clip, ID_RE, missingEnv };

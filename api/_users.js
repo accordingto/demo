@@ -117,4 +117,4 @@ async function remove(name) {   // 刪除使用者，連同他的所有文章
 
 class UserError extends Error { constructor(m, status) { super(m); this.status = status; } }
 
-module.exports = { findByCode, touch, list, add, setPassword, setDisabled, remove, UserError, NAME_RE, MIN_PASSWORD };
+module.exports = { findByCode, touch, list, add, setPassword, setDisabled, remove, UserError, NAME_RE };

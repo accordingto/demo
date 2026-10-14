@@ -222,4 +222,4 @@ function buildMessages(o) {
   return [{ role: 'system', content: buildSystem(o) }, { role: 'user', content: user }];
 }
 
-module.exports = { OWNER_MAX_WORDS, MAX_WORDS, validate, buildMessages, paragraphCount, pointCount, arcPlan, LEVELS, GENRES, ARC };
+module.exports = { validate, buildMessages, paragraphCount, pointCount, arcPlan, GENRES, ARC };
