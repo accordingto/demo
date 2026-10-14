@@ -140,8 +140,9 @@ body.nav-open { overflow:hidden; }
 .searchbox:focus-within { border-color:var(--accent); box-shadow:0 0 0 4px rgba(var(--accent-rgb), .15); }
 .searchbox input { border:0; background:transparent; height:46px; padding:0; outline:0; color:var(--ink); }
 .libtools { display:flex; gap:10px; align-items:center; }
-.libtools .searchbox { flex:1; }
-#libSortSel { display:none; height:48px; width:auto; min-width:0; max-width:50%; padding-right:30px; flex:none; border-radius:14px; }
+.libtools .searchbox { flex:1; min-width:0; }
+.libtools .searchbox input { flex:1; min-width:0; width:100%; }
+#libSortSel { display:none; height:48px; width:auto; min-width:0; max-width:45%; padding-right:30px; flex:0 1 auto; border-radius:14px; }   /* 可以縮，手機上才不會超出畫面 */
 /* 文章庫：表格（欄位標題可點擊排序）*/
 .libtable-wrap { background:var(--card); border:1px solid var(--line); border-radius:18px; overflow-x:auto; box-shadow:0 10px 30px var(--shadow); }
 .libtable { width:100%; border-collapse:collapse; font-size:.92rem; }
